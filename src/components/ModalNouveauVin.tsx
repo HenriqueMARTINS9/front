@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import MotsCles from './MotsCles';
 import Button from './Button';
 import Checkbox from './Checkbox';
@@ -36,6 +36,16 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
     const [cepages, setCepages] = useState([{ id: '1', nom: '', pourcentage: 0 }]);
     const [formats, setFormats] = useState([{ id: '1', nom: '', capacite: '', prix: 0 }]);
 
+    // États pour les erreurs de validation
+    const [errors, setErrors] = useState<{[key: string]: boolean}>({});
+
+    // Références pour les champs
+    const wineNameRef = useRef<HTMLInputElement>(null);
+    const domaineRef = useRef<HTMLInputElement>(null);
+    const millesimeRef = useRef<HTMLInputElement>(null);
+    const aocRegionRef = useRef<HTMLInputElement>(null);
+    const paysRef = useRef<HTMLInputElement>(null);
+
     // Gestionnaires pour les listes
     const handleCepagesChange = (items: any[]) => {
         setCepages(items.map(item => ({
@@ -66,19 +76,75 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
         setSelectedWineType(type);
     };
 
+    // Fonction de validation
+    const validateForm = () => {
+        const newErrors: {[key: string]: boolean} = {};
+        
+        // Validation des champs obligatoires
+        if (!wineName.trim()) {
+            newErrors.wineName = true;
+        }
+        if (!domaine.trim()) {
+            newErrors.domaine = true;
+        }
+        if (!millesime.trim()) {
+            newErrors.millesime = true;
+        }
+        if (!aocRegion.trim()) {
+            newErrors.aocRegion = true;
+        }
+        if (!pays.trim()) {
+            newErrors.pays = true;
+        }
+        if (cepages.length === 0 || !cepages[0].nom.trim()) {
+            newErrors.cepages = true;
+        }
+        if (formats.length === 0 || !formats[0].nom.trim()) {
+            newErrors.formats = true;
+        }
+
+        setErrors(newErrors);
+
+        // Focus sur le premier champ en erreur
+        if (newErrors.wineName && wineNameRef.current) {
+            wineNameRef.current.focus();
+        } else if (newErrors.domaine && domaineRef.current) {
+            domaineRef.current.focus();
+        } else if (newErrors.millesime && millesimeRef.current) {
+            millesimeRef.current.focus();
+        } else if (newErrors.aocRegion && aocRegionRef.current) {
+            aocRegionRef.current.focus();
+        } else if (newErrors.pays && paysRef.current) {
+            paysRef.current.focus();
+        }
+
+        return Object.keys(newErrors).length === 0;
+    };
+
     // Gestionnaire pour la soumission
     const handleSubmit = () => {
+        if (!validateForm()) {
+            return; // Arrêter si validation échoue
+        }
+
+        // S'assurer que le prix est un nombre
+        const prix = formats.length > 0 ? parseFloat(formats[0].prix?.toString()) || 0 : 0;
+        
+        // Créer un objet vin avec la structure correcte
         const wineData = {
-            name: wineName,
-            millesime: parseInt(millesime),
-            type: selectedWineType,
-            pointsDeVente: restaurantChecks,
+            nom: wineName,
             subname: domaine,
-            aocRegion,
-            pays,
-            cepages,
-            formats,
-            motsCles: []
+            type: selectedWineType,
+            cepage: cepages.length > 0 ? cepages[0].nom : '',
+            region: aocRegion,
+            pays: pays,
+            millesime: parseInt(millesime) || 2024,
+            prix: prix,
+            restaurant: 'Restaurant Principal',
+            pointsDeVente: restaurantChecks as [boolean, boolean, boolean, boolean],
+            motsCles: [
+                { id: 'mc1', label: 'Nouveau vin', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }
+            ]
         };
         onSave(wineData);
         onClose();
@@ -234,8 +300,11 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                     text: 'text-gray-900',
                                     placeholder: 'placeholder-gray-500',
                                     focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                                    hover: ''
+                                    hover: '',
+                                    error: 'border-red-500'
                                 }}
+                                ref={wineNameRef}
+                                error={errors.wineName ? "Le nom du vin est requis" : undefined}
                             />
                         </div>
 
@@ -256,8 +325,11 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                         text: 'text-gray-900',
                                         placeholder: 'placeholder-gray-500',
                                         focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                                        hover: ''
+                                        hover: '',
+                                        error: 'border-red-500'
                                     }}
+                                    ref={domaineRef}
+                                    error={errors.domaine ? "Le domaine est requis" : undefined}
                                 />
                             </div>
                             <div className="col-span-1 ">
@@ -275,8 +347,11 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                         text: 'text-gray-900',
                                         placeholder: 'placeholder-gray-500',
                                         focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                                        hover: ''
+                                        hover: '',
+                                        error: 'border-red-500'
                                     }}
+                                    ref={millesimeRef}
+                                    error={errors.millesime ? "Le millésime est requis" : undefined}
                                 />
                             </div>
                         </div>
@@ -298,8 +373,11 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                         text: 'text-gray-900',
                                         placeholder: 'placeholder-gray-500',
                                         focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                                        hover: ''
+                                        hover: '',
+                                        error: 'border-red-500'
                                     }}
+                                    ref={aocRegionRef}
+                                    error={errors.aocRegion ? "La région est requise" : undefined}
                                 />
                             </div>
                             <div className="col-span-2 ">
@@ -317,8 +395,11 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                         text: 'text-gray-900',
                                         placeholder: 'placeholder-gray-500',
                                         focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                                        hover: ''
+                                        hover: '',
+                                        error: 'border-red-500'
                                     }}
+                                    ref={paysRef}
+                                    error={errors.pays ? "Le pays est requis" : undefined}
                                 />
                             </div>
                         </div>
@@ -384,6 +465,9 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 optionSelected: 'bg-purple-50 text-purple-700'
                             }}
                         />
+                        {errors.cepages && (
+                            <p className="text-red-500 text-sm mt-1">Au moins un cépage est requis</p>
+                        )}
                     </div>
 
                     {/* Restaurants */}
@@ -441,6 +525,9 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 { key: 'prix', label: 'Prix (CHF)', type: 'text', placeholder: '42.00', suffix: ' CHF', width: 'full' }
                             ]}
                         />
+                        {errors.formats && (
+                            <p className="text-red-500 text-sm mt-1">Au moins un format est requis</p>
+                        )}
                     </div>
 
                     {/* Mots clés */}

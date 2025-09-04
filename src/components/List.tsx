@@ -80,21 +80,9 @@ export default function List({
     };
 
     const handleItemBlur = (id: string, key: string, value: string) => {
-        let formattedValue = value;
-
-        // Formatage automatique pour les prix
-        if (key === 'prix' && value) {
-            // Convertir la virgule en point pour le parsing
-            const normalizedValue = value.replace(',', '.');
-            const numValue = parseFloat(normalizedValue);
-            if (!isNaN(numValue)) {
-                // Formater avec une virgule pour l'affichage
-                formattedValue = numValue.toFixed(2).replace('.', ',');
-            }
-        }
-
+        // Pas de formatage automatique - laisser l'utilisateur taper librement
         const updatedItems = items.map(item =>
-            item.id === id ? { ...item, [key]: formattedValue } : item
+            item.id === id ? { ...item, [key]: value } : item
         );
         onItemsChange(updatedItems);
     };

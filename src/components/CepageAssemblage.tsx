@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import { getTagColors } from '@/lib/tagColors';
 
 type Cepage = {
     id: string;
@@ -9,9 +10,37 @@ type Cepage = {
 
 type CepageAssemblageProps = {
     cepages: Cepage[];
+    wineType?: string;
 };
 
-export default function CepageAssemblage({ cepages }: CepageAssemblageProps) {
+export default function CepageAssemblage({ cepages, wineType }: CepageAssemblageProps) {
+    const wineTypeColors = wineType ? getTagColors(wineType) : null;
+    
+    // Mapping direct des couleurs de bordure par type de vin
+    const borderColorMap: Record<string, string> = {
+        'Blanc': 'border-[#B54708]',
+        'Mousseux': 'border-[#B54708]',
+        'Rouge': 'border-[#B42318]',
+        'Rosé': 'border-[#C11574]',
+        'Fortifié': 'border-[#C11574]',
+        'Moelleux ou liquoreux': 'border-[#C4320A]',
+        'Orange': 'border-[#C4320A]'
+    };
+    
+    // Couleurs par défaut si pas de type de vin
+    const defaultColors = {
+        bg: 'bg-[#FFFAEB]',
+        border: 'border-[#B54708]',
+        text: 'text-[#B54708]'
+    };
+    
+    // Couleurs basées sur le type de vin
+    const colors = wineTypeColors ? {
+        bg: wineTypeColors.bg,
+        border: wineType ? borderColorMap[wineType] || 'border-[#000000]' : 'border-[#000000]',
+        text: wineTypeColors.text
+    } : defaultColors;
+    
     return (
         <div className="space-y-3">
             <p className="text-sm font-medium text-gray-700">Cépage ou assemblage</p>
@@ -19,11 +48,11 @@ export default function CepageAssemblage({ cepages }: CepageAssemblageProps) {
             <div className="flex flex-wrap gap-2">
                 {cepages.map((cepage) => (
                     <div key={cepage.id} className="flex items-center">
-                        <div className="bg-[#FFFAEB] border border-orange-500 rounded-l-lg  px-4 py-2.5">
-                            <span className="text-sm font-semibold text-[#B54708]">{cepage.nom}</span>
+                        <div className={`${colors.bg} border ${colors.border} rounded-l-lg px-4 py-2.5`}>
+                            <span className={`text-sm font-semibold ${colors.text}`}>{cepage.nom}</span>
                         </div>
-                        <div className="bg-[#FFFAEB] border border-l-0 border-orange-500 rounded-r-lg px-4 py-2.5">
-                            <span className="text-sm font-semibold text-[#B54708]">{cepage.pourcentage} %</span>
+                        <div className={`${colors.bg} border border-l-0 ${colors.border} rounded-r-lg px-4 py-2.5`}>
+                            <span className={`text-sm font-semibold ${colors.text}`}>{cepage.pourcentage} %</span>
                         </div>
                     </div>
                 ))}

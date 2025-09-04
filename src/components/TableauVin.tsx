@@ -7,6 +7,9 @@ import FormulaireModification from './FormulaireModification';
 import CepageAssemblage from './CepageAssemblage';
 import FormatsDisponibles from './FormatsDisponibles';
 import MotsCles from './MotsCles';
+import { type Vin } from '@/lib/api';
+import { useUpdateVin, useDeleteVin } from '@/lib/hooks';
+import { getTagColors } from '@/lib/tagColors';
 
 type Cepage = {
     id: string;
@@ -17,7 +20,7 @@ type Cepage = {
 type Format = {
     id: string;
     nom: string;
-    capacite: string;
+    capacite?: string;
     prix: number;
 };
 
@@ -40,6 +43,10 @@ export type Wine = {
     cepages: Cepage[];
     formats: Format[];
     motsCles: MotCle[];
+};
+
+type TableauVinProps = {
+    vins: Vin[];
 };
 
 function createInitialData(): Wine[] {
@@ -113,31 +120,53 @@ function createInitialData(): Wine[] {
     ];
 }
 
-export default function TableauVin() {
-    const [wines, setWines] = useState<Wine[]>(() => createInitialData());
+export default function TableauVin({ vins }: TableauVinProps) {
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [editingWineId, setEditingWineId] = useState<string | null>(null);
+    const [localVins, setLocalVins] = useState<Vin[]>(vins);
+    const [editingData, setEditingData] = useState<Record<string, { cepages: any[], formats: any[] }>>({});
+
+    const updateVinMutation = useUpdateVin();
+    const deleteVinMutation = useDeleteVin();
+
+    // Mettre à jour les vins locaux quand les props changent
+    React.useEffect(() => {
+        setLocalVins(vins);
+    }, [vins]);
 
     const columns = useMemo(() => [
         { key: 'name', label: 'Nom du vin' },
         { key: 'millesime', label: 'Millésime' },
         { key: 'type', label: 'Type' },
-        { key: 'pdv1', label: 'PdV #1' },
-        { key: 'pdv2', label: 'PdV #2' },
-        { key: 'pdv3', label: 'PdV #3' },
-        { key: 'pdv4', label: 'PdV #4' },
+        { key: 'pdv1', label: 'Restaurant #1' },
+        { key: 'pdv2', label: 'Restaurant #2' },
+        { key: 'pdv3', label: 'Restaurant #3' },
+        { key: 'pdv4', label: 'Restaurant #4' },
         { key: 'actions', label: '' },
     ], []);
 
-    function togglePointDeVente(wineId: string, index: number) {
-        setWines(prev => prev.map(w => {
-            if (w.id !== wineId) return w;
-            const next: Wine = {
-                ...w,
-                pointsDeVente: w.pointsDeVente.map((v, i) => i === index ? !v : v) as [boolean, boolean, boolean, boolean],
-            };
-            return next;
-        }));
+    async function togglePointDeVente(wineId: string, index: number) {
+        const wine = localVins.find(v => v.id === wineId);
+        if (!wine) return;
+
+        const newPointsDeVente = [...wine.pointsDeVente] as [boolean, boolean, boolean, boolean];
+        newPointsDeVente[index] = !newPointsDeVente[index];
+
+        // Mettre à jour localement immédiatement
+        setLocalVins(prev => prev.map(v =>
+            v.id === wineId
+                ? { ...v, pointsDeVente: newPointsDeVente }
+                : v
+        ));
+
+        try {
+            await updateVinMutation.mutateAsync({
+                id: wineId,
+                vin: { pointsDeVente: newPointsDeVente }
+            });
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour du point de vente:', error);
+        }
     }
 
     function toggleExpanded(wineId: string) {
@@ -149,17 +178,61 @@ export default function TableauVin() {
         setExpanded(prev => ({ ...prev, [wineId]: false }));
     }
 
+    function updateEditingData(wineId: string, data: { cepages?: any[], formats?: any[] }) {
+        setEditingData(prev => ({
+            ...prev,
+            [wineId]: {
+                ...prev[wineId],
+                ...data
+            }
+        }));
+    }
+
     function cancelEditing() {
         setEditingWineId(null);
     }
 
-    function saveWine(wine: Wine) {
-        setEditingWineId(null);
+    async function saveWine(wine: Vin) {
+        try {
+            // Mettre à jour les mots-clés avec la couleur du type de vin
+            const wineTypeColors = getTagColors(wine.type);
+            const updatedMotsCles = wine.motsCles.map(motCle => ({
+                ...motCle,
+                color: wineTypeColors.bg,
+                textColor: wineTypeColors.text
+            }));
+
+            // Mettre à jour localement immédiatement avec le vin complet
+            setLocalVins(prev => prev.map(v =>
+                v.id === wine.id
+                    ? { ...v, ...wine, motsCles: updatedMotsCles }
+                    : v
+            ));
+
+            // Mettre à jour le vin avec les nouveaux mots-clés et le type
+            await updateVinMutation.mutateAsync({
+                id: wine.id,
+                vin: {
+                    ...wine,
+                    type: wine.type,
+                    motsCles: updatedMotsCles
+                }
+            });
+            setEditingWineId(null);
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour du vin:', error);
+        }
     }
 
-    function deleteWine(wineId: string) {
-        setWines(prev => prev.filter(w => w.id !== wineId));
-        setEditingWineId(null);
+    async function deleteWine(wineId: string) {
+        try {
+            // Mettre à jour localement immédiatement
+            setLocalVins(prev => prev.filter(v => v.id !== wineId));
+            await deleteVinMutation.mutateAsync(wineId);
+            setEditingWineId(null);
+        } catch (error) {
+            console.error('Erreur lors de la suppression du vin:', error);
+        }
     }
 
     return (
@@ -167,7 +240,7 @@ export default function TableauVin() {
             <div className="px-6 py-6 text-lg text-gray-900 flex items-center justify-between bg-[#D5D9EB] rounded-t-xl">
                 <div className="flex items-center gap-2">
                     Vins
-                    <Tag label="17 vins" color="bg-[#EEF4FF]" textColor="text-indigo-700" />
+                    <Tag label={`${localVins.length} vins`} color="bg-[#EEF4FF]" textColor="text-indigo-700" />
                 </div>
             </div>
             <div className="">
@@ -181,24 +254,26 @@ export default function TableauVin() {
                             </tr>
                         </thead>
                         <tbody className="align-center text-center text-gray-900">
-                            {wines.map((wine) => {
+                            {localVins.map((wine) => {
                                 const isOpen = !!expanded[wine.id];
                                 return (
                                     <React.Fragment key={wine.id}>
                                         <tr className={`border-t border-gray-200 transition-opacity transition-transform duration-500 ease-in-out ${editingWineId === wine.id ? 'opacity-0 scale-95 absolute' : 'opacity-100 scale-100 relative'}`}>
                                             <td className="px-6 py-4">
-                                                <div className="font-medium text-sm text-left">{wine.name}</div>
-                                                {wine.subname && (
-                                                    <div className="text-sm text-left text-gray-600">{wine.subname}</div>
-                                                )}
+                                                <div className="text-left">
+                                                    <div className="font-medium text-sm text-gray-900">{wine.nom}</div>
+                                                    {wine.subname && (
+                                                        <div className="text-sm text-gray-500 mt-1">{wine.subname}</div>
+                                                    )}
+                                                </div>
                                             </td>
+                                            <td className="px-10 py-3 text-sm text-gray-900">{wine.millesime}</td>
                                             <td className="px-10 py-3 text-sm text-gray-900">
-                                                <Tag 
-                                                    label={wine.type} 
+                                                <Tag
+                                                    label={wine.type}
                                                     puce={true}
                                                 />
                                             </td>
-                                            <td className="px-10 py-3 text-sm text-gray-900">{wine.millesime}</td>
                                             {wine.pointsDeVente.map((checked, idx) => (
                                                 <td key={idx} className="px-10 py-3">
                                                     <label className="inline-flex items-center select-none w-4 h-4">
@@ -209,7 +284,7 @@ export default function TableauVin() {
                                                             onChange={() => togglePointDeVente(wine.id, idx)}
                                                         />
                                                         {checked && <svg className="forced-colors:hidden absolute mx-0.75" width="10" height="7" viewBox="0 0 10 7" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M8.33341 1.5L3.75008 6.08333L1.66675 4" stroke="white" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <path d="M8.33341 1.5L3.75008 6.08333L1.66675 4" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
                                                         </svg>}
                                                     </label>
                                                 </td>
@@ -222,10 +297,10 @@ export default function TableauVin() {
                                                         className="transition-all duration-300 rounded p-1"
                                                     >
                                                         <svg className={`transform transition duration-300 ${isOpen ? 'rotate-180 opacity-0' : 'opacity-100'}`} width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M11 6.5L6 1.5L1 6.5" stroke="#535862" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <path d="M11 6.5L6 1.5L1 6.5" stroke="#535862" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
                                                         </svg>
                                                         <svg className={`transform transition duration-300 ${isOpen ? 'rotate-180 opacity-100' : 'opacity-0'}`} width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M11 6.5L6 1.5L1 6.5" stroke="#535862" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <path d="M11 6.5L6 1.5L1 6.5" stroke="#535862" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
                                                         </svg>
                                                     </button>
                                                     <button
@@ -234,7 +309,7 @@ export default function TableauVin() {
                                                         className="transition-all duration-300 rounded p-1"
                                                     >
                                                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M14.1665 2.49999C14.3854 2.28112 14.6452 2.1075 14.9312 1.98905C15.2171 1.8706 15.5236 1.80963 15.8332 1.80963C16.1427 1.80963 16.4492 1.8706 16.7352 1.98905C17.0211 2.1075 17.281 2.28112 17.4998 2.49999C17.7187 2.71886 17.8923 2.97869 18.0108 3.26466C18.1292 3.55063 18.1902 3.85713 18.1902 4.16665C18.1902 4.47618 18.1292 4.78268 18.0108 5.06865C17.8923 5.35461 17.7187 5.61445 17.4998 5.83332L6.24984 17.0833L1.6665 18.3333L2.9165 13.75L14.1665 2.49999Z" stroke="#535862" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <path d="M14.1665 2.49999C14.3854 2.28112 14.6452 2.1075 14.9312 1.98905C15.2171 1.8706 15.5236 1.80963 15.8332 1.80963C16.1427 1.80963 16.4492 1.8706 16.7352 1.98905C17.0211 2.1075 17.281 2.28112 17.4998 2.49999C17.7187 2.71886 17.8923 2.97869 18.0108 3.26466C18.1292 3.55063 18.1902 3.85713 18.1902 4.16665C18.1902 4.47618 18.1292 4.78268 18.0108 5.06865C17.8923 5.35461 17.7187 5.61445 17.4998 5.83332L6.24984 17.0833L1.6665 18.3333L2.9165 13.75L14.1665 2.49999Z" stroke="#535862" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
                                                         </svg>
                                                     </button>
                                                 </div>
@@ -250,23 +325,29 @@ export default function TableauVin() {
                                                     <div className="space-y-6">
                                                         {/* AOC / Région et Pays */}
                                                         <div>
-                                                            <p className="text-sm font-medium text-gray-700">{wine.aocRegion || 'Non spécifié'}</p>
+                                                            <p className="text-sm font-medium text-gray-700">{wine.region || 'Non spécifié'}</p>
                                                             <p className="text-sm text-gray-700">{wine.pays || 'Non spécifié'}</p>
                                                         </div>
 
                                                         {/* Cépage ou assemblage */}
-                                                        <CepageAssemblage cepages={wine.cepages} />
+                                                        <CepageAssemblage 
+                                                            cepages={editingData[wine.id]?.cepages || [{ id: '1', nom: wine.cepage, pourcentage: 100 }]} 
+                                                            wineType={wine.type} 
+                                                        />
 
                                                         {/* Formats disponibles et Prix */}
-                                                        <FormatsDisponibles formats={wine.formats} />
+                                                        <FormatsDisponibles 
+                                                            formats={editingData[wine.id]?.formats || [{ id: '1', nom: 'Bouteille (75 cl)', prix: wine.prix }]} 
+                                                            wineType={wine.type} 
+                                                        />
 
                                                         {/* Mots clefs descriptifs */}
-                                                        <MotsCles motsCles={wine.motsCles} />
+                                                        <MotsCles motsCles={wine.motsCles} wineType={wine.type} />
                                                     </div>
                                                 </div>
                                             </td>
                                         </tr>
-                                        
+
                                         {/* Ligne pour le formulaire de modification */}
                                         <tr className="bg-white text-left">
                                             <td colSpan={8} className="py-0">
@@ -276,8 +357,58 @@ export default function TableauVin() {
                                                 >
                                                     <div className="transform transition-all duration-500 ease-in-out">
                                                         <FormulaireModification
-                                                            wine={wine}
-                                                            onSave={saveWine}
+                                                            wine={{
+                                                                id: wine.id,
+                                                                name: wine.nom,
+                                                                millesime: wine.millesime,
+                                                                type: wine.type as any,
+                                                                pointsDeVente: wine.pointsDeVente,
+                                                                aocRegion: wine.region,
+                                                                pays: wine.pays,
+                                                                cepages: [{ id: '1', nom: wine.cepage, pourcentage: 100 }],
+                                                                formats: [{ id: '1', nom: 'Bouteille (75 cl)', prix: wine.prix }],
+                                                                motsCles: wine.motsCles
+                                                            }}
+                                                            onDataChange={(data) => updateEditingData(wine.id, data)}
+                                                            onSave={(wineData) => {
+                                                                // S'assurer que le prix est un nombre (même logique que l'ajout)
+                                                                const prix = wineData.formats.length > 0 ? parseFloat(wineData.formats[0].prix?.toString()) || 0 : 0;
+                                                                
+                                                                // Convertir tous les prix des formats en nombres
+                                                                const formatsWithNumericPrices = wineData.formats.map(format => ({
+                                                                    ...format,
+                                                                    prix: typeof format.prix === 'string' ? parseFloat(format.prix) || 0 : format.prix || 0
+                                                                }));
+                                                                
+                                                                // Mettre à jour editingData avec les nouveaux formats (avec prix numériques)
+                                                                setEditingData(prev => ({
+                                                                    ...prev,
+                                                                    [wineData.id]: {
+                                                                        cepages: wineData.cepages || [],
+                                                                        formats: formatsWithNumericPrices
+                                                                    }
+                                                                }));
+                                                                
+                                                                saveWine({
+                                                                    id: wineData.id,
+                                                                    nom: wineData.name,
+                                                                    subname: wineData.subname,
+                                                                    type: wineData.type,
+                                                                    cepage: wineData.cepages[0]?.nom || '',
+                                                                    region: wineData.aocRegion || '',
+                                                                    pays: wineData.pays || '',
+                                                                    millesime: wineData.millesime,
+                                                                    prix: prix,
+                                                                    restaurant: wine.restaurant,
+                                                                    pointsDeVente: wineData.pointsDeVente,
+                                                                    motsCles: wineData.motsCles
+                                                                });
+                                                                
+                                                                // Forcer la mise à jour de l'affichage en fermant et rouvrant les détails
+                                                                setTimeout(() => {
+                                                                    setExpanded(prev => ({ ...prev }));
+                                                                }, 100);
+                                                            }}
                                                             onCancel={cancelEditing}
                                                             onDelete={deleteWine}
                                                         />

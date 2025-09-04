@@ -45,7 +45,7 @@ export function getTagColors(label: string): { bg: string; puce: string; text: s
     
     // Catégorie 5: Types de vins (Orange/Yellowish, Red/Pinkish, Pink)
     if (lowerLabel.includes('vin')) {
-        if (['orange', 'moelleux', 'liquoreux'].some(type => lowerLabel.includes(type))) {
+        if (['orange', 'moelleux', 'liquoreux', 'moelleux ou liquoreux'].some(type => lowerLabel.includes(type))) {
             return {
                 bg: 'bg-[#FFF6ED]',
                 puce: '#FB6514',
@@ -72,33 +72,31 @@ export function getTagColors(label: string): { bg: string; puce: string; text: s
         }
     }
     
-    // Types de vins simples (sans "vin" dans le nom)
-    if (['blanc', 'rouge', 'rosé', 'mousseux', 'fortifié', 'moelleux', 'liquoreux', 'orange'].includes(lowerLabel)) {
-        if (['orange', 'moelleux', 'liquoreux'].includes(lowerLabel)) {
-            return {
-                bg: 'bg-[#FFF6ED]',
-                puce: '#FB6514',
-                text: 'text-[#C4320A]'
-            };
-        } else if (['mousseux', 'blanc'].includes(lowerLabel)) {
-            return {
-                bg: 'bg-[#FFFAEB]',
-                puce: '#F79009',
-                text: 'text-[#B54708]'
-            };
-        } else if (['rouge'].includes(lowerLabel)) {
-            return {
-                bg: 'bg-[#FEF3F2]',
-                puce: '#F04438',
-                text: 'text-[#B42318]'
-            };
-        } else if (['rosé', 'fortifié'].includes(lowerLabel)) {
-            return {
-                bg: 'bg-[#FDF2FA]',
-                puce: '#EE46BC',
-                text: 'text-[#C11574]'
-            };
-        }
+    // Types de vins simples (sans "vin" dans le nom) - PRIORITÉ ÉLEVÉE
+    if (['orange', 'moelleux', 'liquoreux', 'moelleux ou liquoreux'].includes(lowerLabel)) {
+        return {
+            bg: 'bg-[#FFF6ED]',
+            puce: '#FB6514',
+            text: 'text-[#C4320A]'
+        };
+    } else if (['mousseux', 'blanc'].includes(lowerLabel)) {
+        return {
+            bg: 'bg-[#FFFAEB]',
+            puce: '#F79009',
+            text: 'text-[#B54708]'
+        };
+    } else if (['rouge'].includes(lowerLabel)) {
+        return {
+            bg: 'bg-[#FEF3F2]',
+            puce: '#F04438',
+            text: 'text-[#B42318]'
+        };
+    } else if (['rosé', 'fortifié'].includes(lowerLabel)) {
+        return {
+            bg: 'bg-[#FDF2FA]',
+            puce: '#EE46BC',
+            text: 'text-[#C11574]'
+        };
     }
     
     // Par défaut: Gris

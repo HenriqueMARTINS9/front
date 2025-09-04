@@ -15,16 +15,17 @@ type FormulaireModificationProps = {
     onSave: (wine: Wine) => void;
     onCancel: () => void;
     onDelete: (wineId: string) => void;
+    onDataChange?: (data: { cepages?: any[], formats?: any[] }) => void;
 };
 
 
 
-export default function FormulaireModification({ wine, onSave, onCancel, onDelete }: FormulaireModificationProps) {
+export default function FormulaireModification({ wine, onSave, onCancel, onDelete, onDataChange }: FormulaireModificationProps) {
     // États pour les checkboxes des restaurants
     const [restaurantChecks, setRestaurantChecks] = useState<boolean[]>(wine.pointsDeVente);
     
     // État pour le type de vin sélectionné
-    const [selectedWineType, setSelectedWineType] = useState('Blanc');
+    const [selectedWineType, setSelectedWineType] = useState<Wine['type']>('Blanc');
     
     // État pour la checkbox "proportions inconnues"
     const [unknownProportions, setUnknownProportions] = useState(false);
@@ -32,7 +33,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
     // États pour les champs de saisie
     const [wineName, setWineName] = useState(wine.name);
     const [millesime, setMillesime] = useState(wine.millesime);
-    const [domaine, setDomaine] = useState(wine.subname || '');
+    const [subname, setSubname] = useState(wine.subname || '');
     const [aocRegion, setAocRegion] = useState(wine.aocRegion || '');
     const [pays, setPays] = useState(wine.pays || '');
     
@@ -52,20 +53,24 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
     
     // Gestionnaires pour les listes
     const handleCepagesChange = (items: any[]) => {
-        setCepages(items.map(item => ({
+        const newCepages = items.map(item => ({
             id: item.id,
             nom: item.nom || '',
             pourcentage: item.pourcentage || 0
-        })));
+        }));
+        setCepages(newCepages);
+        onDataChange?.({ cepages: newCepages });
     };
     
     const handleFormatsChange = (items: any[]) => {
-        setFormats(items.map(item => ({
+        const newFormats = items.map(item => ({
             id: item.id,
             nom: item.nom || '',
             capacite: item.capacite || '',
             prix: item.prix || 0
-        })));
+        }));
+        setFormats(newFormats);
+        onDataChange?.({ formats: newFormats });
     };
 
     // Gestionnaires pour les checkboxes des restaurants
@@ -77,7 +82,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
 
     // Gestionnaire pour le type de vin
     const handleWineTypeChange = (type: string) => {
-        setSelectedWineType(type);
+        setSelectedWineType(type as Wine['type']);
     };
 
     return (
@@ -146,8 +151,8 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                 <div className="col-span-6">
                     <InputField
                         type="text"
-                        value={domaine}
-                        onChange={setDomaine}
+                        value={subname}
+                        onChange={setSubname}
                         label="Domaine"
                         size="md"
                         width="full"
@@ -339,7 +344,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                 <div className="col-span-6" />
                 {/* Mots clefs descriptifs (automatique) */}
                 <div className="col-span-6">
-                    <MotsCles motsCles={wine.motsCles} />
+                    <MotsCles motsCles={wine.motsCles} wineType={selectedWineType} />
                 </div>
             </div>
 
@@ -347,7 +352,26 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
 
             {/* Boutons d'action */}
             <div className="flex gap-6 pt-6">
-                <Button onClick={() => onSave(wine)} className="!bg-[#7F56D9] !text-white hover:!bg-[#6941C6] focus:!outline-none focus:!ring-2 focus:!ring-purple-100 focus:!border-purple-300 focus:!shadow-xs transition-colors duration-200">Sauvegarder</Button>
+                <Button onClick={() => {
+                    // S'assurer que les prix sont des nombres
+                    const formatsWithNumericPrices = formats.map(format => ({
+                        ...format,
+                        prix: typeof format.prix === 'string' ? parseFloat(format.prix) || 0 : format.prix || 0
+                    }));
+                    
+                    onSave({
+                        ...wine,
+                        type: selectedWineType,
+                        pointsDeVente: restaurantChecks as [boolean, boolean, boolean, boolean],
+                        cepages: cepages,
+                        formats: formatsWithNumericPrices,
+                        name: wineName,
+                        subname: subname,
+                        millesime: millesime,
+                        aocRegion: aocRegion,
+                        pays: pays
+                    });
+                }} className="!bg-[#7F56D9] !text-white hover:!bg-[#6941C6] focus:!outline-none focus:!ring-2 focus:!ring-purple-100 focus:!border-purple-300 focus:!shadow-xs transition-colors duration-200">Sauvegarder</Button>
                 <div className="flex gap-3">
                     <button
                         onClick={() => onDelete(wine.id)}

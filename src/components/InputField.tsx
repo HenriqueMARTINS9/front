@@ -109,15 +109,23 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
                 if (newValue && !/^[0-9.,]*$/.test(newValue)) {
                     return;
                 }
-                // Convertir la virgule en point pour le parsing
-                const normalizedValue = newValue.replace(',', '.');
-                const numValue = parseFloat(normalizedValue);
-                if (newValue && (isNaN(numValue) || numValue < 0 || numValue > 100)) {
+                // Vérifier qu'il n'y a qu'une seule virgule ou un seul point
+                const commaCount = (newValue.match(/,/g) || []).length;
+                const dotCount = (newValue.match(/\./g) || []).length;
+                if (commaCount + dotCount > 1) {
                     return;
                 }
-                // Limiter à 2 décimales
+                // Limiter à 2 décimales seulement si on a un point
+                const normalizedValue = newValue.replace(',', '.');
                 if (normalizedValue.includes('.') && normalizedValue.split('.')[1]?.length > 2) {
                     return;
+                }
+                // Vérifier que la valeur est entre 0.00 et 100.00
+                if (normalizedValue && normalizedValue !== '.') {
+                    const numValue = parseFloat(normalizedValue);
+                    if (!isNaN(numValue) && (numValue < 0 || numValue > 100)) {
+                        return;
+                    }
                 }
             }
             
@@ -127,15 +135,23 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
                 if (newValue && !/^[0-9.,]*$/.test(newValue)) {
                     return;
                 }
-                // Convertir la virgule en point pour le parsing
-                const normalizedValue = newValue.replace(',', '.');
-                const numValue = parseFloat(normalizedValue);
-                if (newValue && isNaN(numValue)) {
+                // Vérifier qu'il n'y a qu'une seule virgule ou un seul point
+                const commaCount = (newValue.match(/,/g) || []).length;
+                const dotCount = (newValue.match(/\./g) || []).length;
+                if (commaCount + dotCount > 1) {
                     return;
                 }
-                // Limiter à 2 décimales
+                // Limiter à 2 décimales seulement si on a un point
+                const normalizedValue = newValue.replace(',', '.');
                 if (normalizedValue.includes('.') && normalizedValue.split('.')[1]?.length > 2) {
                     return;
+                }
+                // Vérifier que la valeur est entre 0.00 et 9999.99
+                if (normalizedValue && normalizedValue !== '.') {
+                    const numValue = parseFloat(normalizedValue);
+                    if (!isNaN(numValue) && (numValue < 0 || numValue > 9999.99)) {
+                        return;
+                    }
                 }
             }
             

@@ -1,18 +1,23 @@
 "use client";
 import React from 'react';
+import { getTagColors } from '@/lib/tagColors';
 
 type Format = {
     id: string;
     nom: string;
-    capacite: string;
+    capacite?: string;
     prix: number;
 };
 
 type FormatsDisponiblesProps = {
     formats: Format[];
+    wineType?: string;
 };
 
-export default function FormatsDisponibles({ formats }: FormatsDisponiblesProps) {
+export default function FormatsDisponibles({ formats, wineType }: FormatsDisponiblesProps) {
+    // Le texte reste toujours gris, pas de changement de couleur selon le type de vin
+    const textColor = 'text-gray-900';
+    
     return (
         <div className="space-y-3"> 
             <table>
@@ -25,9 +30,13 @@ export default function FormatsDisponibles({ formats }: FormatsDisponiblesProps)
                 <tbody>
                     {formats.map((format) => (
                         <tr key={format.id} className="text-sm">
-                            <td className="py-1 pr-12 text-gray-900">{format.nom} ({format.capacite})</td>
-                            <td className="py-1 text-gray-900">
-                                {format.prix.toFixed(2)} CHF
+                            <td className={`py-1 pr-12 ${textColor}`}>
+                                {format.nom}
+                            </td>
+                            <td className={`py-1 ${textColor}`}>
+                                {typeof format.prix === 'number' && !isNaN(format.prix) 
+                                    ? format.prix.toFixed(2) 
+                                    : '0.00'} CHF
                             </td>
                         </tr>
                     ))}
