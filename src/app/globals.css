@@ -13,7 +13,7 @@
 }
 
 .input {
-  @apply w-full px-10 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-300 focus:shadow-xs;
+  @apply w-full px-10 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs;
 }
 
 .btn {
@@ -38,4 +38,14 @@ h1{
 
 h4{
   @apply text-[#717680] text-base font-semibold py-2;
+}
+
+/* Masquer la barre de scroll pour éviter les décalages */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
 }

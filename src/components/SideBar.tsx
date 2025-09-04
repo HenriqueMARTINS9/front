@@ -15,8 +15,8 @@ const nav = [
     { label: 'Home', icon: <Home className="w-4 h-4" />, href: '/home' },
     { label: 'Carte des vins', icon: <Wine className="w-4 h-4" />, href: '/vins' },
     { label: 'Menu(s)', icon: <Utensils className="w-4 h-4" />, href: '/menu' },
-    { label: 'Équipe', icon: <Users className="w-4 h-4" />, href: '/equipe' },
-    { label: 'Paramètres', icon: <Settings className="w-4 h-4" />, href: '/settings' },
+    { label: 'Équipe', icon: <Users className="w-4 h-4" />, href: '' },
+    { label: 'Paramètres', icon: <Settings className="w-4 h-4" />, href: '' },
 ];
 
 export default function Sidebar() {
