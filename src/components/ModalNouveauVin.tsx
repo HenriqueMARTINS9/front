@@ -153,8 +153,8 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-[#0000005F] bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-50 rounded-xl max-w-4xl w-full mx-4 max-h-[90vh] shadow-sm focus:shadow-sm focus:shadow-gray-100 focus:shadow-[4px] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-[#0000005F] bg-opacity-50 flex items-center justify-center z-50 animate-in fade-in duration-300">
+            <div className="bg-gray-50 rounded-xl max-w-4xl w-full mx-4 max-h-[90vh] shadow-sm focus:shadow-sm focus:shadow-gray-100 focus:shadow-[4px] overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                 <div className="p-8 overflow-y-auto flex-1">
                 {/* Header */}
                 <div className="mb-6">

@@ -1,5 +1,14 @@
 // Fonction pour déterminer les couleurs des tags selon les catégories
-export function getTagColors(label: string): { bg: string; puce: string; text: string } {
+export function getTagColors(label: string | undefined | null): { bg: string; puce: string; text: string } {
+    // Vérification de sécurité pour éviter les erreurs avec des valeurs undefined/null
+    if (!label || typeof label !== 'string') {
+        return {
+            bg: 'bg-gray-100',
+            puce: '#6B7280',
+            text: 'text-gray-700'
+        };
+    }
+    
     const lowerLabel = label.toLowerCase();
     
     // Catégorie 1: Fromages (Orange/Yellowish)
