@@ -1,45 +1,41 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import InputField from './InputField';
 import Checkbox from './Checkbox';
 import List from './List';
 import Button from './Button';
 import type { Plat } from './TableauMenu';
+import { recommendationsService } from '@/lib/api';
+import { Dish } from '@/lib/api';
+import { useTranslation } from '@/lib/useTranslation';
 
 type FormulaireModificationPlatProps = {
     plat: Plat;
     onSave: (plat: Plat) => void;
     onCancel: () => void;
     onDelete: (platId: string) => void;
+    restaurantId?: number; // ID du restaurant pour récupérer les types de plats
 };
 
-const optionsAromes = [
-    { value: 'viande-rouge', label: 'Viande rouge' },
-    { value: 'viande-blanche', label: 'Viande blanche' },
-    { value: 'volaille', label: 'Volaille' },
-    { value: 'poisson', label: 'Poisson' },
-    { value: 'crustace', label: 'Crustacé' },
-    { value: 'mollusque', label: 'Mollusque' },
-    { value: 'legume-vert', label: 'Légume vert' },
-    { value: 'solanacee', label: 'Solanacée' },
-    { value: 'champignon', label: 'Champignon' },
-    { value: 'fromage-dur', label: 'Fromage pâte dure et noisettée' },
-    { value: 'fromage-bleu', label: 'Fromage bleu puissant' },
-    { value: 'fromage-doux', label: 'Fromage doux et beurré' },
-    { value: 'herbe-fraiche', label: 'Herbe fraîche aromatique' },
-    { value: 'herbe-seche', label: 'Herbe sèche' },
-    { value: 'epices-exotiques', label: 'Épices exotiques' },
-    { value: 'viande-sechee', label: 'Viande séchée' },
-    { value: 'faisselle', label: 'Faisselle / crème aigre' },
-    { value: 'fromage-sale', label: 'Fromage salé et friable' }
+// Les options d'arômes seront traduites dynamiquement dans le composant
+const optionsAromesKeys = [
+    'viande-rouge', 'viande-blanche', 'volaille', 'poisson', 'crustace', 'mollusque',
+    'legume-vert', 'solanacee', 'champignon', 'fromage-dur', 'fromage-bleu', 'fromage-doux',
+    'herbe-fraiche', 'herbe-seche', 'epices-exotiques', 'viande-sechee', 'faisselle', 'fromage-sale'
 ];
 
-export default function FormulaireModificationPlat({ plat, onSave, onCancel, onDelete }: FormulaireModificationPlatProps) {
+export default function FormulaireModificationPlat({ plat, onSave, onCancel, onDelete, restaurantId = 0 }: FormulaireModificationPlatProps) {
+    const { t } = useTranslation();
+    
     // États pour les champs de saisie
     const [nom, setNom] = useState(plat.nom);
     const [description, setDescription] = useState(plat.description || '');
     const [section, setSection] = useState(plat.section);
     const [pointsDeVente, setPointsDeVente] = useState(plat.pointsDeVente);
+    
+    // États pour les sections dynamiques
+    const [availableSections, setAvailableSections] = useState<string[]>([]);
+    const [isLoadingSections, setIsLoadingSections] = useState(false);
     
     // Séparer les arômes en principal et secondaires
     const aromePrincipal = plat.motsCles.length > 0 ? [plat.motsCles[0]] : [];
@@ -47,6 +43,42 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
     
     const [aromePrincipalList, setAromePrincipalList] = useState<{ id: string; label: string; color: string; textColor: string }[]>(aromePrincipal.length > 0 ? aromePrincipal : [{ id: 'temp', label: '', color: 'bg-green-100', textColor: 'text-green-700' }]);
     const [aromesSecondairesList, setAromesSecondairesList] = useState<{ id: string; label: string; color: string; textColor: string }[]>(aromesSecondaires);
+
+    // Effet pour récupérer les sections dynamiques
+    useEffect(() => {
+        const fetchSections = async () => {
+            setIsLoadingSections(true);
+            try {
+                const dishes = await recommendationsService.getRestaurantDishes(restaurantId);
+                
+                // Extraire les types uniques de plats
+                const uniqueTypes = new Set<string>();
+                dishes.forEach(dish => {
+                    const dishType = dish.dish_type?.fr || dish.dish_type?.['en-US'] || '';
+                    if (dishType) {
+                        uniqueTypes.add(dishType);
+                    }
+                });
+                
+                const sectionsArray = Array.from(uniqueTypes);
+                setAvailableSections(sectionsArray);
+                
+                // Si la section actuelle du plat n'est pas dans les sections disponibles, l'ajouter
+                if (section && !sectionsArray.includes(section)) {
+                    setAvailableSections([section, ...sectionsArray]);
+                }
+            } catch (error) {
+                console.error('Erreur lors de la récupération des types de plats:', error);
+                // Fallback vers les sections par défaut
+                const defaultSections = ['Entrée', 'Plat', 'Dessert'];
+                setAvailableSections(defaultSections);
+            } finally {
+                setIsLoadingSections(false);
+            }
+        };
+
+        fetchSections();
+    }, [restaurantId, section]);
 
     // Gestionnaires pour les points de vente
     const handlePointDeVenteChange = (index: number, checked: boolean) => {
@@ -82,7 +114,7 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
                         type="text"
                         value={nom}
                         onChange={setNom}
-                        label="Nom du plat"
+                        label={t('menu.dish.name')}
                         size="md"
                         width="full"
                         colors={{
@@ -102,7 +134,7 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
                         type="text"
                         value={description}
                         onChange={setDescription}
-                        label="Description supplémentaire"
+                        label={t('menu.dish.description')}
                         size="md"
                         width="full"
                         colors={{
@@ -140,25 +172,32 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
 
                 {/* Section dans le menu */}
                 <div className="col-span-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Section dans le menu</label>
-                    <div className="flex flex-col space-y-3">
-                        {['Entrée', 'Plat', 'Dessert'].map((sectionOption) => (
-                            <Checkbox
-                                key={sectionOption}
-                                id={`section-${sectionOption}`}
-                                checked={section === sectionOption}
-                                onChange={() => setSection(sectionOption)}
-                                size="md"
-                                colors={{
-                                    unchecked: 'border-gray-300 bg-white',
-                                    checked: 'border-[#7C3AED] bg-[#7C3AED]',
-                                    focus: 'focus:ring-[#C4B5FD]'
-                                }}
-                            >
-                                <span className="text-sm text-gray-700">{sectionOption}</span>
-                            </Checkbox>
-                        ))}
-                    </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">{t('menu.dish.section')}</label>
+                    {isLoadingSections ? (
+                        <div className="flex items-center justify-center py-4">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#7C3AED]"></div>
+                            <span className="ml-2 text-sm text-gray-500">Chargement des sections...</span>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col space-y-3">
+                            {availableSections.map((sectionOption) => (
+                                <Checkbox
+                                    key={sectionOption}
+                                    id={`section-${sectionOption}`}
+                                    checked={section === sectionOption}
+                                    onChange={() => setSection(sectionOption)}
+                                    size="md"
+                                    colors={{
+                                        unchecked: 'border-gray-300 bg-white',
+                                        checked: 'border-[#7C3AED] bg-[#7C3AED]',
+                                        focus: 'focus:ring-[#C4B5FD]'
+                                    }}
+                                >
+                                    <span className="text-sm text-gray-700">{sectionOption}</span>
+                                </Checkbox>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <div className="col-span-6" />
 
@@ -179,7 +218,7 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
                                 key: 'label',
                                 label: 'Arôme principal',
                                 type: 'select',
-                                options: optionsAromes,
+                                options: optionsAromesKeys.map(key => ({ value: key, label: t(`aromas.${key}`) })),
                                 width: 'full'
                             }
                         ]}
@@ -223,7 +262,7 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
                                 label: 'Arôme secondaire',
                                 type: 'select',
                                 placeholder: 'Sélectionner un arôme secondaire',
-                                options: optionsAromes,
+                                options: optionsAromesKeys.map(key => ({ value: key, label: t(`aromas.${key}`) })),
                                 width: 'full'
                             }
                         ]}
@@ -264,7 +303,7 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
                     }} 
                     className="!bg-[#7F56D9] !text-white hover:!bg-[#6941C6] focus:!outline-none focus:!ring-2 focus:!ring-purple-100 focus:!border-purple-300 focus:!shadow-xs transition-colors duration-200"
                 >
-                    Sauvegarder
+                    {t('common.save')}
                 </Button>
                 <div className="flex gap-3">
                     <button
@@ -273,7 +312,7 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
                         }}
                         className="px-5 py-2.5 rounded-md bg-[#F5F3FF] text-[#7C3AED] font-medium hover:bg-[#EDE9FE] focus:outline-none focus:ring-2 focus:ring-[#C4B5FD] transition"
                     >
-                        Supprimer ce plat
+                        {t('menu.dish.delete')}
                     </button>
                 </div>
             </div>

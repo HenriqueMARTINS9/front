@@ -10,9 +10,11 @@ type SectionMenuProps = {
     plats: Plat[];
     onSavePlat: (plat: Plat) => void;
     onDeletePlat: (platId: string) => void;
+    isApiSection?: boolean;
+    restaurantId?: number;
 };
 
-export default function SectionMenu({ titre, plats, onSavePlat, onDeletePlat }: SectionMenuProps) {
+export default function SectionMenu({ titre, plats, onSavePlat, onDeletePlat, isApiSection = false, restaurantId = 0 }: SectionMenuProps) {
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [editingPlatId, setEditingPlatId] = useState<string | null>(null);
 
@@ -39,10 +41,15 @@ export default function SectionMenu({ titre, plats, onSavePlat, onDeletePlat }: 
 
     return (
         <div className="bg-white rounded-xl border border-gray-200">
-            <div className="px-6 py-6 text-lg font-medium text-gray-900 flex items-center justify-between bg-[#D5D9EB] rounded-t-xl">
+            <div className={`px-6 py-6 text-lg font-medium text-gray-900 flex items-center justify-between rounded-t-xl ${isApiSection ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200' : 'bg-[#D5D9EB]'}`}>
                 <div className="flex items-center gap-2">
                     {titre}
-                    <Tag label={`${plats.length} éléments`} color="bg-[#EEF4FF]" textColor="text-indigo-700" />
+                    {isApiSection && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            API
+                        </span>
+                    )}
+                    <Tag label={`${plats.length} éléments`} color={isApiSection ? "bg-blue-100" : "bg-[#EEF4FF]"} textColor={isApiSection ? "text-blue-700" : "text-indigo-700"} />
                 </div>
             </div>
             <div className="">
@@ -100,6 +107,7 @@ export default function SectionMenu({ titre, plats, onSavePlat, onDeletePlat }: 
                                                         onSave={savePlat}
                                                         onCancel={cancelEditing}
                                                         onDelete={deletePlat}
+                                                        restaurantId={restaurantId}
                                                     />
                                                 </td>
                                             </tr>

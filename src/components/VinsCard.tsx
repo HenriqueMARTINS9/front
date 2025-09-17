@@ -4,10 +4,12 @@ import Tag from './Tag';
 import { getTagColors } from '@/lib/tagColors';
 import { useWineStats } from '@/lib/hooks';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/useTranslation';
 
 export default function VinsCard() {
     const { data: stats, isLoading, isOffline } = useWineStats();
     const router = useRouter();
+    const { t } = useTranslation();
 
     const handleUpdateClick = () => {
         router.push('/vins');
@@ -15,7 +17,7 @@ export default function VinsCard() {
 
     if (isLoading) {
         return (
-            <Card title='Vins' number='45' subtitle='Références enregistrées'>
+            <Card title={t('home.wines.title')} number='45' subtitle='Références enregistrées'>
                 <div className="animate-pulse space-y-4">
                     <div className="h-8 bg-gray-200 rounded"></div>
                     <div className="grid grid-flow-col grid-cols-2 grid-rows-4 gap-4">
@@ -29,7 +31,7 @@ export default function VinsCard() {
     }
 
     return (
-        <Card title='Vins' number={stats.total.toString()} subtitle='Références enregistrées'>
+        <Card title={t('home.wines.title')} number={stats.total.toString()} subtitle='Références enregistrées'>
             {isOffline && (
                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <div className="flex items-center gap-2 text-yellow-800 text-sm">
@@ -55,44 +57,87 @@ export default function VinsCard() {
                 </button>
             </div>
 
-            {/* Tags */}
-            <div className="grid grid-flow-col grid-cols-2 grid-rows-4 gap-4">
-                <Tag 
-                    color={getTagColors('mousseux').bg} 
-                    textColor={getTagColors('mousseux').text} 
-                    count={stats.mousseux} 
-                    label="Vins mousseux" 
-                />
-                <Tag 
-                    color={getTagColors('blanc').bg} 
-                    textColor={getTagColors('blanc').text} 
-                    count={stats.blanc} 
-                    label="Vins blancs" 
-                />
-                <Tag 
-                    color={getTagColors('rouge').bg} 
-                    textColor={getTagColors('rouge').text} 
-                    count={stats.rouge} 
-                    label="Vins rouges" 
-                />
-                <Tag 
-                    color={getTagColors('rosé').bg} 
-                    textColor={getTagColors('rosé').text} 
-                    count={stats.rose} 
-                    label="Vins rosés" 
-                />
-                <Tag 
-                    color="bg-[#F4F3FF]" 
-                    textColor="text-[#5925DC]" 
-                    count={stats.bouteille} 
-                    label="Bouteille (75 cl)" 
-                />
-                <Tag 
-                    color="bg-[#F4F3FF]" 
-                    textColor="text-[#5925DC]" 
-                    count={stats.verre} 
-                    label="Vins au verre (10 cl)" 
-                />
+            {/* Tags organisés en deux colonnes */}
+            <div className="grid grid-cols-2 gap-6">
+                {/* Colonne 1: Types de vins */}
+                <div className="space-y-3">
+                    
+                    <div className="flex flex-wrap gap-2">
+                        <Tag 
+                            color={getTagColors('mousseux').bg} 
+                            textColor={getTagColors('mousseux').text} 
+                            count={stats.mousseux} 
+                            label={`${t('home.wines.sparkling')}`} 
+                        />
+                        <Tag 
+                            color={getTagColors('blanc').bg} 
+                            textColor={getTagColors('blanc').text} 
+                            count={stats.blanc} 
+                            label={`${t('home.wines.white')}`} 
+                        />
+                        <Tag 
+                            color={getTagColors('rouge').bg} 
+                            textColor={getTagColors('rouge').text} 
+                            count={stats.rouge} 
+                            label={`${t('home.wines.red')}`} 
+                        />
+                        <Tag 
+                            color={getTagColors('rosé').bg} 
+                            textColor={getTagColors('rosé').text} 
+                            count={stats.rose} 
+                            label={`${t('home.wines.rose')}`} 
+                        />
+                        <Tag 
+                            color={getTagColors('moelleux ou liquoreux').bg} 
+                            textColor={getTagColors('moelleux ou liquoreux').text} 
+                            count={stats.moelleux} 
+                            label="Moelleux / Liquoreux" 
+                        />
+                        <Tag 
+                            color={getTagColors('fortifié').bg} 
+                            textColor={getTagColors('fortifié').text} 
+                            count={stats.fortifie} 
+                            label="Fortifié" 
+                        />
+                    </div>
+                </div>
+
+                {/* Colonne 2: Contenants */}
+                <div className="space-y-3">
+                    
+                    <div className="flex flex-wrap gap-2">
+                        <Tag 
+                            color="bg-[#F4F3FF]" 
+                            textColor="text-[#5925DC]" 
+                            count={stats.bouteille} 
+                            label={`${t('home.wines.bottle')}`} 
+                        />
+                        <Tag 
+                            color="bg-[#F4F3FF]" 
+                            textColor="text-[#5925DC]" 
+                            count={stats.verre} 
+                            label={`${t('home.wines.glass')}`} 
+                        />
+                        <Tag 
+                            color="bg-[#F4F3FF]" 
+                            textColor="text-[#5925DC]" 
+                            count={stats.magnum} 
+                            label="Magnum" 
+                        />
+                        <Tag 
+                            color="bg-[#F4F3FF]" 
+                            textColor="text-[#5925DC]" 
+                            count={stats.demiBouteille} 
+                            label="Demi-bouteille" 
+                        />
+                        <Tag 
+                            color="bg-[#F4F3FF]" 
+                            textColor="text-[#5925DC]" 
+                            count={stats.desiree} 
+                            label="Désirée" 
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="text-gray-400 text-xs mt-4">Dernière modification le 8 août 2025</div>

@@ -8,6 +8,7 @@ import Select from './Select';
 import InputField from './InputField';
 import InputRow from './InputRow';
 import List from './List';
+import { useTranslation } from '@/lib/useTranslation';
 
 type ModalNouveauVinProps = {
     isOpen: boolean;
@@ -16,8 +17,10 @@ type ModalNouveauVinProps = {
 };
 
 export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouveauVinProps) {
-    // États pour les checkboxes des restaurants
-    const [restaurantChecks, setRestaurantChecks] = useState<boolean[]>([true, true, true, false]);
+    const { t } = useTranslation();
+    
+    // États pour les checkboxes des restaurants (seulement restaurant 1)
+    const [restaurantChecks, setRestaurantChecks] = useState<boolean[]>([true]);
 
     // État pour le type de vin sélectionné
     const [selectedWineType, setSelectedWineType] = useState('Blanc');
@@ -35,6 +38,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
     // États pour les listes
     const [cepages, setCepages] = useState([{ id: '1', nom: '', pourcentage: 0 }]);
     const [formats, setFormats] = useState([{ id: '1', nom: '', capacite: '', prix: 0 }]);
+    const [motsCles, setMotsCles] = useState([{ id: '1', label: '', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }]);
 
     // États pour les erreurs de validation
     const [errors, setErrors] = useState<{[key: string]: boolean}>({});
@@ -61,6 +65,15 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
             nom: item.nom || '',
             capacite: item.capacite || '',
             prix: item.prix || 0
+        })));
+    };
+
+    const handleMotsClesChange = (items: any[]) => {
+        setMotsCles(items.map(item => ({
+            id: item.id,
+            label: item.label || '',
+            color: item.color || 'bg-[#FFFAEB]',
+            textColor: item.textColor || 'text-[#B54708]'
         })));
     };
 
@@ -141,10 +154,8 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
             millesime: parseInt(millesime) || 2024,
             prix: prix,
             restaurant: 'Restaurant Principal',
-            pointsDeVente: restaurantChecks as [boolean, boolean, boolean, boolean],
-            motsCles: [
-                { id: 'mc1', label: 'Nouveau vin', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }
-            ]
+            pointsDeVente: restaurantChecks as [boolean],
+            motsCles: motsCles.filter(mc => mc.label.trim() !== '') // Filtrer les mots-clés vides
         };
         onSave(wineData);
         onClose();
@@ -165,7 +176,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                 <div className="space-y-6">
                     {/* Type de vin */}
                     <div>
-                        <label className="block text-md font-medium text-gray-900 mb-3">Type de vin</label>
+                        <label className="block text-md font-medium text-gray-900 mb-3">{t('wines.wine.type')}</label>
                         <div className="grid grid-cols-3 gap-4">
                             <RadioButton
                                 name="wine-type"
@@ -290,7 +301,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 type="text"
                                 value={wineName}
                                 onChange={setWineName}
-                                label="Nom du vin"
+                                label={t('wines.wine.name')}
                                 placeholder="Château La Pompe"
                                 size="md"
                                 width="full"
@@ -337,7 +348,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                     type="number"
                                     value={millesime}
                                     onChange={setMillesime}
-                                    label="Millésime"
+                                    label={t('wines.wine.vintage')}
                                     placeholder="2021"
                                     size="md"
                                     width="full"
@@ -363,7 +374,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                     type="text"
                                     value={aocRegion}
                                     onChange={setAocRegion}
-                                    label="Région / AOC"
+                                    label={t('wines.wine.region')}
                                     placeholder="La Côte"
                                     size="md"
                                     width="full"
@@ -385,7 +396,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                     type="text"
                                     value={pays}
                                     onChange={setPays}
-                                    label="Pays"
+                                    label={t('wines.wine.country')}
                                     placeholder="Suisse"
                                     size="md"
                                     width="full"
@@ -407,7 +418,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
 
                     {/* Cépage(s) */}
                     <div className="col-span-6">
-                        <label className="block text-md font-medium text-gray-700 mb-2">Cépage(s)</label>
+                        <label className="block text-md font-medium text-gray-700 mb-2">{t('wines.wine.grape')}</label>
                         <div className="flex items-start gap-3 mb-3">
                             <Checkbox
                                 id={`unknown-proportions`}
@@ -522,7 +533,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                         { value: 'Verre (10 cl)', label: 'Verre (10 cl)' }
                                     ]
                                 },
-                                { key: 'prix', label: 'Prix (CHF)', type: 'text', placeholder: '42.00', suffix: ' CHF', width: 'full' }
+                                { key: 'prix', label: t('wines.wine.price'), type: 'text', placeholder: '42.00', suffix: ' CHF', width: 'full' }
                             ]}
                         />
                         {errors.formats && (
@@ -532,12 +543,12 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
 
                     {/* Mots clés */}
                     <div>
-                        <MotsCles motsCles={[
-                            {id: '1', label: 'Label', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]'},
-                            {id: '2', label: 'Label', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]'},
-                            {id: '3', label: 'Label', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]'},
-                            {id: '4', label: 'Label', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]'}
-                            ]} />
+                        <MotsCles 
+                            motsCles={motsCles}
+                            wineType={selectedWineType}
+                            editable={true}
+                            onMotsClesChange={handleMotsClesChange}
+                        />
                     </div>
                 </div>
 
@@ -553,7 +564,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                         onClick={onClose}
                         className="bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200"
                     >
-                        Annuler
+                        {t('common.cancel')}
                     </Button>
 
                                  </div>

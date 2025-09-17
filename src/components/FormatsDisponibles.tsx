@@ -18,6 +18,17 @@ export default function FormatsDisponibles({ formats, wineType }: FormatsDisponi
     // Le texte reste toujours gris, pas de changement de couleur selon le type de vin
     const textColor = 'text-gray-900';
     
+    // Filtrer les formats avec un prix > 0
+    const formatsWithPrice = formats.filter(format => {
+        const prix = typeof format.prix === 'number' ? format.prix : parseFloat(String(format.prix) || '0');
+        return prix > 0;
+    });
+    
+    // Ne pas afficher le composant s'il n'y a aucun format avec un prix > 0
+    if (formatsWithPrice.length === 0) {
+        return null;
+    }
+    
     return (
         <div className="space-y-3"> 
             <table>
@@ -28,7 +39,7 @@ export default function FormatsDisponibles({ formats, wineType }: FormatsDisponi
                     </tr>
                 </thead>
                 <tbody>
-                    {formats.map((format) => (
+                    {formatsWithPrice.map((format) => (
                         <tr key={format.id} className="text-sm">
                             <td className={`py-1 pr-12 ${textColor}`}>
                                 {format.nom}

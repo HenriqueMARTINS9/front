@@ -9,6 +9,7 @@ import InputField from './InputField';
 import InputRow from './InputRow';
 import List from './List';
 import type { Wine } from './TableauVin';
+import { useTranslation } from '@/lib/useTranslation';
 
 type FormulaireModificationProps = {
     wine: Wine;
@@ -21,6 +22,8 @@ type FormulaireModificationProps = {
 
 
 export default function FormulaireModification({ wine, onSave, onCancel, onDelete, onDataChange }: FormulaireModificationProps) {
+    const { t } = useTranslation();
+    
     // États pour les checkboxes des restaurants
     const [restaurantChecks, setRestaurantChecks] = useState<boolean[]>(wine.pointsDeVente);
     
@@ -51,6 +54,13 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
         prix: f.prix
     })));
     
+    const [motsCles, setMotsCles] = useState(wine.motsCles.map(mc => ({
+        id: mc.id,
+        label: mc.label,
+        color: mc.color,
+        textColor: mc.textColor
+    })));
+    
     // Gestionnaires pour les listes
     const handleCepagesChange = (items: any[]) => {
         const newCepages = items.map(item => ({
@@ -71,6 +81,16 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
         }));
         setFormats(newFormats);
         onDataChange?.({ formats: newFormats });
+    };
+    
+    const handleMotsClesChange = (items: any[]) => {
+        const newMotsCles = items.map(item => ({
+            id: item.id,
+            label: item.label || '',
+            color: item.color || 'bg-[#FFFAEB]',
+            textColor: item.textColor || 'text-[#B54708]'
+        }));
+        setMotsCles(newMotsCles);
     };
 
     // Gestionnaires pour les checkboxes des restaurants
@@ -342,9 +362,15 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                     />
                 </div>
                 <div className="col-span-6" />
-                {/* Mots clefs descriptifs (automatique) */}
+                {/* Mots clefs descriptifs */}
                 <div className="col-span-6">
-                    <MotsCles motsCles={wine.motsCles} wineType={selectedWineType} />
+                    <MotsCles 
+                        motsCles={motsCles}
+                        wineType={selectedWineType}
+                        editable={true}
+                        onMotsClesChange={handleMotsClesChange}
+                        addButtonColor="bg-[#7C3AED] text-white hover:bg-[#6D28D9] transition-colors duration-200"
+                    />
                 </div>
             </div>
 
@@ -362,22 +388,23 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                     onSave({
                         ...wine,
                         type: selectedWineType,
-                        pointsDeVente: restaurantChecks as [boolean, boolean, boolean, boolean],
+                        pointsDeVente: restaurantChecks as [boolean],
                         cepages: cepages,
                         formats: formatsWithNumericPrices,
+                        motsCles: motsCles.filter(mc => mc.label.trim() !== ''), // Filtrer les mots-clés vides
                         name: wineName,
                         subname: subname,
                         millesime: millesime,
                         aocRegion: aocRegion,
                         pays: pays
                     });
-                }} className="!bg-[#7F56D9] !text-white hover:!bg-[#6941C6] focus:!outline-none focus:!ring-2 focus:!ring-purple-100 focus:!border-purple-300 focus:!shadow-xs transition-colors duration-200">Sauvegarder</Button>
+                }} className="!bg-[#7F56D9] !text-white hover:!bg-[#6941C6] focus:!outline-none focus:!ring-2 focus:!ring-purple-100 focus:!border-purple-300 focus:!shadow-xs transition-colors duration-200">{t('common.save')}</Button>
                 <div className="flex gap-3">
                     <button
                         onClick={() => onDelete(wine.id)}
                         className="px-5 py-2.5 rounded-md bg-[#F5F3FF] text-[#7C3AED] font-medium hover:bg-[#EDE9FE] focus:outline-none focus:ring-2 focus:ring-[#C4B5FD] transition"
                     >
-                        Supprimer ce vin
+                        {t('wines.wine.delete')}
                     </button>
                 </div>
             </div>

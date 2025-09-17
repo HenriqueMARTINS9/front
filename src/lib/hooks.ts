@@ -1,12 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
     authService, 
+    restaurantAuthService,
     questionsService, 
     answersService, 
     recommendationsService,
     foodsService,
     type User, 
     type UserWithPassword,
+    type Restaurant,
+    type RestaurantLoginResponse,
     type Question,
     type Answer,
     type RestaurantWine,
@@ -21,6 +24,8 @@ import {
 export const queryKeys = {
     // Authentification
     user: ['user'] as const,
+    restaurant: ['restaurant'] as const,
+    testRestaurants: ['test-restaurants'] as const,
     
     // Questions
     questions: ['questions'] as const,
@@ -80,6 +85,41 @@ export const useUserInfo = () => {
         queryKey: queryKeys.user,
         queryFn: authService.getUserInfo,
         enabled: !!getLocalStorage()?.getItem('access_token'),
+    });
+};
+
+// Hooks pour l'authentification des restaurants
+export const useRestaurantLogin = () => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: ({ email, password }: { email: string; password: string }) => 
+            restaurantAuthService.login(email, password),
+        onSuccess: (data) => {
+            // Stocker le token restaurant dans localStorage
+            const storage = getLocalStorage();
+            if (storage) {
+                storage.setItem('restaurant_token', data.access_token);
+            }
+            // Invalider les requêtes restaurant
+            queryClient.invalidateQueries({ queryKey: queryKeys.restaurant });
+        },
+    });
+};
+
+export const useRestaurantInfo = () => {
+    return useQuery({
+        queryKey: queryKeys.restaurant,
+        queryFn: restaurantAuthService.getRestaurantInfo,
+        enabled: !!getLocalStorage()?.getItem('restaurant_token'),
+    });
+};
+
+export const useTestRestaurants = () => {
+    return useQuery({
+        queryKey: queryKeys.testRestaurants,
+        queryFn: () => Promise.resolve(restaurantAuthService.getTestRestaurants()),
+        staleTime: 10 * 60 * 1000, // 10 minutes
     });
 };
 
@@ -160,19 +200,25 @@ export const useWineRecommendations = (userList?: User[], wineCategories?: strin
     });
 };
 
-export const useRestaurantWines = (restaurantId: number) => {
+export const useRestaurantWines = (restaurantId?: number) => {
+    const { data: restaurantInfo } = useRestaurantInfo();
+    const actualRestaurantId = restaurantId || restaurantInfo?.id || 0;
+    
     return useQuery({
-        queryKey: queryKeys.restaurantWines(restaurantId),
-        queryFn: () => recommendationsService.getRestaurantWines(restaurantId),
-        enabled: !!restaurantId,
+        queryKey: queryKeys.restaurantWines(actualRestaurantId),
+        queryFn: () => recommendationsService.getRestaurantWines(actualRestaurantId),
+        enabled: !!actualRestaurantId,
     });
 };
 
-export const useRestaurantDishes = (restaurantId: number) => {
+export const useRestaurantDishes = (restaurantId?: number) => {
+    const { data: restaurantInfo } = useRestaurantInfo();
+    const actualRestaurantId = restaurantId || restaurantInfo?.id || 0;
+    
     return useQuery({
-        queryKey: queryKeys.restaurantDishes(restaurantId),
-        queryFn: () => recommendationsService.getRestaurantDishes(restaurantId),
-        enabled: !!restaurantId,
+        queryKey: queryKeys.restaurantDishes(actualRestaurantId),
+        queryFn: () => recommendationsService.getRestaurantDishes(actualRestaurantId),
+        enabled: !!actualRestaurantId,
     });
 };
 
@@ -201,7 +247,7 @@ export const useVins = () => {
                 millesime: 2021,
                 prix: 36.00,
                 restaurant: 'Restaurant Principal',
-                pointsDeVente: [true, true, true, true],
+                pointsDeVente: [true],
                 motsCles: [
                     { id: 'mc1', label: 'Frais & léger', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' },
                     { id: 'mc2', label: 'Fruit blanc discret', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }
@@ -218,7 +264,7 @@ export const useVins = () => {
                 millesime: 2023,
                 prix: 42.00,
                 restaurant: 'Restaurant Principal',
-                pointsDeVente: [true, false, true, true],
+                pointsDeVente: [true],
                 motsCles: [
                     { id: 'mc3', label: 'Label 1', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' },
                     { id: 'mc4', label: 'Label 2', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }
@@ -288,49 +334,52 @@ export const useDeleteVin = () => {
 
 // Hook pour récupérer les plats de tous les restaurants
 export const useAllRestaurantDishes = () => {
-    // Données des plats de la page menus
+    // Récupérer les plats du restaurant connecté depuis l'API
+    const { data: apiDishes, isLoading: isLoadingApi, error: apiError } = useRestaurantDishes();
+    
+    // Données des plats statiques pour les autres restaurants
     const platsData = {
         entrees: [
-            { id: 'e1', nom: 'Salade verte', pointsDeVente: [true, true, true, true] },
-            { id: 'e2', nom: 'Salade mêlée', pointsDeVente: [true, true, true, false] },
-            { id: 'e3', nom: 'Gaspacho andalou', pointsDeVente: [true, false, true, true] },
-            { id: 'e4', nom: 'Carpaccio de tomate à l\'ancienne', pointsDeVente: [true, true, false, true] },
-            { id: 'e5', nom: 'Feuilleté aux champignons', pointsDeVente: [false, true, true, true] },
-            { id: 'e6', nom: 'Crevettes Royales sautées', pointsDeVente: [true, true, true, true] }
+            { id: 'e1', nom: 'Salade verte', pointsDeVente: [true] },
+            { id: 'e2', nom: 'Salade mêlée', pointsDeVente: [true] },
+            { id: 'e3', nom: 'Gaspacho andalou', pointsDeVente: [true] },
+            { id: 'e4', nom: 'Carpaccio de tomate à l\'ancienne', pointsDeVente: [true] },
+            { id: 'e5', nom: 'Feuilleté aux champignons', pointsDeVente: [true] },
+            { id: 'e6', nom: 'Crevettes Royales sautées', pointsDeVente: [true] }
         ],
         viandes: [
-            { id: 'v1', nom: 'Entrecôte de la Tour', pointsDeVente: [true, true, true, true] },
-            { id: 'v2', nom: 'Filet de bœuf', pointsDeVente: [true, true, true, true] },
-            { id: 'v3', nom: 'Filet de bœuf Landais', pointsDeVente: [true, true, false, true] },
-            { id: 'v4', nom: 'Tartare de bœuf 180gr', pointsDeVente: [true, true, true, false] }
+            { id: 'v1', nom: 'Entrecôte de la Tour', pointsDeVente: [true] },
+            { id: 'v2', nom: 'Filet de bœuf', pointsDeVente: [true] },
+            { id: 'v3', nom: 'Filet de bœuf Landais', pointsDeVente: [true] },
+            { id: 'v4', nom: 'Tartare de bœuf 180gr', pointsDeVente: [true] }
         ],
         poissons: [
-            { id: 'p1', nom: 'Spécialité du Chef : Assiette exotique', pointsDeVente: [true, true, true, true] },
-            { id: 'p2', nom: 'Filets de perche meunière', pointsDeVente: [true, true, false, true] },
-            { id: 'p3', nom: 'Filet de féra du lac Léman', pointsDeVente: [true, false, true, true] }
+            { id: 'p1', nom: 'Spécialité du Chef : Assiette exotique', pointsDeVente: [true] },
+            { id: 'p2', nom: 'Filets de perche meunière', pointsDeVente: [true] },
+            { id: 'p3', nom: 'Filet de féra du lac Léman', pointsDeVente: [true] }
         ],
         pates: [
-            { id: 'pa1', nom: 'Tagliatelles sauce morilles et parmesan', pointsDeVente: [true, true, true, true] },
-            { id: 'pa2', nom: 'Tagliatelles végétariennes', pointsDeVente: [true, true, false, true] },
-            { id: 'pa3', nom: 'Tagliatelles aux crevettes royale', pointsDeVente: [true, true, true, false] }
+            { id: 'pa1', nom: 'Tagliatelles sauce morilles et parmesan', pointsDeVente: [true] },
+            { id: 'pa2', nom: 'Tagliatelles végétariennes', pointsDeVente: [true] },
+            { id: 'pa3', nom: 'Tagliatelles aux crevettes royale', pointsDeVente: [true] }
         ],
         suggestions: [
-            { id: 's1', nom: 'Salade gourmande de printemps', pointsDeVente: [true, true, true, true] },
-            { id: 's2', nom: 'Langue de bœuf', pointsDeVente: [true, true, false, true] },
-            { id: 's3', nom: 'Suprême de poulet sauce aux morilles', pointsDeVente: [true, true, true, false] },
-            { id: 's4', nom: 'Filet de Bar poêlé, sauce vierge', pointsDeVente: [true, false, true, true] },
-            { id: 's5', nom: 'Tagliata de bœuf', pointsDeVente: [true, true, true, true] }
+            { id: 's1', nom: 'Salade gourmande de printemps', pointsDeVente: [true] },
+            { id: 's2', nom: 'Langue de bœuf', pointsDeVente: [true] },
+            { id: 's3', nom: 'Suprême de poulet sauce aux morilles', pointsDeVente: [true] },
+            { id: 's4', nom: 'Filet de Bar poêlé, sauce vierge', pointsDeVente: [true] },
+            { id: 's5', nom: 'Tagliata de bœuf', pointsDeVente: [true] }
         ],
         desserts: [
-            { id: 'd1', nom: 'Douceur de soleil', pointsDeVente: [true, true, true, true] },
-            { id: 'd2', nom: 'Moelleux au chocolat et glace vanille', pointsDeVente: [true, true, true, true] },
-            { id: 'd3', nom: 'Crème brûlée à la vanille', pointsDeVente: [true, true, false, true] },
-            { id: 'd4', nom: 'Dessert du jour', pointsDeVente: [true, false, true, true] },
-            { id: 'd5', nom: 'Carpaccio d\'ananas au sirop de thym', pointsDeVente: [true, true, true, false] }
+            { id: 'd1', nom: 'Douceur de soleil', pointsDeVente: [true] },
+            { id: 'd2', nom: 'Moelleux au chocolat et glace vanille', pointsDeVente: [true] },
+            { id: 'd3', nom: 'Crème brûlée à la vanille', pointsDeVente: [true] },
+            { id: 'd4', nom: 'Dessert du jour', pointsDeVente: [true] },
+            { id: 'd5', nom: 'Carpaccio d\'ananas au sirop de thym', pointsDeVente: [true] }
         ]
     };
 
-    // Fonction pour compter les plats par restaurant
+    // Fonction pour compter les plats par restaurant (seulement restaurant 1)
     const countPlatsByRestaurant = () => {
         const allPlats = [
             ...platsData.entrees,
@@ -342,35 +391,38 @@ export const useAllRestaurantDishes = () => {
         ];
 
         const counts = {
-            restaurant1: 0,
-            restaurant2: 0,
-            restaurant3: 0,
-            restaurant4: 0
+            restaurant1: 0
         };
 
         allPlats.forEach(plat => {
             if (plat.pointsDeVente[0]) counts.restaurant1++;
-            if (plat.pointsDeVente[1]) counts.restaurant2++;
-            if (plat.pointsDeVente[2]) counts.restaurant3++;
-            if (plat.pointsDeVente[3]) counts.restaurant4++;
         });
 
         return counts;
     };
 
-    const dishesCount = countPlatsByRestaurant();
+    const staticDishesCount = countPlatsByRestaurant();
+    
+    // Utiliser les données de l'API pour le restaurant 1 (ID 0), sinon fallback vers les données statiques
+    const dishesCount = {
+        restaurant1: apiDishes ? apiDishes.length : staticDishesCount.restaurant1
+    };
 
     return {
         data: dishesCount,
-        isLoading: false,
-        error: null,
+        isLoading: isLoadingApi,
+        error: apiError,
         isOffline: false,
     };
 };
 
 // Hook pour récupérer les statistiques des vins
 export const useWineStats = () => {
-    const { data: vins, isLoading, error } = useVins();
+    // Récupérer les vins du restaurant connecté depuis l'API
+    const { data: apiVins, isLoading: isLoadingApi, error: apiError } = useRestaurantWines();
+    
+    // Récupérer les vins statiques
+    const { data: staticVins, isLoading: isLoadingStatic, error: staticError } = useVins();
 
     // Données de fallback si l'API n'est pas accessible
     const fallbackStats = {
@@ -379,10 +431,17 @@ export const useWineStats = () => {
         blanc: 12,
         rouge: 17,
         rose: 5,
+        moelleux: 3,
+        fortifie: 2,
         bouteille: 38,
         verre: 9,
+        magnum: 2,
+        demiBouteille: 5,
+        desiree: 3,
         incomplete: 2,
     };
+
+    const isLoading = isLoadingApi || isLoadingStatic;
 
     if (isLoading) {
         return {
@@ -393,7 +452,11 @@ export const useWineStats = () => {
         };
     }
 
-    if (error || !vins) {
+    // Utiliser les données de l'API si disponibles, sinon les données statiques
+    const vinsToUse = apiVins || staticVins;
+    const error = apiError || staticError;
+
+    if (error || !vinsToUse) {
         return {
             data: fallbackStats,
             isLoading: false,
@@ -404,14 +467,89 @@ export const useWineStats = () => {
 
     // Calculer les statistiques à partir des vins récupérés
     const stats = {
-        total: vins.length,
-        mousseux: vins.filter(vin => vin.type.toLowerCase().includes('mousseux')).length,
-        blanc: vins.filter(vin => vin.type.toLowerCase().includes('blanc')).length,
-        rouge: vins.filter(vin => vin.type.toLowerCase().includes('rouge')).length,
-        rose: vins.filter(vin => vin.type.toLowerCase().includes('rosé')).length,
-        bouteille: vins.filter(vin => vin.prix > 0).length, // Approximation
-        verre: vins.filter(vin => vin.prix < 20).length, // Approximation
-        incomplete: vins.filter(vin => !vin.cepage || !vin.region).length,
+        total: vinsToUse.length,
+        mousseux: vinsToUse.filter(vin => {
+            const type = typeof vin === 'object' && 'type' in vin 
+                ? vin.type.toLowerCase() 
+                : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
+            return type.includes('mousseux');
+        }).length,
+        blanc: vinsToUse.filter(vin => {
+            const type = typeof vin === 'object' && 'type' in vin 
+                ? vin.type.toLowerCase() 
+                : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
+            return type.includes('blanc');
+        }).length,
+        rouge: vinsToUse.filter(vin => {
+            const type = typeof vin === 'object' && 'type' in vin 
+                ? vin.type.toLowerCase() 
+                : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
+            return type.includes('rouge');
+        }).length,
+        rose: vinsToUse.filter(vin => {
+            const type = typeof vin === 'object' && 'type' in vin 
+                ? vin.type.toLowerCase() 
+                : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
+            return type.includes('rosé');
+        }).length,
+        moelleux: vinsToUse.filter(vin => {
+            const type = typeof vin === 'object' && 'type' in vin 
+                ? vin.type.toLowerCase() 
+                : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
+            return type.includes('moelleux') || type.includes('liquoreux');
+        }).length,
+        fortifie: vinsToUse.filter(vin => {
+            const type = typeof vin === 'object' && 'type' in vin 
+                ? vin.type.toLowerCase() 
+                : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
+            return type.includes('fortifié');
+        }).length,
+        bouteille: vinsToUse.filter(vin => {
+            const prix = typeof vin === 'object' && 'prix' in vin 
+                ? vin.prix 
+                : (vin as any).price || 0;
+            return prix > 0;
+        }).length,
+        verre: vinsToUse.filter(vin => {
+            const prix = typeof vin === 'object' && 'prix' in vin 
+                ? vin.prix 
+                : (vin as any).price || 0;
+            return prix < 20;
+        }).length,
+        magnum: vinsToUse.filter(vin => {
+            // Logique pour détecter les magnums (à adapter selon la structure des données)
+            const formats = typeof vin === 'object' && 'formats' in vin 
+                ? (vin.formats as any[]) 
+                : [];
+            return Array.isArray(formats) && formats.some((format: any) => 
+                format.nom && format.nom.toLowerCase().includes('magnum')
+            );
+        }).length,
+        demiBouteille: vinsToUse.filter(vin => {
+            const formats = typeof vin === 'object' && 'formats' in vin 
+                ? (vin.formats as any[]) 
+                : [];
+            return Array.isArray(formats) && formats.some((format: any) => 
+                format.nom && format.nom.toLowerCase().includes('demi')
+            );
+        }).length,
+        desiree: vinsToUse.filter(vin => {
+            const formats = typeof vin === 'object' && 'formats' in vin 
+                ? (vin.formats as any[]) 
+                : [];
+            return Array.isArray(formats) && formats.some((format: any) => 
+                format.nom && format.nom.toLowerCase().includes('désirée')
+            );
+        }).length,
+        incomplete: vinsToUse.filter(vin => {
+            const cepage = typeof vin === 'object' && 'cepage' in vin 
+                ? vin.cepage 
+                : (vin as any).grapes_varieties?.length > 0 ? 'présent' : '';
+            const region = typeof vin === 'object' && 'region' in vin 
+                ? vin.region 
+                : (vin as any).appellation?.fr || (vin as any).appellation?.['en-US'] || '';
+            return !cepage || !region;
+        }).length,
     };
 
     return {

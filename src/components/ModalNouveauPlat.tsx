@@ -1,52 +1,49 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from './Button';
 import InputField from './InputField';
 import Checkbox from './Checkbox';
 import List from './List';
 import Select from './Select';
 import type { Plat } from './TableauMenu';
+import { recommendationsService } from '@/lib/api';
+import { Dish } from '@/lib/api';
+import { useTranslation } from '@/lib/useTranslation';
 
 type ModalNouveauPlatProps = {
     isOpen: boolean;
     onClose: () => void;
     onSave: (platData: Omit<Plat, 'id'>) => void;
+    restaurantId?: number; // ID du restaurant pour récupérer les types de plats
 };
 
-const optionsAromes = [
-    { value: 'viande-rouge', label: 'Viande rouge' },
-    { value: 'viande-blanche', label: 'Viande blanche' },
-    { value: 'volaille', label: 'Volaille' },
-    { value: 'poisson', label: 'Poisson' },
-    { value: 'crustace', label: 'Crustacé' },
-    { value: 'mollusque', label: 'Mollusque' },
-    { value: 'legume-vert', label: 'Légume vert' },
-    { value: 'solanacee', label: 'Solanacée' },
-    { value: 'champignon', label: 'Champignon' },
-    { value: 'fromage-dur', label: 'Fromage pâte dure et noisettée' },
-    { value: 'fromage-bleu', label: 'Fromage bleu puissant' },
-    { value: 'fromage-doux', label: 'Fromage doux et beurré' },
-    { value: 'herbe-fraiche', label: 'Herbe fraîche aromatique' },
-    { value: 'herbe-seche', label: 'Herbe sèche' },
-    { value: 'epices-exotiques', label: 'Épices exotiques' },
-    { value: 'viande-sechee', label: 'Viande séchée' },
-    { value: 'faisselle', label: 'Faisselle / crème aigre' },
-    { value: 'fromage-sale', label: 'Fromage salé et friable' }
+// Les options d'arômes seront traduites dynamiquement dans le composant
+const optionsAromesKeys = [
+    'viande-rouge', 'viande-blanche', 'volaille', 'poisson', 'crustace', 'mollusque',
+    'legume-vert', 'solanacee', 'champignon', 'fromage-dur', 'fromage-bleu', 'fromage-doux',
+    'herbe-fraiche', 'herbe-seche', 'epices-exotiques', 'viande-sechee', 'faisselle', 'fromage-sale'
 ];
 
-const sections = [
-    'Entrée',
-    'Plat',
-    'Dessert'
-];
+// Créer les options d'arômes avec les traductions
+const createOptionsAromes = (t: (key: string) => string) => 
+    optionsAromesKeys.map(key => ({
+        value: key,
+        label: t(`aromes.${key}`)
+    }));
 
-export default function ModalNouveauPlat({ isOpen, onClose, onSave }: ModalNouveauPlatProps) {
+export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId = 0 }: ModalNouveauPlatProps) {
+    const { t } = useTranslation();
+    
     // États pour les champs de saisie
     const [nom, setNom] = useState('');
     const [description, setDescription] = useState('');
     const [prix, setPrix] = useState('');
-    const [section, setSection] = useState('Entrée');
-    const [sectionsSelectionnees, setSectionsSelectionnees] = useState<boolean[]>([true, false, false]);
+    const [section, setSection] = useState('');
+    const [sectionsSelectionnees, setSectionsSelectionnees] = useState<boolean[]>([]);
+    
+    // États pour les types de plats dynamiques
+    const [sections, setSections] = useState<string[]>([]);
+    const [isLoadingSections, setIsLoadingSections] = useState(false);
 
     // États pour les arômes
     const [aromePrincipal, setAromePrincipal] = useState([{ id: '1', label: '', color: 'bg-green-100', textColor: 'text-green-700' }]);
@@ -54,6 +51,47 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave }: ModalNouve
 
     // États pour les erreurs de validation
     const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
+
+    // Effet pour récupérer les types de plats de l'API
+    useEffect(() => {
+        const fetchSections = async () => {
+            if (!isOpen) return; // Ne récupérer que quand le modal est ouvert
+            
+            setIsLoadingSections(true);
+            try {
+                const dishes = await recommendationsService.getRestaurantDishes(restaurantId);
+                
+                // Extraire les types uniques de plats
+                const uniqueTypes = new Set<string>();
+                dishes.forEach(dish => {
+                    const dishType = dish.dish_type?.fr || dish.dish_type?.['en-US'] || '';
+                    if (dishType) {
+                        uniqueTypes.add(dishType);
+                    }
+                });
+                
+                const sectionsArray = Array.from(uniqueTypes);
+                setSections(sectionsArray);
+                
+                // Initialiser les sections sélectionnées (première section sélectionnée par défaut)
+                if (sectionsArray.length > 0) {
+                    setSectionsSelectionnees(sectionsArray.map((_, index) => index === 0));
+                    setSection(sectionsArray[0]);
+                }
+            } catch (error) {
+                console.error('Erreur lors de la récupération des types de plats:', error);
+                // Fallback vers les sections par défaut
+                const defaultSections = ['Entrée', 'Plat', 'Dessert'];
+                setSections(defaultSections);
+                setSectionsSelectionnees([true, false, false]);
+                setSection('Entrée');
+            } finally {
+                setIsLoadingSections(false);
+            }
+        };
+
+        fetchSections();
+    }, [isOpen, restaurantId]);
 
     // Gestionnaires pour les sections
     const handleSectionChange = (index: number, checked: boolean) => {
@@ -148,7 +186,7 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave }: ModalNouve
                                 type="text"
                                 value={nom}
                                 onChange={setNom}
-                                label="Nom du plat"
+                                label={t('menu.dish.name')}
                                 placeholder="Salade verte"
                                 size="md"
                                 width="full"
@@ -171,8 +209,8 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave }: ModalNouve
                                 type="text"
                                 value={description}
                                 onChange={setDescription}
-                                label="Description supplémentaire"
-                                placeholder="Description du plat"
+                                label={t('menu.dish.description')}
+                                placeholder={t('menu.dish.description')}
                                 size="md"
                                 width="full"
                                 colors={{
@@ -189,9 +227,15 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave }: ModalNouve
 
                         {/* Points de vente */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">Section dans le menu</label>
-                            <div className="grid grid-cols-1 gap-4">
-                                {sections.map((sectionName, index) => (
+                            <label className="block text-sm font-medium text-gray-700 mb-3">{t('menu.dish.section')}</label>
+                            {isLoadingSections ? (
+                                <div className="flex items-center justify-center py-4">
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#7F56D9]"></div>
+                                    <span className="ml-2 text-sm text-gray-500">Chargement des sections...</span>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {sections.map((sectionName, index) => (
                                     <div key={index} className="flex items-start">
                                         <Checkbox
                                             checked={sectionsSelectionnees[index]}
@@ -203,8 +247,9 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave }: ModalNouve
                                         />
                                         <span className="ml-3 text-sm text-gray-700">{sectionName}</span>
                                     </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Arôme principal */}
@@ -218,10 +263,10 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave }: ModalNouve
                                         key: 'label',
                                         label: 'Arôme',
                                         type: 'select',
-                                        options: optionsAromes.map(opt => ({ value: opt.value, label: opt.label }))
+                                        options: createOptionsAromes(t)
                                     }
                                 ]}
-                                addButtonText="Ajouter un arôme principal"
+                                addButtonText={t('menu.dish.addAroma')}
                                 emptyMessage="Aucun arôme principal ajouté"
                                 size="md"
                                 colors={{
@@ -251,10 +296,10 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave }: ModalNouve
                                         key: 'label',
                                         label: 'Arôme',
                                         type: 'select',
-                                        options: optionsAromes.map(opt => ({ value: opt.value, label: opt.label }))
+                                        options: createOptionsAromes(t)
                                     }
                                 ]}
-                                addButtonText="Ajouter un arôme secondaire"
+                                addButtonText={t('menu.dish.addSecondaryAroma')}
                                 emptyMessage="Aucun arôme secondaire ajouté"
                                 size="md"
                                 colors={{
@@ -285,7 +330,7 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave }: ModalNouve
                             onClick={onClose}
                             className="bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200"
                         >
-                            Annuler
+                            {t('common.cancel')}
                         </Button>
                     </div>
                 </div>

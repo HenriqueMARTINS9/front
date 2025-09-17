@@ -10,6 +10,7 @@ import MotsCles from './MotsCles';
 import { type Vin } from '@/lib/api';
 import { useUpdateVin, useDeleteVin } from '@/lib/hooks';
 import { getTagColors } from '@/lib/tagColors';
+import { useTranslation } from '@/lib/useTranslation';
 
 type Cepage = {
     id: string;
@@ -37,7 +38,7 @@ export type Wine = {
     subname?: string;
     millesime: number;
     type: 'Mousseux' | 'Rosé' | 'Blanc' | 'Fortifié' | 'Rouge' | 'Moelleux ou liquoreux';
-    pointsDeVente: [boolean, boolean, boolean, boolean];
+    pointsDeVente: [boolean];
     aocRegion?: string;
     pays?: string;
     cepages: Cepage[];
@@ -57,7 +58,7 @@ function createInitialData(): Wine[] {
             subname: 'Domaine de la Harpe',
             millesime: 2021,
             type: 'Blanc',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             aocRegion: 'La Côte',
             pays: 'Suisse',
             cepages: [
@@ -78,7 +79,7 @@ function createInitialData(): Wine[] {
             name: 'Château de Vinzel - Grand Cru',
             millesime: 2023,
             type: 'Blanc',
-            pointsDeVente: [true, false, true, true],
+            pointsDeVente: [true],
             aocRegion: 'La Côte',
             pays: 'Suisse',
             cepages: [
@@ -103,7 +104,7 @@ function createInitialData(): Wine[] {
             name: 'Sauvignon - Domaine de Chantegrive',
             millesime: 2022,
             type: 'Blanc',
-            pointsDeVente: [true, false, false, true],
+            pointsDeVente: [true],
             aocRegion: 'Bordeaux',
             pays: 'France',
             cepages: [
@@ -121,6 +122,7 @@ function createInitialData(): Wine[] {
 }
 
 export default function TableauVin({ vins }: TableauVinProps) {
+    const { t } = useTranslation();
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [editingWineId, setEditingWineId] = useState<string | null>(null);
     const [localVins, setLocalVins] = useState<Vin[]>(vins);
@@ -139,9 +141,6 @@ export default function TableauVin({ vins }: TableauVinProps) {
         { key: 'millesime', label: 'Millésime' },
         { key: 'type', label: 'Type' },
         { key: 'pdv1', label: 'Restaurant #1' },
-        { key: 'pdv2', label: 'Restaurant #2' },
-        { key: 'pdv3', label: 'Restaurant #3' },
-        { key: 'pdv4', label: 'Restaurant #4' },
         { key: 'actions', label: '' },
     ], []);
 
@@ -149,7 +148,7 @@ export default function TableauVin({ vins }: TableauVinProps) {
         const wine = localVins.find(v => v.id === wineId);
         if (!wine) return;
 
-        const newPointsDeVente = [...wine.pointsDeVente] as [boolean, boolean, boolean, boolean];
+        const newPointsDeVente = [...wine.pointsDeVente] as [boolean];
         newPointsDeVente[index] = !newPointsDeVente[index];
 
         // Mettre à jour localement immédiatement

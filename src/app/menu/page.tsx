@@ -3,24 +3,24 @@ import { useState } from 'react';
 import Sidebar from '@/components/SideBar';
 import Header from '@/components/Header';
 import Button from '@/components/Button';
-import { Plus } from 'lucide-react';
 import SectionMenu from '@/components/SectionMenu';
 import PointsDeVenteTabs from '@/components/PointsDeVenteTabs';
 import ModalNouveauPlat from '@/components/ModalNouveauPlat';
+import TableauMenu from '@/components/TableauMenu';
 import type { Plat } from '@/components/TableauMenu';
+import { useTranslation } from '@/lib/useTranslation';
 
 export default function MenuPage() {
+    const { t } = useTranslation();
+    
     // État pour le modal d'ajout de plat
     const [isModalOpen, setIsModalOpen] = useState(false);
     
-    // État pour les points de vente
+    // État pour les points de vente (seulement restaurant 1)
     const [pointsDeVente, setPointsDeVente] = useState([
-        { id: '1', nom: 'Point de vente #1', actif: false },
-        { id: '2', nom: 'Point de vente #2', actif: true },
-        { id: '3', nom: 'Point de vente #3', actif: false },
-        { id: '4', nom: 'Point de vente #4', actif: false },
+        { id: '1', nom: 'Restaurant #1', actif: true },
     ]);
-    const [activeTabId, setActiveTabId] = useState('2');
+    const [activeTabId, setActiveTabId] = useState('1');
 
     // Données des sections de menu
     const [entrees, setEntrees] = useState<Plat[]>([
@@ -30,7 +30,7 @@ export default function MenuPage() {
             description: '',
             prix: 12.00,
             section: 'Nos entrées',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             motsCles: [{ id: 'mc1', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }]
         },
         {
@@ -39,7 +39,7 @@ export default function MenuPage() {
             description: '',
             prix: 14.00,
             section: 'Nos entrées',
-            pointsDeVente: [true, true, true, false],
+            pointsDeVente: [true],
             motsCles: [{ id: 'mc2', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }]
         },
         {
@@ -48,7 +48,7 @@ export default function MenuPage() {
             description: 'Perles de melon et lard grillé',
             prix: 16.00,
             section: 'Nos entrées',
-            pointsDeVente: [true, false, true, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc3', label: 'Solanacée', color: 'bg-green-100', textColor: 'text-green-700' },
                 { id: 'mc4', label: 'Viande séchée', color: 'bg-red-100', textColor: 'text-red-700' }
@@ -60,7 +60,7 @@ export default function MenuPage() {
             description: 'Vinaigrette balsamique, sorbet basilic maison',
             prix: 18.00,
             section: 'Nos entrées',
-            pointsDeVente: [true, true, false, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc5', label: 'Solanacée', color: 'bg-green-100', textColor: 'text-green-700' },
                 { id: 'mc6', label: 'Herbe fraîche aromatique', color: 'bg-purple-100', textColor: 'text-purple-700' }
@@ -72,7 +72,7 @@ export default function MenuPage() {
             description: 'Mélange de champignons et sauce morilles',
             prix: 20.00,
             section: 'Nos entrées',
-            pointsDeVente: [false, true, true, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc7', label: 'Champignon', color: 'bg-green-100', textColor: 'text-green-700' },
                 { id: 'mc8', label: 'Herbe sèche', color: 'bg-purple-100', textColor: 'text-purple-700' }
@@ -84,7 +84,7 @@ export default function MenuPage() {
             description: 'Sur lit de julienne de légumes et sauce exotique',
             prix: 28.00,
             section: 'Nos entrées',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc9', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc10', label: 'Mollusque', color: 'bg-orange-100', textColor: 'text-orange-700' },
@@ -100,7 +100,7 @@ export default function MenuPage() {
             description: '',
             prix: 32.00,
             section: 'Nos viandes',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             motsCles: [{ id: 'mc12', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' }]
         },
         {
@@ -109,7 +109,7 @@ export default function MenuPage() {
             description: '',
             prix: 35.00,
             section: 'Nos viandes',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             motsCles: [{ id: 'mc13', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' }]
         },
         {
@@ -118,7 +118,7 @@ export default function MenuPage() {
             description: 'Nappé dans son jus de cuisson & foie gras de canard poêlé, pommes de terre grenailles à l\'huile d\'olive et thym, légumes de saison',
             prix: 38.00,
             section: 'Nos viandes',
-            pointsDeVente: [true, true, false, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc14', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc15', label: 'Légume racine', color: 'bg-green-100', textColor: 'text-green-700' },
@@ -131,7 +131,7 @@ export default function MenuPage() {
             description: 'Toasts et beurre',
             prix: 26.00,
             section: 'Nos viandes',
-            pointsDeVente: [true, true, true, false],
+            pointsDeVente: [true],
             motsCles: [{ id: 'mc17', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' }]
         }
     ]);
@@ -143,7 +143,7 @@ export default function MenuPage() {
             description: 'Mélange de fruits de mer, coulis de crustacés, Julienne de légumes et riz créole',
             prix: 32.00,
             section: 'Nos poissons',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc18', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc19', label: 'Épices exotiques', color: 'bg-purple-100', textColor: 'text-purple-700' },
@@ -156,7 +156,7 @@ export default function MenuPage() {
             description: 'Sauce au beurre blanc citronnée',
             prix: 28.00,
             section: 'Nos poissons',
-            pointsDeVente: [true, true, false, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc21', label: 'Poisson', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc22', label: 'Herbe sèche', color: 'bg-purple-100', textColor: 'text-purple-700' }
@@ -168,7 +168,7 @@ export default function MenuPage() {
             description: 'Sauce au beurre blanc citronnée ou coulis de crustacés',
             prix: 30.00,
             section: 'Nos poissons',
-            pointsDeVente: [true, false, true, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc23', label: 'Poisson', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc24', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' }
@@ -183,7 +183,7 @@ export default function MenuPage() {
             description: '',
             prix: 24.00,
             section: 'Nos pâtes fraîches',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc25', label: 'Champignon', color: 'bg-green-100', textColor: 'text-green-700' },
                 { id: 'mc26', label: 'Fromage sec, salé et umami', color: 'bg-orange-100', textColor: 'text-orange-700' }
@@ -195,7 +195,7 @@ export default function MenuPage() {
             description: '',
             prix: 20.00,
             section: 'Nos pâtes fraîches',
-            pointsDeVente: [true, true, false, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc27', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' },
                 { id: 'mc28', label: 'Légume alliacé', color: 'bg-green-100', textColor: 'text-green-700' }
@@ -207,7 +207,7 @@ export default function MenuPage() {
             description: 'Crème citronnée et Julienne de légumes',
             prix: 26.00,
             section: 'Nos pâtes fraîches',
-            pointsDeVente: [true, true, true, false],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc29', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc30', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }
@@ -222,7 +222,7 @@ export default function MenuPage() {
             description: 'Composée : mélange de fruits de mer, Avocat et tomates cœur de bœuf',
             prix: 22.00,
             section: 'Suggestions du chef',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc31', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc32', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' },
@@ -235,7 +235,7 @@ export default function MenuPage() {
             description: 'Sauce aux câpres et pommes de terre écrasées',
             prix: 24.00,
             section: 'Suggestions du chef',
-            pointsDeVente: [true, true, false, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc34', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc35', label: 'Légume racine', color: 'bg-green-100', textColor: 'text-green-700' }
@@ -247,7 +247,7 @@ export default function MenuPage() {
             description: 'Légumes du marché et pommes de terre grenailles',
             prix: 26.00,
             section: 'Suggestions du chef',
-            pointsDeVente: [true, true, true, false],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc36', label: 'Viande blanche', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc37', label: 'Champignon', color: 'bg-green-100', textColor: 'text-green-700' },
@@ -260,7 +260,7 @@ export default function MenuPage() {
             description: 'Riz et légumes',
             prix: 28.00,
             section: 'Suggestions du chef',
-            pointsDeVente: [true, false, true, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc39', label: 'Poisson', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc40', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }
@@ -272,7 +272,7 @@ export default function MenuPage() {
             description: 'Huile parfumée aux truffes et son lit de mesclun, Grano Padano, tomate cerise et pommes de terre frites',
             prix: 32.00,
             section: 'Suggestions du chef',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc41', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' },
                 { id: 'mc42', label: 'Fromage sec, salé et umami', color: 'bg-orange-100', textColor: 'text-orange-700' },
@@ -288,7 +288,7 @@ export default function MenuPage() {
             description: 'Entremet aux fruits de la passion et noisettes',
             prix: 12.00,
             section: 'Nos desserts maison',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             motsCles: [{ id: 'mc44', label: 'Épices pâtissières', color: 'bg-purple-100', textColor: 'text-purple-700' }]
         },
         {
@@ -297,7 +297,7 @@ export default function MenuPage() {
             description: '',
             prix: 10.00,
             section: 'Nos desserts maison',
-            pointsDeVente: [true, true, true, true],
+            pointsDeVente: [true],
             motsCles: [{ id: 'mc45', label: 'Épices pâtissières', color: 'bg-purple-100', textColor: 'text-purple-700' }]
         },
         {
@@ -306,7 +306,7 @@ export default function MenuPage() {
             description: '',
             prix: 8.00,
             section: 'Nos desserts maison',
-            pointsDeVente: [true, true, false, true],
+            pointsDeVente: [true],
             motsCles: [{ id: 'mc46', label: 'Épices pâtissières', color: 'bg-purple-100', textColor: 'text-purple-700' }]
         },
         {
@@ -315,7 +315,7 @@ export default function MenuPage() {
             description: '',
             prix: 9.00,
             section: 'Nos desserts maison',
-            pointsDeVente: [true, false, true, true],
+            pointsDeVente: [true],
             motsCles: [{ id: 'mc47', label: 'Épices pâtissières', color: 'bg-purple-100', textColor: 'text-purple-700' }]
         },
         {
@@ -324,7 +324,7 @@ export default function MenuPage() {
             description: 'Glace romarin maison',
             prix: 11.00,
             section: 'Nos desserts maison',
-            pointsDeVente: [true, true, true, false],
+            pointsDeVente: [true],
             motsCles: [
                 { id: 'mc48', label: 'Épices pâtissières', color: 'bg-purple-100', textColor: 'text-purple-700' },
                 { id: 'mc49', label: 'Herbe résineuse', color: 'bg-purple-100', textColor: 'text-purple-700' }
@@ -342,15 +342,6 @@ export default function MenuPage() {
         );
     };
 
-    const handleAddPointDeVente = () => {
-        const newId = (pointsDeVente.length + 1).toString();
-        const newPoint = {
-            id: newId,
-            nom: `Point de vente #${newId}`,
-            actif: false
-        };
-        setPointsDeVente(prev => [...prev, newPoint]);
-    };
 
     // Fonctions de gestion des plats
     const handleSavePlat = (plat: Plat, setter: React.Dispatch<React.SetStateAction<Plat[]>>) => {
@@ -398,14 +389,13 @@ export default function MenuPage() {
             <Sidebar />
 
             <main className="flex-1 overflow-y-scroll scrollbar-hide">
-                <Header title='Menu(s)' />
+                <Header title={t('menu.title')} />
 
                 <div className="px-10 py-10 space-y-8">
                     {/* Tabs des points de vente */}
                     <PointsDeVenteTabs
                         pointsDeVente={pointsDeVente}
                         onTabChange={handleTabChange}
-                        onAddPointDeVente={handleAddPointDeVente}
                         activeTabId={activeTabId}
                     />
                     
@@ -417,7 +407,7 @@ export default function MenuPage() {
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M10.0001 6.66667V13.3333M6.66675 10H13.3334M18.3334 10C18.3334 14.6024 14.6025 18.3333 10.0001 18.3333C5.39771 18.3333 1.66675 14.6024 1.66675 10C1.66675 5.39763 5.39771 1.66667 10.0001 1.66667C14.6025 1.66667 18.3334 5.39763 18.3334 10Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                            Ajouter un plat
+                            {t('menu.addDish')}
                         </Button>
 
                                                  <Button
@@ -451,53 +441,71 @@ export default function MenuPage() {
                          </Button>
                     </div>
 
+                    {/* Tableaux des plats récupérés de l'API */}
+                    <TableauMenu pointDeVenteId="1" restaurantId={0} />
+
+                    {/* Séparateur visuel */}
+                    <div className="border-t border-gray-200 my-8">
+                        <div className="text-center">
+                            <span className="bg-[#F8F9FC] px-4 py-2 text-sm text-gray-500 rounded-full border border-gray-200">
+                                📋 {t('menu.sections.staticDishes')}
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="space-y-8">
                         {/* Nos entrées */}
                         <SectionMenu
-                            titre="Nos entrées"
+                            titre={t('menu.sections.entrees')}
                             plats={entrees}
                             onSavePlat={(plat) => handleSavePlat(plat, setEntrees)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setEntrees)}
+                            restaurantId={0}
                         />
 
                         {/* Nos viandes */}
                         <SectionMenu
-                            titre="Nos viandes"
+                            titre={t('menu.sections.meats')}
                             plats={viandes}
                             onSavePlat={(plat) => handleSavePlat(plat, setViandes)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setViandes)}
+                            restaurantId={0}
                         />
 
                         {/* Nos poissons */}
                         <SectionMenu
-                            titre="Nos poissons"
+                            titre={t('menu.sections.fish')}
                             plats={poissons}
                             onSavePlat={(plat) => handleSavePlat(plat, setPoissons)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setPoissons)}
+                            restaurantId={0}
                         />
 
                         {/* Nos pâtes fraîches */}
                         <SectionMenu
-                            titre="Nos pâtes fraîches"
+                            titre={t('menu.sections.pasta')}
                             plats={pates}
                             onSavePlat={(plat) => handleSavePlat(plat, setPates)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setPates)}
+                            restaurantId={0}
                         />
 
                         {/* Suggestions du chef */}
                         <SectionMenu
-                            titre="Suggestions du chef"
+                            titre={t('menu.sections.suggestions')}
                             plats={suggestions}
                             onSavePlat={(plat) => handleSavePlat(plat, setSuggestions)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setSuggestions)}
+                            restaurantId={0}
                         />
 
                         {/* Nos desserts maison */}
                         <SectionMenu
-                            titre="Nos desserts maison"
+                            titre={t('menu.sections.desserts')}
                             plats={desserts}
                             onSavePlat={(plat) => handleSavePlat(plat, setDesserts)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setDesserts)}
+                            restaurantId={0}
                         />
                     </div>
                 </div>
@@ -508,6 +516,7 @@ export default function MenuPage() {
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 onSave={handleAddPlat}
+                restaurantId={0}
             />
         </div>
     );

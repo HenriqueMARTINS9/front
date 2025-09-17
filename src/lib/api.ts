@@ -97,6 +97,22 @@ export interface LoginResponse {
     token_type: string;
 }
 
+// Types pour l'authentification des restaurants
+export interface Restaurant {
+    id: number;
+    name: string;
+    email: string;
+    password?: string; // Optionnel car on ne retourne pas le mot de passe dans les réponses
+    address?: string;
+    phone?: string;
+}
+
+export interface RestaurantLoginResponse {
+    access_token: string;
+    token_type: string;
+    restaurant: Restaurant;
+}
+
 // Types pour compatibilité avec l'ancien système
 export interface Vin {
     id: string;
@@ -109,7 +125,7 @@ export interface Vin {
     millesime: number;
     prix: number;
     restaurant: string;
-    pointsDeVente: [boolean, boolean, boolean, boolean];
+    pointsDeVente: [boolean];
     motsCles: Array<{
         id: string;
         label: string;
@@ -120,26 +136,74 @@ export interface Vin {
 
 // Configuration de l'API
 export const api = axios.create({
-    baseURL: 'http://vps.virtualsomm.ch:8081',
+    baseURL: '/api', // Utilise le proxy Next.js pour contourner CORS
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
+// Instance API séparée pour l'authentification (sans intercepteurs)
+export const authApi = axios.create({
+    baseURL: '/api', // Utilise le proxy Next.js pour contourner CORS
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+    },
+});
+
+// Restaurants de test prédéfinis
+const TEST_RESTAURANTS: Restaurant[] = [
+    {
+        id: 1,
+        name: "Restaurant Principal",
+        email: "restaurant1@virtualsomm.ch",
+        password: "resto123",
+        address: "123 Rue de la Gastronomie, 1000 Lausanne",
+        phone: "+41 21 123 45 67"
+    },
+    {
+        id: 2,
+        name: "Bistrot du Lac",
+        email: "bistrot@virtualsomm.ch",
+        password: "bistrot456",
+        address: "456 Quai du Lac, 1000 Lausanne",
+        phone: "+41 21 234 56 78"
+    },
+    {
+        id: 3,
+        name: "Café des Arts",
+        email: "cafe@virtualsomm.ch",
+        password: "cafe789",
+        address: "789 Avenue des Arts, 1000 Lausanne",
+        phone: "+41 21 345 67 89"
+    },
+    {
+        id: 4,
+        name: "Brasserie Moderne",
+        email: "brasserie@virtualsomm.ch",
+        password: "brasserie012",
+        address: "012 Place Moderne, 1000 Lausanne",
+        phone: "+41 21 456 78 90"
+    }
+];
+
+// Configuration OAuth2 pour l'API VirtualSomm
+const OAUTH_CONFIG = {
+    client_id: '250684173847-7f1vs6bi5852mel1k2ddogijlrffemf8.apps.googleusercontent.com',
+    client_secret: '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',
+};
+
 // Services pour l'authentification
 export const authService = {
-    // Connexion utilisateur
+    // Connexion utilisateur avec OAuth2
     login: async (username: string, password: string): Promise<LoginResponse> => {
         const formData = new URLSearchParams();
         formData.append('username', username);
         formData.append('password', password);
         formData.append('grant_type', 'password');
+        formData.append('client_id', OAUTH_CONFIG.client_id);
+        formData.append('client_secret', OAUTH_CONFIG.client_secret);
         
-        const response = await api.post('/token', formData, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-        });
+        const response = await authApi.post('/token', formData);
         return response.data;
     },
 
@@ -153,6 +217,78 @@ export const authService = {
         const response = await api.get('/users_infos');
         return response.data;
     },
+};
+
+// Services pour l'authentification des restaurants
+export const restaurantAuthService = {
+    // Connexion restaurant
+    login: async (email: string, password: string): Promise<RestaurantLoginResponse> => {
+        // Simuler un délai de réseau
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Rechercher le restaurant par email
+        const restaurant = TEST_RESTAURANTS.find(r => r.email === email);
+        
+        if (!restaurant) {
+            throw new Error('Restaurant non trouvé');
+        }
+        
+        if (restaurant.password !== password) {
+            throw new Error('Mot de passe incorrect');
+        }
+        
+        // Générer un token simulé
+        const token = `restaurant_${restaurant.id}_${Date.now()}`;
+        
+        return {
+            access_token: token,
+            token_type: 'Bearer',
+            restaurant: {
+                id: restaurant.id,
+                name: restaurant.name,
+                email: restaurant.email,
+                address: restaurant.address,
+                phone: restaurant.phone
+            }
+        };
+    },
+
+    // Récupérer les informations du restaurant connecté
+    getRestaurantInfo: async (): Promise<Restaurant> => {
+        const storage = getLocalStorage();
+        const token = storage?.getItem('restaurant_token');
+        
+        if (!token) {
+            throw new Error('Aucun token restaurant trouvé');
+        }
+        
+        // Extraire l'ID du restaurant du token
+        const restaurantId = parseInt(token.split('_')[1]);
+        const restaurant = TEST_RESTAURANTS.find(r => r.id === restaurantId);
+        
+        if (!restaurant) {
+            throw new Error('Restaurant non trouvé');
+        }
+        
+        return {
+            id: restaurant.id,
+            name: restaurant.name,
+            email: restaurant.email,
+            address: restaurant.address,
+            phone: restaurant.phone
+        };
+    },
+
+    // Récupérer la liste des restaurants de test
+    getTestRestaurants: (): Restaurant[] => {
+        return TEST_RESTAURANTS.map(r => ({
+            id: r.id,
+            name: r.name,
+            email: r.email,
+            address: r.address,
+            phone: r.phone
+        }));
+    }
 };
 
 // Services pour les questions
@@ -233,16 +369,87 @@ export const recommendationsService = {
 
     // Récupérer les vins d'un restaurant
     getRestaurantWines: async (restaurantId: number): Promise<RestaurantWine[]> => {
-        const response = await api.post('/recommendations/restaurant_wines', {}, {
-            params: { restaurant_id: restaurantId },
-        });
-        return response.data;
+        try {
+            console.log(`Fetching wines for restaurant ID: ${restaurantId}`);
+            
+            // Essayer différentes approches pour l'endpoint restaurant_wines
+            let response;
+            
+            try {
+                // Approche 1: POST avec restaurant_id dans le body
+                response = await api.post('/recommendations/restaurant_wines', {
+                    restaurant_id: restaurantId
+                });
+            } catch (error: any) {
+                if (error.response?.status === 422) {
+                    try {
+                        // Approche 2: POST avec restaurant_id en paramètre de requête
+                        response = await api.post('/recommendations/restaurant_wines', {}, {
+                            params: { restaurant_id: restaurantId }
+                        });
+                    } catch (error2: any) {
+                        if (error2.response?.status === 422) {
+                            try {
+                                // Approche 3: GET avec restaurant_id en paramètre
+                                response = await api.get('/recommendations/restaurant_wines', {
+                                    params: { restaurant_id: restaurantId }
+                                });
+                            } catch (error3: any) {
+                                if (error3.response?.status === 422) {
+                                    // Approche 4: POST avec restaurantId (sans underscore)
+                                    response = await api.post('/recommendations/restaurant_wines', {
+                                        restaurantId: restaurantId
+                                    });
+                                } else {
+                                    throw error3;
+                                }
+                            }
+                        } else {
+                            throw error2;
+                        }
+                    }
+                } else {
+                    throw error;
+                }
+            }
+            
+            console.log('Wines response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching restaurant wines:', error);
+            throw error;
+        }
     },
 
     // Récupérer les plats d'un restaurant
     getRestaurantDishes: async (restaurantId: number): Promise<Dish[]> => {
-        const response = await api.post(`/recommendations/dishes?restaurant_id=${restaurantId}`, {});
-        return response.data;
+        try {
+            console.log(`Fetching dishes for restaurant ID: ${restaurantId}`);
+            // L'endpoint /recommendations/dishes retourne 422, essayons différentes approches
+            let response;
+            
+            try {
+                // Essayer avec un body vide d'abord
+                response = await api.post('/recommendations/dishes', {});
+            } catch (error: any) {
+                if (error.response?.status === 422) {
+                    // Si 422, essayer avec des paramètres de requête
+                    response = await api.post('/recommendations/dishes', {}, {
+                        params: { restaurant_id: restaurantId }
+                    });
+                } else {
+                    throw error;
+                }
+            }
+            
+            console.log('Dishes response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching restaurant dishes:', error);
+            // Si l'endpoint ne fonctionne pas, retourner un tableau vide pour l'instant
+            console.warn('Endpoint /recommendations/dishes non fonctionnel, retour d\'un tableau vide');
+            return [];
+        }
     },
 
     // Récupérer les meilleurs vins pour des plats
@@ -276,14 +483,79 @@ const getLocalStorage = () => {
     return null;
 };
 
-// Intercepteur pour ajouter le token d'authentification
-api.interceptors.request.use(
-    (config) => {
+// Fonction pour obtenir un token valide (génère automatiquement si nécessaire)
+let tokenPromise: Promise<string> | null = null;
+
+const getValidToken = async (): Promise<string> => {
+    const storage = getLocalStorage();
+    if (!storage) {
+        throw new Error('localStorage not available');
+    }
+
+    // Vérifier si on a déjà un token valide
+    const existingToken = storage.getItem('access_token');
+    if (existingToken) {
+        return existingToken;
+    }
+
+    // Si pas de token, en générer un automatiquement
+    if (!tokenPromise) {
+        tokenPromise = generateToken();
+    }
+
+    try {
+        const token = await tokenPromise;
+        return token;
+    } finally {
+        tokenPromise = null;
+    }
+};
+
+// Fonction pour générer un token automatiquement
+const generateToken = async (): Promise<string> => {
+    console.log('Génération automatique du token...');
+    
+    const formData = new URLSearchParams();
+    formData.append('username', 'admin');
+    formData.append('password', 'admin123');
+    formData.append('grant_type', 'password');
+    formData.append('client_id', OAUTH_CONFIG.client_id);
+    formData.append('client_secret', OAUTH_CONFIG.client_secret);
+
+    try {
+        // Utiliser l'instance API d'authentification (sans intercepteurs)
+        const response = await authApi.post('/token', formData);
+
+        const token = response.data.access_token;
         const storage = getLocalStorage();
-        const token = storage?.getItem('access_token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        if (storage) {
+            storage.setItem('access_token', token);
         }
+        
+        console.log('Token généré avec succès:', token.substring(0, 20) + '...');
+        return token;
+    } catch (error) {
+        console.error('Erreur lors de la génération du token:', error);
+        throw error;
+    }
+};
+
+// Intercepteur pour ajouter le token d'authentification automatiquement
+api.interceptors.request.use(
+    async (config) => {
+        // Ne pas essayer d'authentifier les requêtes vers /token
+        if (config.url?.includes('/token')) {
+            return config;
+        }
+
+        try {
+            const token = await getValidToken();
+            config.headers.Authorization = `Bearer ${token}`;
+        } catch (error) {
+            console.error('Impossible d\'obtenir un token valide:', error);
+            // Continuer sans token si l'authentification échoue
+        }
+        
         return config;
     },
     (error) => {

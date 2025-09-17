@@ -1,13 +1,13 @@
 'use client';
 import { useState } from 'react';
-import { api } from '@/lib/api';
+import { authApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { setToken } from '@/lib/auth';
 
 
 export default function LoginPage() {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('admin');
+    const [password, setPassword] = useState('admin123');
     const router = useRouter();
 
 
@@ -17,12 +17,10 @@ export default function LoginPage() {
             form.append('username', username);
             form.append('password', password);
             form.append('grant_type', 'password');
+            form.append('client_id', '250684173847-7f1vs6bi5852mel1k2ddogijlrffemf8.apps.googleusercontent.com');
+            form.append('client_secret', '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');
 
-
-            const res = await api.post('/token', form, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            });
-
+            const res = await authApi.post('/token', form);
 
             setToken(res.data.access_token);
             router.push('/home');
@@ -116,8 +114,18 @@ export default function LoginPage() {
                         Connexion
                     </button>
                     <p className="forgotMdp">
-                        J'ai oublié mon mot de passe
+                        J&apos;ai oublié mon mot de passe
                     </p>
+                    
+                    <div className="border-t border-gray-200 pt-4 text-center">
+                        <p className="text-sm text-gray-600 mb-2">Vous êtes un restaurant ?</p>
+                        <button
+                            onClick={() => router.push('/restaurant-login')}
+                            className="text-[#7C3AED] hover:text-[#6D28D9] text-sm font-medium"
+                        >
+                            Connexion Restaurant
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

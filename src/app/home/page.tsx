@@ -1,9 +1,8 @@
 'use client';
 
-
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken } from '@/lib/auth';
+import { getToken, getRestaurantToken, isRestaurantLoggedIn, isUserLoggedIn } from '@/lib/auth';
 import Sidebar from '@/components/SideBar';
 import AlertCard from '@/components/AlertCard';
 import VinsCard from '@/components/VinsCard';
@@ -11,24 +10,33 @@ import RestaurantCard from '@/components/RestaurantCard';
 import Header from '@/components/Header';
 import MenuCard from '@/components/MenuCard';
 import MembersCard from '@/components/MembersCard';
+import { useTranslation } from '@/lib/useTranslation';
+import { useRestaurantInfo } from '@/lib/hooks';
 
 
 export default function HomePage() {
     const router = useRouter();
+    const { t } = useTranslation();
+    const { data: restaurantInfo } = useRestaurantInfo();
 
-
-    /*useEffect(() => {
-        if (!getToken()) router.push('/login');
-    }, []);*/
-
+    useEffect(() => {
+        // Vérifier si l'utilisateur ou le restaurant est connecté
+        if (!isUserLoggedIn() && !isRestaurantLoggedIn()) {
+            router.push('/login');
+        }
+    }, [router]);
 
     return (
         <div className="flex h-screen bg-[#F8F9FC]">
             <Sidebar />
 
-
             <main className="flex-1 overflow-y-scroll">
-                <Header title='Home'></Header>
+                <Header 
+                    title={isRestaurantLoggedIn() && restaurantInfo 
+                        ? `${t('home.title')} - ${restaurantInfo.name}` 
+                        : t('home.title')
+                    }
+                ></Header>
 
                 <div className='px-10 py-10 grid grid-cols-12 gap-10'>
                     {/* Alertes */}
@@ -36,9 +44,9 @@ export default function HomePage() {
                         <div>
                             <AlertCard
                                 alerts={[
-                                    { type: 'warning', message: '3 plats ne contiennent pas encore de tags d\'arômes.' },
-                                    { type: 'error', message: 'Votre menu n\'a pas été mis à jour depuis 30 jours.' },
-                                    { type: 'success', message: 'Ajoutez au moins un vin au verre pour activer la suggestion client.' },
+                                    { type: 'warning', message: t('home.alerts.missingAromas') },
+                                    { type: 'error', message: t('home.alerts.menuNotUpdated') },
+                                    { type: 'success', message: t('home.alerts.addWineByGlass') },
                                 ]}
                             />
 
