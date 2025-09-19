@@ -92,7 +92,7 @@ export default function Sidebar() {
 
                 {/* Section utilisateur/restaurant */}
                 <div className="text-sm pt-4 flex justify-between">
-                    <div>
+                    {/*<div>
                         <div className="mb-1 font-medium">
                             {isRestaurant && restaurantInfo 
                                 ? restaurantInfo.name 
@@ -105,7 +105,7 @@ export default function Sidebar() {
                                 : 'olivia@untitledui.com'
                             }
                         </div>
-                    </div>
+                    </div>*/}
 
                     <div 
                         className="flex items-center gap-1 text-indigo-300 cursor-pointer"

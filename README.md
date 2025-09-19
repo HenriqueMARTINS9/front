@@ -1,235 +1,205 @@
 # VirtualSomm Frontend
 
-## 🍷 Description du Projet
+Application web moderne pour la gestion de cartes de vins et menus de restaurants avec recommandations intelligentes.
 
-VirtualSomm est une application web moderne développée avec Next.js 15 et React 19, conçue pour la gestion intelligente des cartes de vins et des menus de restaurants. L'application utilise l'intelligence artificielle pour fournir des recommandations personnalisées d'accords mets-vins.
+## 🚀 Fonctionnalités
 
-## 🚀 Technologies Utilisées
+- **Gestion des vins** : Ajout, modification et organisation de la carte des vins
+- **Gestion des menus** : Interface complète pour gérer les plats et sections du menu
+- **Recommandations intelligentes** : Suggestions de vins basées sur l'analyse des plats
+- **Interface multilingue** : Support français et anglais
+- **Authentification OAuth2** : Connexion sécurisée avec tokens JWT
+- **API intégrée** : Communication avec l'API VirtualSomm
+- **Design moderne** : Interface utilisateur intuitive avec Tailwind CSS
 
-- **Framework** : Next.js 15.5.0 avec App Router
-- **Frontend** : React 19.1.0 avec TypeScript 5
-- **Styling** : Tailwind CSS 4
-- **État** : React Query (@tanstack/react-query) pour la gestion des données
-- **HTTP Client** : Axios pour les appels API
-- **Icônes** : Lucide React
-- **Authentification** : JWT avec gestion automatique des tokens
+## 🛠️ Technologies utilisées
 
-## 📁 Structure du Projet
+- **Framework** : Next.js 14 avec App Router
+- **Langage** : TypeScript
+- **Styling** : Tailwind CSS
+- **State Management** : React Query (TanStack Query)
+- **Authentification** : OAuth2 avec JWT
+- **HTTP Client** : Axios
+- **Internationalisation** : react-i18next
+- **Icons** : Lucide React
+
+## 📦 Installation
+
+1. **Cloner le repository**
+   ```bash
+   git clone <repository-url>
+   cd VirtualSomm/front
+   ```
+
+2. **Installer les dépendances**
+   ```bash
+   npm install
+   ```
+
+3. **Configuration de l'environnement**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Configurer les variables d'environnement dans `.env.local` :
+   ```env
+   NEXT_PUBLIC_API_URL=https://api.virtualsomm.ch
+   OAUTH_CLIENT_ID=your_client_id
+   OAUTH_CLIENT_SECRET=your_client_secret
+   ```
+
+4. **Lancer en développement**
+   ```bash
+   npm run dev
+   ```
+
+5. **Accéder à l'application**
+   Ouvrir [http://localhost:3000](http://localhost:3000)
+
+## 🏗️ Structure du projet
 
 ```
 src/
-├── app/                    # Pages de l'application (App Router)
-│   ├── home/              # Page d'accueil avec dashboard
+├── app/                    # Pages Next.js (App Router)
+│   ├── home/              # Page d'accueil
 │   ├── login/             # Page de connexion
 │   ├── menu/              # Gestion des menus
-│   ├── vins/              # Gestion de la carte des vins
-│   └── test-api/          # Page de test des APIs
+│   └── vins/              # Gestion des vins
 ├── components/            # Composants réutilisables
-│   ├── ModalNouveauPlat.tsx    # Modal d'ajout de plat avec transitions
-│   ├── ModalNouveauVin.tsx     # Modal d'ajout de vin avec transitions
-│   ├── TableauMenu.tsx         # Tableau de gestion des plats
-│   ├── TableauVin.tsx          # Tableau de gestion des vins
-│   ├── SideBar.tsx             # Navigation latérale
-│   ├── Header.tsx              # En-tête de page
-│   ├── Button.tsx              # Composant bouton réutilisable
-│   ├── InputField.tsx          # Champ de saisie
-│   ├── Checkbox.tsx            # Case à cocher
-│   ├── RadioButton.tsx         # Bouton radio
-│   ├── Select.tsx              # Liste déroulante
-│   ├── List.tsx                # Composant de liste dynamique
-│   ├── Card.tsx                # Composant carte
-│   ├── AlertCard.tsx           # Cartes d'alertes
-│   ├── MenuCard.tsx            # Carte de menu
-│   ├── VinsCard.tsx            # Carte des vins
-│   ├── RestaurantCard.tsx       # Carte de restaurant
-│   ├── MembersCard.tsx         # Carte des membres
-│   ├── LoginForm.tsx           # Formulaire de connexion
-│   ├── Notification.tsx        # Système de notifications
-│   └── ...                     # Autres composants utilitaires
-└── lib/                   # Utilitaires et configuration
-    ├── api.ts             # Configuration API et services
-    ├── auth.ts            # Gestion de l'authentification
-    ├── hooks.ts            # Hooks personnalisés React Query
-    ├── useNotification.ts  # Hook pour les notifications
-    └── tagColors.ts       # Configuration des couleurs des tags
+│   ├── AlertCard.tsx      # Carte d'alertes
+│   ├── ApiVinsIntegration.tsx # Intégration API vins
+│   ├── Button.tsx         # Bouton personnalisé
+│   ├── Card.tsx           # Carte de base
+│   ├── Header.tsx         # En-tête
+│   ├── SideBar.tsx        # Barre latérale
+│   ├── TableauVin.tsx     # Tableau des vins
+│   ├── ModalNouveauVin.tsx # Modal d'ajout de vin
+│   └── ...
+├── lib/                   # Utilitaires et configuration
+│   ├── api.ts             # Configuration API et services
+│   ├── auth.ts            # Gestion de l'authentification
+│   ├── hooks.ts           # Hooks React Query personnalisés
+│   ├── i18n.ts            # Configuration internationalisation
+│   └── ...
+└── public/
+    └── locales/           # Fichiers de traduction
+        ├── fr/common.json # Traductions françaises
+        └── en/common.json # Traductions anglaises
 ```
 
-## 🎨 Fonctionnalités Principales
+## 🔧 Scripts disponibles
 
-### 🏠 Page d'Accueil (Dashboard)
-- **Vue d'ensemble** : Statistiques et alertes importantes
-- **Cartes d'alertes** : Notifications pour les actions requises
-- **Statistiques** : Nombre de vins, membres de l'équipe
-- **Navigation rapide** : Accès direct aux principales fonctionnalités
+- `npm run dev` - Lancement en mode développement
+- `npm run build` - Build de production
+- `npm run start` - Démarrage du serveur de production
+- `npm run lint` - Vérification ESLint
+- `npm run type-check` - Vérification TypeScript
 
-### 🍽️ Gestion des Menus
-- **Sections organisées** : Entrées, Plats, Desserts
-- **Points de vente multiples** : Gestion de plusieurs restaurants
-- **Ajout de plats** : Modal avec formulaire complet
-- **Tags d'arômes** : Système de classification des saveurs
-- **Validation** : Contrôles de saisie et gestion d'erreurs
+## 🌐 API Integration
 
-### 🍷 Carte des Vins
-- **Types de vins** : Blanc, Rouge, Rosé, Mousseux, Orange, Fortifié, Moelleux
-- **Informations détaillées** : Domaine, millésime, région, pays
-- **Cépages** : Gestion des assemblages avec pourcentages
-- **Formats disponibles** : Magnum, Bouteille, Demi-bouteille, Verre
-- **Points de vente** : Disponibilité par restaurant
+L'application communique avec l'API VirtualSomm via :
 
-### 🔐 Authentification
-- **Connexion sécurisée** : JWT avec gestion automatique des tokens
-- **Protection des routes** : Redirection automatique si non connecté
-- **Gestion des sessions** : Persistance des tokens en localStorage
+### Endpoints principaux
+- **Authentification** : `POST /token`
+- **Informations utilisateur** : `GET /users_infos`
+- **Vins du restaurant** : `POST /recommendations/restaurant_wines`
+- **Plats du restaurant** : `POST /recommendations/dishes`
+- **Recommandations** : `POST /recommendations/wines`
 
-### 🎯 Système de Recommandations IA
-- **API VirtualSomm** : Intégration avec le backend d'IA
-- **Questions personnalisées** : Questionnaire adaptatif
-- **Recommandations intelligentes** : Accords mets-vins optimisés
-- **Support multi-utilisateurs** : Gestion des préférences individuelles
-
-## 🎭 Animations et Transitions
-
-### Modales avec Transitions Smooth
-Les modales `ModalNouveauPlat` et `ModalNouveauVin` incluent des animations fluides :
-
-- **Apparition** : Fade-in avec zoom depuis 95% et mouvement depuis le bas
-- **Disparition** : Fade-out avec les mêmes effets en sens inverse
-- **Durée** : 300ms pour une expérience utilisateur optimale
-- **Gestion d'état** : États `isAnimating` et `shouldRender` pour un contrôle précis
-
-## 🔧 Configuration et Installation
-
-### Prérequis
-- Node.js 18+ 
-- npm, yarn, pnpm ou bun
-
-### Installation
-```bash
-# Cloner le repository
-git clone [url-du-repo]
-
-# Installer les dépendances
-npm install
-# ou
-yarn install
-# ou
-pnpm install
+### Configuration du proxy
+Le fichier `next.config.ts` configure un proxy pour éviter les problèmes CORS :
+```typescript
+async rewrites() {
+  return [
+    {
+      source: '/api/:path*',
+      destination: 'https://api.virtualsomm.ch/:path*',
+    },
+  ];
+}
 ```
 
-### Développement
-```bash
-# Démarrer le serveur de développement
-npm run dev
-# ou
-yarn dev
-# ou
-pnpm dev
+## 🔐 Authentification
 
-# Ouvrir http://localhost:3000
-```
+L'application utilise OAuth2 avec le flow "password grant" :
 
-### Build de Production
-```bash
-# Construire l'application
-npm run build
-# ou
-yarn build
+1. **Connexion** avec username/password
+2. **Récupération du token** JWT
+3. **Stockage sécurisé** dans localStorage
+4. **Auto-refresh** du token si nécessaire
 
-# Démarrer en production
-npm start
-# ou
-yarn start
-```
+## 🌍 Internationalisation
 
-## 🌐 Configuration API
+Support de deux langues :
+- **Français** (par défaut)
+- **Anglais**
 
-L'application se connecte à l'API VirtualSomm :
-- **Base URL** : `http://vps.virtualsomm.ch:8081`
-- **Authentification** : Bearer Token automatique
-- **Gestion d'erreurs** : Intercepteurs Axios pour la gestion des erreurs 401
+Les traductions sont stockées dans `public/locales/` et gérées via react-i18next.
 
-### Endpoints Principaux
-- `/token` - Authentification
-- `/register` - Inscription
-- `/questions` - Questions IA
-- `/answers` - Réponses utilisateur
-- `/recommendations/wines` - Recommandations de vins
-- `/foods` - Base de données des aliments
+## 🎨 Types de vins supportés
 
-## 🎨 Design System
+- **Mousseux / Sparkling** (Pétillants)
+- **Blanc / White** (Blancs)
+- **Rouge / Red** (Rouges)
+- **Rosé** (Rosés)
+- **Sweet** (Doux/Moelleux/Liquoreux)
+- **Old White** (Blancs vieux)
+- **Fortifié** (Vins fortifiés)
+- **Orange** (Vins orange)
 
-### Couleurs Principales
-- **Primaire** : `#363F72` (Sidebar)
-- **Secondaire** : `#3E4784` (Boutons)
-- **Accent** : `#7F56D9` (Éléments interactifs)
-- **Fond** : `#F8F9FC` (Arrière-plan principal)
+## 🧪 Tests et qualité
 
-### Composants Réutilisables
-- **Button** : Boutons avec états hover et focus
-- **InputField** : Champs de saisie avec validation
-- **Card** : Cartes avec ombres et bordures arrondies
-- **Modal** : Modales avec overlay et animations
+- **ESLint** : Configuration stricte pour la qualité du code
+- **TypeScript** : Typage fort pour réduire les erreurs
+- **Prettier** : Formatage automatique du code
 
 ## 📱 Responsive Design
 
-L'application est entièrement responsive avec :
-- **Desktop** : Layout en grille avec sidebar fixe
-- **Tablet** : Adaptation des colonnes et espacement
-- **Mobile** : Navigation optimisée et composants adaptés
-
-## 🔍 Fonctionnalités Avancées
-
-### React Query Integration
-- **Cache intelligent** : Mise en cache des données API
-- **Refetch automatique** : Actualisation des données
-- **Gestion des états** : Loading, error, success states
-- **Optimistic updates** : Mises à jour optimistes
-
-### Système de Notifications
-- **Notifications toast** : Messages de succès/erreur
-- **Auto-dismiss** : Disparition automatique
-- **Queue** : Gestion de plusieurs notifications
-
-### Validation de Formulaires
-- **Validation en temps réel** : Contrôles pendant la saisie
-- **Messages d'erreur** : Feedback utilisateur clair
-- **Focus automatique** : Navigation vers les champs en erreur
+L'application est entièrement responsive et optimisée pour :
+- 🖥️ Desktop (1920px+)
+- 💻 Laptop (1024px+)
+- 📱 Tablet (768px+)
+- 📱 Mobile (320px+)
 
 ## 🚀 Déploiement
 
-### Vercel (Recommandé)
+### Build de production
 ```bash
-# Installer Vercel CLI
-npm i -g vercel
-
-# Déployer
-vercel
+npm run build
 ```
 
-### Autres Plateformes
-L'application peut être déployée sur :
-- **Netlify** : Build statique
-- **Railway** : Déploiement Node.js
-- **Docker** : Containerisation possible
+### Déploiement avec Docker
+```bash
+docker build -t virtualsomm-frontend .
+docker run -p 3000:3000 virtualsomm-frontend
+```
+
+### Variables d'environnement de production
+```env
+NODE_ENV=production
+NEXT_PUBLIC_API_URL=https://api.virtualsomm.ch
+OAUTH_CLIENT_ID=production_client_id
+OAUTH_CLIENT_SECRET=production_client_secret
+```
 
 ## 🤝 Contribution
 
 1. Fork le projet
-2. Créer une branche feature (`git checkout -b feature/nouvelle-fonctionnalite`)
-3. Commit les changements (`git commit -m 'Ajouter nouvelle fonctionnalité'`)
-4. Push vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
+2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
+3. Commit les changements (`git commit -m 'Add some AmazingFeature'`)
+4. Push vers la branche (`git push origin feature/AmazingFeature`)
 5. Ouvrir une Pull Request
 
 ## 📄 Licence
 
-Ce projet est sous licence [MIT](LICENSE).
+Ce projet est sous licence privée. Tous droits réservés.
 
 ## 📞 Support
 
-Pour toute question ou problème :
-- Créer une issue sur GitHub
-- Contacter l'équipe de développement
+Pour toute question ou support technique :
+- 📧 Email : support@virtualsomm.ch
+- 📱 Téléphone : +41 XX XXX XX XX
 
 ---
 
-**VirtualSomm** - Révolutionnez l'art de l'accord mets-vins avec l'intelligence artificielle 🍷✨
+**VirtualSomm** - Révolutionnez votre expérience culinaire avec l'intelligence artificielle 🍷✨
