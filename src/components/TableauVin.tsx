@@ -37,7 +37,7 @@ export type Wine = {
     name: string;
     subname?: string;
     millesime: number;
-    type: 'Mousseux' | 'Rosé' | 'Blanc' | 'Fortifié' | 'Rouge' | 'Moelleux ou liquoreux';
+    type: 'Mousseux' | 'Rosé' | 'Blanc' | 'Fortifié' | 'Rouge' | 'Sweet' | 'Old White' | 'Sparkling' | 'Red' | 'White' | 'Moelleux ou liquoreux';
     pointsDeVente: [boolean];
     aocRegion?: string;
     pays?: string;

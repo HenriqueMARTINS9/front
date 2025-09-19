@@ -43,7 +43,7 @@ export default function VinsCard() {
                 </div>
             )}
 
-            {/* Alerte */}
+            {/* Alerte 
             <div className="flex items-center justify-between bg-red-50 text-red-600 px-3 py-2 rounded text-xs font-medium">
                 <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" />
@@ -55,7 +55,7 @@ export default function VinsCard() {
                 >
                     Mettre à jour
                 </button>
-            </div>
+            </div>*/}
 
             {/* Tags organisés en deux colonnes */}
             <div className="grid grid-cols-2 gap-6">
@@ -88,10 +88,16 @@ export default function VinsCard() {
                             label={`${t('home.wines.rose')}`} 
                         />
                         <Tag 
-                            color={getTagColors('moelleux ou liquoreux').bg} 
-                            textColor={getTagColors('moelleux ou liquoreux').text} 
-                            count={stats.moelleux} 
-                            label="Moelleux / Liquoreux" 
+                            color={getTagColors('sweet').bg} 
+                            textColor={getTagColors('sweet').text} 
+                            count={stats.sweet} 
+                            label={`${t('home.wines.sweet')}`} 
+                        />
+                        <Tag 
+                            color={getTagColors('oldWhite').bg} 
+                            textColor={getTagColors('oldWhite').text} 
+                            count={stats.oldWhite} 
+                            label={`${t('home.wines.oldWhite')}`} 
                         />
                         <Tag 
                             color={getTagColors('fortifié').bg} 

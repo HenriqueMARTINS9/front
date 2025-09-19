@@ -19,10 +19,15 @@ export default function CepageAssemblage({ cepages, wineType }: CepageAssemblage
     // Mapping direct des couleurs de bordure par type de vin
     const borderColorMap: Record<string, string> = {
         'Blanc': 'border-[#B54708]',
+        'White': 'border-[#B54708]',
         'Mousseux': 'border-[#B54708]',
+        'Sparkling': 'border-[#B54708]',
         'Rouge': 'border-[#B42318]',
+        'Red': 'border-[#B42318]',
         'Rosé': 'border-[#C11574]',
         'Fortifié': 'border-[#C11574]',
+        'Sweet': 'border-[#C4320A]',
+        'Old White': 'border-[#15803D]',
         'Moelleux ou liquoreux': 'border-[#C4320A]',
         'Orange': 'border-[#C4320A]'
     };

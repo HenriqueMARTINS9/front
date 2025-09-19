@@ -202,23 +202,25 @@ export const useWineRecommendations = (userList?: User[], wineCategories?: strin
 
 export const useRestaurantWines = (restaurantId?: number) => {
     const { data: restaurantInfo } = useRestaurantInfo();
-    const actualRestaurantId = restaurantId || restaurantInfo?.id || 0;
+    // Forcer l'utilisation du restaurant ID 0 pour les données de démonstration
+    const actualRestaurantId = restaurantId !== undefined ? restaurantId : 0;
     
     return useQuery({
         queryKey: queryKeys.restaurantWines(actualRestaurantId),
         queryFn: () => recommendationsService.getRestaurantWines(actualRestaurantId),
-        enabled: !!actualRestaurantId,
+        enabled: actualRestaurantId !== null,
     });
 };
 
 export const useRestaurantDishes = (restaurantId?: number) => {
     const { data: restaurantInfo } = useRestaurantInfo();
-    const actualRestaurantId = restaurantId || restaurantInfo?.id || 0;
+    // Forcer l'utilisation du restaurant ID 0 pour les données de démonstration
+    const actualRestaurantId = restaurantId !== undefined ? restaurantId : 0;
     
     return useQuery({
         queryKey: queryKeys.restaurantDishes(actualRestaurantId),
         queryFn: () => recommendationsService.getRestaurantDishes(actualRestaurantId),
-        enabled: !!actualRestaurantId,
+        enabled: actualRestaurantId !== null,
     });
 };
 
@@ -403,9 +405,9 @@ export const useAllRestaurantDishes = () => {
 
     const staticDishesCount = countPlatsByRestaurant();
     
-    // Utiliser les données de l'API pour le restaurant 1 (ID 0), sinon fallback vers les données statiques
+    // Utiliser les données de l'API pour le restaurant 0, sinon fallback vers les données statiques
     const dishesCount = {
-        restaurant1: apiDishes ? apiDishes.length : staticDishesCount.restaurant1
+        restaurant0: apiDishes ? apiDishes.length : staticDishesCount.restaurant1
     };
 
     return {
@@ -431,7 +433,8 @@ export const useWineStats = () => {
         blanc: 12,
         rouge: 17,
         rose: 5,
-        moelleux: 3,
+        sweet: 3,
+        oldWhite: 2,
         fortifie: 2,
         bouteille: 38,
         verre: 9,
@@ -472,31 +475,37 @@ export const useWineStats = () => {
             const type = typeof vin === 'object' && 'type' in vin 
                 ? vin.type.toLowerCase() 
                 : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
-            return type.includes('mousseux');
+            return type.includes('mousseux') || type.includes('sparkling');
         }).length,
         blanc: vinsToUse.filter(vin => {
             const type = typeof vin === 'object' && 'type' in vin 
                 ? vin.type.toLowerCase() 
                 : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
-            return type.includes('blanc');
+            return type.includes('blanc') || type.includes('white');
         }).length,
         rouge: vinsToUse.filter(vin => {
             const type = typeof vin === 'object' && 'type' in vin 
                 ? vin.type.toLowerCase() 
                 : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
-            return type.includes('rouge');
+            return type.includes('rouge') || type.includes('red');
         }).length,
         rose: vinsToUse.filter(vin => {
             const type = typeof vin === 'object' && 'type' in vin 
                 ? vin.type.toLowerCase() 
                 : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
-            return type.includes('rosé');
+            return type.includes('rosé') || type.includes('rose');
         }).length,
-        moelleux: vinsToUse.filter(vin => {
+        sweet: vinsToUse.filter(vin => {
             const type = typeof vin === 'object' && 'type' in vin 
                 ? vin.type.toLowerCase() 
                 : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
-            return type.includes('moelleux') || type.includes('liquoreux');
+            return type.includes('sweet') || type.includes('doux') || type.includes('moelleux') || type.includes('liquoreux');
+        }).length,
+        oldWhite: vinsToUse.filter(vin => {
+            const type = typeof vin === 'object' && 'type' in vin 
+                ? vin.type.toLowerCase() 
+                : (vin as any).wine_type?.fr?.toLowerCase() || (vin as any).wine_type?.['en-US']?.toLowerCase() || '';
+            return type.includes('old white') || type.includes('blanc vieux');
         }).length,
         fortifie: vinsToUse.filter(vin => {
             const type = typeof vin === 'object' && 'type' in vin 

@@ -231,7 +231,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                 <div className="col-span-6">
                     <label className="block text-sm font-medium text-gray-700 mb-3">Type de vin</label>
                     <div className="grid grid-cols-2 gap-3 items-start">
-                        {['Mousseux', 'Rosé', 'Blanc', 'Fortifié', 'Rouge', 'Moelleux ou liquoreux'].map((type) => (
+                        {['Mousseux', 'Rosé', 'Blanc', 'Fortifié', 'Rouge', 'Sweet', 'Old White', 'Sparkling', 'Red', 'White'].map((type) => (
                             <RadioButton
                                 key={type}
                                 name={`type-${wine.id}`}

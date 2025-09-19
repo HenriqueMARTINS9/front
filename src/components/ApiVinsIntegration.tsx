@@ -135,20 +135,6 @@ export default function ApiVinsIntegration({ restaurantId = 0 }: ApiVinsIntegrat
 
     return (
         <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-gray-200">
-                <div className="px-6 py-6 text-lg font-medium text-gray-900 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-200 rounded-t-xl">
-                    <div className="flex items-center gap-2">
-                        <span>{t('wines.apiWines')}</span>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                            API
-                        </span>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                            {vins.length} vins
-                        </span>
-                    </div>
-                </div>
-            </div>
-
             <TableauVin
                 vins={vins}
             />

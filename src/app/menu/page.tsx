@@ -22,316 +22,6 @@ export default function MenuPage() {
     ]);
     const [activeTabId, setActiveTabId] = useState('1');
 
-    // Données des sections de menu
-    const [entrees, setEntrees] = useState<Plat[]>([
-        {
-            id: 'e1',
-            nom: 'Salade verte',
-            description: '',
-            prix: 12.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [{ id: 'mc1', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }]
-        },
-        {
-            id: 'e2',
-            nom: 'Salade mêlée',
-            description: '',
-            prix: 14.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [{ id: 'mc2', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }]
-        },
-        {
-            id: 'e3',
-            nom: 'Gaspacho andalou',
-            description: 'Perles de melon et lard grillé',
-            prix: 16.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc3', label: 'Solanacée', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc4', label: 'Viande séchée', color: 'bg-red-100', textColor: 'text-red-700' }
-            ]
-        },
-        {
-            id: 'e4',
-            nom: 'Carpaccio de tomate à l\'ancienne',
-            description: 'Vinaigrette balsamique, sorbet basilic maison',
-            prix: 18.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc5', label: 'Solanacée', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc6', label: 'Herbe fraîche aromatique', color: 'bg-purple-100', textColor: 'text-purple-700' }
-            ]
-        },
-        {
-            id: 'e5',
-            nom: 'Feuilleté aux champignons',
-            description: 'Mélange de champignons et sauce morilles',
-            prix: 20.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc7', label: 'Champignon', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc8', label: 'Herbe sèche', color: 'bg-purple-100', textColor: 'text-purple-700' }
-            ]
-        },
-        {
-            id: 'e6',
-            nom: 'Crevettes Royales sautées à l\'huile d\'olive & noix st-jacques',
-            description: 'Sur lit de julienne de légumes et sauce exotique',
-            prix: 28.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc9', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc10', label: 'Mollusque', color: 'bg-orange-100', textColor: 'text-orange-700' },
-                { id: 'mc11', label: 'Épices exotiques', color: 'bg-purple-100', textColor: 'text-purple-700' }
-            ]
-        }
-    ]);
-
-    const [viandes, setViandes] = useState<Plat[]>([
-        {
-            id: 'v1',
-            nom: 'Entrecôte de la Tour',
-            description: '',
-            prix: 32.00,
-            section: 'Nos viandes',
-            pointsDeVente: [true],
-            motsCles: [{ id: 'mc12', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' }]
-        },
-        {
-            id: 'v2',
-            nom: 'Filet de bœuf',
-            description: '',
-            prix: 35.00,
-            section: 'Nos viandes',
-            pointsDeVente: [true],
-            motsCles: [{ id: 'mc13', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' }]
-        },
-        {
-            id: 'v3',
-            nom: 'Filet de bœuf Landais',
-            description: 'Nappé dans son jus de cuisson & foie gras de canard poêlé, pommes de terre grenailles à l\'huile d\'olive et thym, légumes de saison',
-            prix: 38.00,
-            section: 'Nos viandes',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc14', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc15', label: 'Légume racine', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc16', label: 'Herbe résineuse', color: 'bg-purple-100', textColor: 'text-purple-700' }
-            ]
-        },
-        {
-            id: 'v4',
-            nom: 'Tartare de bœuf 180gr',
-            description: 'Toasts et beurre',
-            prix: 26.00,
-            section: 'Nos viandes',
-            pointsDeVente: [true],
-            motsCles: [{ id: 'mc17', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' }]
-        }
-    ]);
-
-    const [poissons, setPoissons] = useState<Plat[]>([
-        {
-            id: 'p1',
-            nom: 'Spécialité du Chef : Assiette exotique',
-            description: 'Mélange de fruits de mer, coulis de crustacés, Julienne de légumes et riz créole',
-            prix: 32.00,
-            section: 'Nos poissons',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc18', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc19', label: 'Épices exotiques', color: 'bg-purple-100', textColor: 'text-purple-700' },
-                { id: 'mc20', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }
-            ]
-        },
-        {
-            id: 'p2',
-            nom: 'Filets de perche meunière',
-            description: 'Sauce au beurre blanc citronnée',
-            prix: 28.00,
-            section: 'Nos poissons',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc21', label: 'Poisson', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc22', label: 'Herbe sèche', color: 'bg-purple-100', textColor: 'text-purple-700' }
-            ]
-        },
-        {
-            id: 'p3',
-            nom: 'Filet de féra du lac Léman',
-            description: 'Sauce au beurre blanc citronnée ou coulis de crustacés',
-            prix: 30.00,
-            section: 'Nos poissons',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc23', label: 'Poisson', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc24', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' }
-            ]
-        }
-    ]);
-
-    const [pates, setPates] = useState<Plat[]>([
-        {
-            id: 'pa1',
-            nom: 'Tagliatelles sauce morilles et parmesan',
-            description: '',
-            prix: 24.00,
-            section: 'Nos pâtes fraîches',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc25', label: 'Champignon', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc26', label: 'Fromage sec, salé et umami', color: 'bg-orange-100', textColor: 'text-orange-700' }
-            ]
-        },
-        {
-            id: 'pa2',
-            nom: 'Tagliatelles végétariennes',
-            description: '',
-            prix: 20.00,
-            section: 'Nos pâtes fraîches',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc27', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc28', label: 'Légume alliacé', color: 'bg-green-100', textColor: 'text-green-700' }
-            ]
-        },
-        {
-            id: 'pa3',
-            nom: 'Tagliatelles aux crevettes royale',
-            description: 'Crème citronnée et Julienne de légumes',
-            prix: 26.00,
-            section: 'Nos pâtes fraîches',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc29', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc30', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }
-            ]
-        }
-    ]);
-
-    const [suggestions, setSuggestions] = useState<Plat[]>([
-        {
-            id: 's1',
-            nom: 'Salade gourmande de printemps',
-            description: 'Composée : mélange de fruits de mer, Avocat et tomates cœur de bœuf',
-            prix: 22.00,
-            section: 'Suggestions du chef',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc31', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc32', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc33', label: 'Solanacée', color: 'bg-green-100', textColor: 'text-green-700' }
-            ]
-        },
-        {
-            id: 's2',
-            nom: 'Langue de bœuf',
-            description: 'Sauce aux câpres et pommes de terre écrasées',
-            prix: 24.00,
-            section: 'Suggestions du chef',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc34', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc35', label: 'Légume racine', color: 'bg-green-100', textColor: 'text-green-700' }
-            ]
-        },
-        {
-            id: 's3',
-            nom: 'Suprême de poulet sauce aux morilles',
-            description: 'Légumes du marché et pommes de terre grenailles',
-            prix: 26.00,
-            section: 'Suggestions du chef',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc36', label: 'Viande blanche', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc37', label: 'Champignon', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc38', label: 'Légume racine', color: 'bg-green-100', textColor: 'text-green-700' }
-            ]
-        },
-        {
-            id: 's4',
-            nom: 'Filet de Bar poêlé, sauce vierge',
-            description: 'Riz et légumes',
-            prix: 28.00,
-            section: 'Suggestions du chef',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc39', label: 'Poisson', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc40', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }
-            ]
-        },
-        {
-            id: 's5',
-            nom: 'Tagliata de bœuf',
-            description: 'Huile parfumée aux truffes et son lit de mesclun, Grano Padano, tomate cerise et pommes de terre frites',
-            prix: 32.00,
-            section: 'Suggestions du chef',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc41', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc42', label: 'Fromage sec, salé et umami', color: 'bg-orange-100', textColor: 'text-orange-700' },
-                { id: 'mc43', label: 'Solanacée', color: 'bg-green-100', textColor: 'text-green-700' }
-            ]
-        }
-    ]);
-
-    const [desserts, setDesserts] = useState<Plat[]>([
-        {
-            id: 'd1',
-            nom: 'Douceur de soleil',
-            description: 'Entremet aux fruits de la passion et noisettes',
-            prix: 12.00,
-            section: 'Nos desserts maison',
-            pointsDeVente: [true],
-            motsCles: [{ id: 'mc44', label: 'Épices pâtissières', color: 'bg-purple-100', textColor: 'text-purple-700' }]
-        },
-        {
-            id: 'd2',
-            nom: 'Moelleux au chocolat et glace vanille',
-            description: '',
-            prix: 10.00,
-            section: 'Nos desserts maison',
-            pointsDeVente: [true],
-            motsCles: [{ id: 'mc45', label: 'Épices pâtissières', color: 'bg-purple-100', textColor: 'text-purple-700' }]
-        },
-        {
-            id: 'd3',
-            nom: 'Crème brûlée à la vanille',
-            description: '',
-            prix: 8.00,
-            section: 'Nos desserts maison',
-            pointsDeVente: [true],
-            motsCles: [{ id: 'mc46', label: 'Épices pâtissières', color: 'bg-purple-100', textColor: 'text-purple-700' }]
-        },
-        {
-            id: 'd4',
-            nom: 'Dessert du jour',
-            description: '',
-            prix: 9.00,
-            section: 'Nos desserts maison',
-            pointsDeVente: [true],
-            motsCles: [{ id: 'mc47', label: 'Épices pâtissières', color: 'bg-purple-100', textColor: 'text-purple-700' }]
-        },
-        {
-            id: 'd5',
-            nom: 'Carpaccio d\'ananas au sirop de thym',
-            description: 'Glace romarin maison',
-            prix: 11.00,
-            section: 'Nos desserts maison',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc48', label: 'Épices pâtissières', color: 'bg-purple-100', textColor: 'text-purple-700' },
-                { id: 'mc49', label: 'Herbe résineuse', color: 'bg-purple-100', textColor: 'text-purple-700' }
-            ]
-        }
-    ]);
-
     const handleTabChange = (id: string) => {
         setActiveTabId(id);
         setPointsDeVente(prev => 
@@ -358,22 +48,6 @@ export default function MenuPage() {
             ...platData,
             id: `plat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         };
-
-        // Ajouter le plat à la section appropriée
-        switch (platData.section) {
-            case 'Entrée':
-                setEntrees(prev => [...prev, newPlat]);
-                break;
-            case 'Plat':
-                // Ajouter aux viandes par défaut, mais on pourrait créer une nouvelle section "Plats"
-                setViandes(prev => [...prev, newPlat]);
-                break;
-            case 'Dessert':
-                setDesserts(prev => [...prev, newPlat]);
-                break;
-            default:
-                setEntrees(prev => [...prev, newPlat]);
-        }
     };
 
     const handleOpenModal = () => {
@@ -420,8 +94,8 @@ export default function MenuPage() {
                              </svg>
                          </Button>
 
-                                                 <Button
-                             onClick={() => {/* TODO: Importer un menu */ }}
+                                                {/*<Button
+                             onClick={() => TODO: Importer un menu }}
                              className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-xs"
                          >
                              Importer un menu
@@ -430,21 +104,21 @@ export default function MenuPage() {
                              </svg>
                          </Button>
 
-                                                 <Button
-                             onClick={() => {/* TODO: Exporter un menu */ }}
-                             className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-xs"
-                         >
+                        <Button
+                            onClick={() => { TODO: Exporter un menu  }}
+                            className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-xs"
+                        >
                              Exporter un menu
                              <svg width="20" height="18" viewBox="0 0 20 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                                  <path d="M6.66649 13.1667L9.99982 16.5M9.99982 16.5L13.3332 13.1667M9.99982 16.5V9.00001M17.3998 14.075C18.1243 13.5655 18.6676 12.8385 18.9509 11.9993C19.2342 11.1601 19.2427 10.2525 18.9752 9.40819C18.7076 8.56387 18.178 7.82675 17.4632 7.30381C16.7484 6.78087 15.8855 6.49931 14.9998 6.50001H13.9498C13.6992 5.52323 13.2302 4.61605 12.5783 3.84674C11.9263 3.07743 11.1083 2.46606 10.1858 2.05863C9.26338 1.65121 8.26053 1.45836 7.25276 1.4946C6.245 1.53084 5.25858 1.79523 4.36778 2.26786C3.47698 2.74049 2.70501 3.40905 2.10998 4.2232C1.51495 5.03735 1.11237 5.97588 0.93254 6.96813C0.752714 7.96038 0.800331 8.9805 1.07181 9.95169C1.34328 10.9229 1.83154 11.8198 2.49982 12.575" stroke="#535862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                              </svg>
-                         </Button>
+                         </Button>*/}
                     </div>
 
                     {/* Tableaux des plats récupérés de l'API */}
                     <TableauMenu pointDeVenteId="1" restaurantId={0} />
 
-                    {/* Séparateur visuel */}
+                    {/* Séparateur visuel 
                     <div className="border-t border-gray-200 my-8">
                         <div className="text-center">
                             <span className="bg-[#F8F9FC] px-4 py-2 text-sm text-gray-500 rounded-full border border-gray-200">
@@ -453,61 +127,61 @@ export default function MenuPage() {
                         </div>
                     </div>
 
-                    <div className="space-y-8">
-                        {/* Nos entrées */}
+                    <div className="space-y-8">*/}
+                        {/* Nos entrées 
                         <SectionMenu
                             titre={t('menu.sections.entrees')}
                             plats={entrees}
                             onSavePlat={(plat) => handleSavePlat(plat, setEntrees)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setEntrees)}
                             restaurantId={0}
-                        />
+                        />*/}
 
-                        {/* Nos viandes */}
+                        {/* Nos viandes
                         <SectionMenu
                             titre={t('menu.sections.meats')}
                             plats={viandes}
                             onSavePlat={(plat) => handleSavePlat(plat, setViandes)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setViandes)}
                             restaurantId={0}
-                        />
+                        /> */}
 
-                        {/* Nos poissons */}
+                        {/* Nos poissons 
                         <SectionMenu
                             titre={t('menu.sections.fish')}
                             plats={poissons}
                             onSavePlat={(plat) => handleSavePlat(plat, setPoissons)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setPoissons)}
                             restaurantId={0}
-                        />
+                        />*/}
 
-                        {/* Nos pâtes fraîches */}
+                        {/* Nos pâtes fraîches 
                         <SectionMenu
                             titre={t('menu.sections.pasta')}
                             plats={pates}
                             onSavePlat={(plat) => handleSavePlat(plat, setPates)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setPates)}
                             restaurantId={0}
-                        />
+                        />*/}
 
-                        {/* Suggestions du chef */}
+                        {/* Suggestions du chef 
                         <SectionMenu
                             titre={t('menu.sections.suggestions')}
                             plats={suggestions}
                             onSavePlat={(plat) => handleSavePlat(plat, setSuggestions)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setSuggestions)}
                             restaurantId={0}
-                        />
+                        />*/}
 
-                        {/* Nos desserts maison */}
+                        {/* Nos desserts maison
                         <SectionMenu
                             titre={t('menu.sections.desserts')}
                             plats={desserts}
                             onSavePlat={(plat) => handleSavePlat(plat, setDesserts)}
                             onDeletePlat={(platId) => handleDeletePlat(platId, setDesserts)}
                             restaurantId={0}
-                        />
-                    </div>
+                        /> 
+                    </div> */}
                 </div>
             </main>
 

@@ -1,0 +1,132 @@
+# Dépendances
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Fichiers de build local
+.next/
+out/
+build/
+
+# Fichiers de développement
+.env*.local
+.env.development
+.env.test
+
+# Fichiers de système
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# Fichiers Git
+.git
+.gitignore
+
+# Fichiers d'éditeur
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+
+# Coverage directory utilisé par des outils comme istanbul
+coverage/
+*.lcov
+
+# Répertoire de dépendance nyc test coverage
+.nyc_output
+
+# Stockage intermédiaire Grunt (https://gruntjs.com/creating-plugins#storing-task-files)
+.grunt
+
+# Répertoire de dépendance Bower (https://bower.io/)
+bower_components
+
+# Configuration node-waf
+.lock-wscript
+
+# Addons binaires compilés (https://nodejs.org/api/addons.html)
+build/Release
+
+# Répertoires de dépendances
+jspm_packages/
+
+# Fichiers de déclaration TypeScript v1
+typings/
+
+# Cache optionnel npm
+.npm
+
+# Cache optionnel eslint
+.eslintcache
+
+# Cache Microbundle
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Cache optionnel REPL
+.node_repl_history
+
+# Sortie de 'npm pack'
+*.tgz
+
+# Fichier d'intégrité Yarn
+.yarn-integrity
+
+# Fichiers d'environnement dotenv
+.env
+
+# Fichier de configuration parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Sortie Next.js build
+.next
+
+# Sortie Nuxt.js build / generate
+.nuxt
+dist
+
+# Fichiers Gatsby
+.cache/
+public
+
+# Répertoire de sortie Vuepress
+.vuepress/dist
+
+# Répertoire temporaire Serverless
+.serverless/
+
+# Cache FuseBox
+.fusebox/
+
+# Fichiers locaux DynamoDB
+.dynamodb/
+
+# Fichier de port TernJS
+.tern-port
+
+# Stores VSCode versions utilisées pour tester les extensions VSCode
+.vscode-test
+
+# Dossier yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Fichiers Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Documentation
+README.md
+docs/

@@ -2,8 +2,12 @@ import Card from "./Card";
 
 export default function AlertCard({ alerts }: { alerts: { type: 'error' | 'success' | 'warning'; message: string }[] }) {
     return (
-      <Card title="Alertes">
-        {alerts.map((alert, i) => {
+      <Card title="Alertes" number={alerts.length === 0 ? 'Aucune notification' : alerts.length.toString()}>
+        {alerts.length === 0 ? (
+          <div className="">
+          </div>
+        ) : (
+          alerts.map((alert, i) => {
           const styles = {
             error: 'bg-[#FEF3F2] text-[#B42318]',
             success: 'bg-[#ECFDF3] text-[#027A48]',
@@ -44,7 +48,7 @@ export default function AlertCard({ alerts }: { alerts: { type: 'error' | 'succe
               <span>{alert.message}</span>
             </div>
           );
-        })}
+        }))}
       </Card>
     );
   }

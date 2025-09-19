@@ -377,41 +377,12 @@ export const recommendationsService = {
             
             try {
                 // Approche 1: POST avec restaurant_id dans le body
-                response = await api.post('/recommendations/restaurant_wines', {
-                    restaurant_id: restaurantId
+                response = await api.post('/recommendations/restaurant_wines', {}, {
+                    params: { restaurant_id: restaurantId }
                 });
-            } catch (error: any) {
-                if (error.response?.status === 422) {
-                    try {
-                        // Approche 2: POST avec restaurant_id en paramètre de requête
-                        response = await api.post('/recommendations/restaurant_wines', {}, {
-                            params: { restaurant_id: restaurantId }
-                        });
-                    } catch (error2: any) {
-                        if (error2.response?.status === 422) {
-                            try {
-                                // Approche 3: GET avec restaurant_id en paramètre
-                                response = await api.get('/recommendations/restaurant_wines', {
-                                    params: { restaurant_id: restaurantId }
-                                });
-                            } catch (error3: any) {
-                                if (error3.response?.status === 422) {
-                                    // Approche 4: POST avec restaurantId (sans underscore)
-                                    response = await api.post('/recommendations/restaurant_wines', {
-                                        restaurantId: restaurantId
-                                    });
-                                } else {
-                                    throw error3;
-                                }
-                            }
-                        } else {
-                            throw error2;
-                        }
-                    }
-                } else {
+            } catch (error: unknown) {
                     throw error;
                 }
-            }
             
             console.log('Wines response:', response.data);
             return response.data;
@@ -430,16 +401,11 @@ export const recommendationsService = {
             
             try {
                 // Essayer avec un body vide d'abord
-                response = await api.post('/recommendations/dishes', {});
-            } catch (error: any) {
-                if (error.response?.status === 422) {
-                    // Si 422, essayer avec des paramètres de requête
-                    response = await api.post('/recommendations/dishes', {}, {
-                        params: { restaurant_id: restaurantId }
-                    });
-                } else {
-                    throw error;
-                }
+                response = await api.post('/recommendations/dishes', {}, {
+                    params: { restaurant_id: restaurantId }
+                });
+            } catch (error: unknown) {
+                throw error;
             }
             
             console.log('Dishes response:', response.data);

@@ -2,11 +2,10 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken, getRestaurantToken, isRestaurantLoggedIn, isUserLoggedIn } from '@/lib/auth';
+import { isRestaurantLoggedIn, isUserLoggedIn } from '@/lib/auth';
 import Sidebar from '@/components/SideBar';
 import AlertCard from '@/components/AlertCard';
 import VinsCard from '@/components/VinsCard';
-import RestaurantCard from '@/components/RestaurantCard';
 import Header from '@/components/Header';
 import MenuCard from '@/components/MenuCard';
 import MembersCard from '@/components/MembersCard';
@@ -43,11 +42,12 @@ export default function HomePage() {
                     <div className="mb-0 col-span-8 space-y-10">
                         <div>
                             <AlertCard
-                                alerts={[
+                                /*alerts={[
                                     { type: 'warning', message: t('home.alerts.missingAromas') },
                                     { type: 'error', message: t('home.alerts.menuNotUpdated') },
                                     { type: 'success', message: t('home.alerts.addWineByGlass') },
-                                ]}
+                                ]}*/
+                                alerts={[]}
                             />
 
                         </div>
@@ -62,7 +62,7 @@ export default function HomePage() {
                         <div>
                             <VinsCard />
                         </div>
-                        <div><MembersCard /></div>
+                        {/*<div><MembersCard /></div> */}
                     </div>
 
                 </div>

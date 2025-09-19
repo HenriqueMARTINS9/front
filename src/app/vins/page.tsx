@@ -15,7 +15,7 @@ import { useTranslation } from '@/lib/useTranslation';
 export default function VinsPage() {
     const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
+
     // Récupération des vins depuis l'API
     const { data: vins, isLoading, error } = useVins();
     const createVinMutation = useCreateVin();
@@ -48,10 +48,22 @@ export default function VinsPage() {
                 <Header title={t('wines.title')} />
 
                 <div className="px-10 py-10 space-y-8">
+                    <div>
+                        <Button
+                            onClick={addNewWine}
+                            className="bg-[#4E5BA6] border-[#4E5BA6] text-white hover:bg-[#3D4A8A] hover:border-[#3D4A8A] transition-colors duration-200"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10.0001 6.66667V13.3333M6.66675 10H13.3334M18.3334 10C18.3334 14.6024 14.6025 18.3333 10.0001 18.3333C5.39771 18.3333 1.66675 14.6024 1.66675 10C1.66675 5.39763 5.39771 1.66667 10.0001 1.66667C14.6025 1.66667 18.3334 5.39763 18.3334 10Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+
+                            {t('wines.addWine')}
+                        </Button>
+                    </div>
                     {/* Vins récupérés de l'API */}
                     <ApiVinsIntegration restaurantId={0} />
 
-                    {/* Séparateur visuel */}
+                    {/* Séparateur visuel 
                     <div className="border-t border-gray-200 my-8">
                         <div className="text-center">
                             <span className="bg-[#F8F9FC] px-4 py-2 text-sm text-gray-500 rounded-full border border-gray-200">
@@ -60,18 +72,7 @@ export default function VinsPage() {
                         </div>
                     </div>
 
-                    <div>
-                    <Button 
-                            onClick={addNewWine}
-                            className="bg-[#4E5BA6] border-[#4E5BA6] text-white hover:bg-[#3D4A8A] hover:border-[#3D4A8A] transition-colors duration-200"
-                        >
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10.0001 6.66667V13.3333M6.66675 10H13.3334M18.3334 10C18.3334 14.6024 14.6025 18.3333 10.0001 18.3333C5.39771 18.3333 1.66675 14.6024 1.66675 10C1.66675 5.39763 5.39771 1.66667 10.0001 1.66667C14.6025 1.66667 18.3334 5.39763 18.3334 10Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-</svg>
 
-                            {t('wines.addWine')}
-                        </Button>
-                    </div>
 
                     <div>
                         {isLoading ? (
@@ -85,16 +86,16 @@ export default function VinsPage() {
                         ) : (
                             <TableauVin vins={(vins || []) as Vin[]} />
                         )}
-                    </div>
+                    </div>*/}
                 </div>
 
-                <ModalNouveauVin 
+                <ModalNouveauVin
                     isOpen={isModalOpen}
                     onClose={handleCloseModal}
                     onSave={handleSaveWine}
                 />
             </main>
-            
+
             {/* Notifications */}
             {notifications.map((notification) => (
                 <Notification

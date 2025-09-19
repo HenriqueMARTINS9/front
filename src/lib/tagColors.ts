@@ -82,19 +82,19 @@ export function getTagColors(label: string | undefined | null): { bg: string; pu
     }
     
     // Types de vins simples (sans "vin" dans le nom) - PRIORITÉ ÉLEVÉE
-    if (['orange', 'moelleux', 'liquoreux', 'moelleux ou liquoreux'].includes(lowerLabel)) {
+    if (['orange', 'moelleux', 'liquoreux', 'moelleux ou liquoreux', 'sweet'].includes(lowerLabel)) {
         return {
             bg: 'bg-[#FFF6ED]',
             puce: '#FB6514',
             text: 'text-[#C4320A]'
         };
-    } else if (['mousseux', 'blanc'].includes(lowerLabel)) {
+    } else if (['mousseux', 'blanc', 'sparkling', 'white'].includes(lowerLabel)) {
         return {
             bg: 'bg-[#FFFAEB]',
             puce: '#F79009',
             text: 'text-[#B54708]'
         };
-    } else if (['rouge'].includes(lowerLabel)) {
+    } else if (['rouge', 'red'].includes(lowerLabel)) {
         return {
             bg: 'bg-[#FEF3F2]',
             puce: '#F04438',
@@ -105,6 +105,12 @@ export function getTagColors(label: string | undefined | null): { bg: string; pu
             bg: 'bg-[#FDF2FA]',
             puce: '#EE46BC',
             text: 'text-[#C11574]'
+        };
+    } else if (['old white', 'oldwhite'].includes(lowerLabel)) {
+        return {
+            bg: 'bg-[#F0FDF4]',
+            puce: '#16A34A',
+            text: 'text-[#15803D]'
         };
     }
     

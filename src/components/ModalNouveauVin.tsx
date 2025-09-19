@@ -276,9 +276,9 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                             </RadioButton>
                             <RadioButton
                                 name="wine-type"
-                                value="moelleux / liquoreux"
-                                checked={selectedWineType === 'moelleux / liquoreux'}
-                                onChange={() => handleWineTypeChange('moelleux / liquoreux')}
+                                value="Sweet"
+                                checked={selectedWineType === 'Sweet'}
+                                onChange={() => handleWineTypeChange('Sweet')}
                                 size="lg"
                                 colors={{
                                     unchecked: 'border-gray-300 bg-white',
@@ -288,7 +288,23 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 }}
                                 className="flex items-center justify-start"
                             >
-                                <span className="text-sm text-gray-700">Vin moelleux / liquoreux</span>
+                                <span className="text-sm text-gray-700">Vin doux (Sweet)</span>
+                            </RadioButton>
+                            <RadioButton
+                                name="wine-type"
+                                value="Old White"
+                                checked={selectedWineType === 'Old White'}
+                                onChange={() => handleWineTypeChange('Old White')}
+                                size="lg"
+                                colors={{
+                                    unchecked: 'border-gray-300 bg-white',
+                                    checked: 'border-[#7F56D9] bg-purple-50',
+                                    focus: 'focus:ring-[#C4B5FD]',
+                                    dot: 'bg-[#7F56D9]'
+                                }}
+                                className="flex items-center justify-start"
+                            >
+                                <span className="text-sm text-gray-700">Blanc vieux (Old White)</span>
                             </RadioButton>
                         </div>
                     </div>

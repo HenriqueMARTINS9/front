@@ -7,8 +7,6 @@ import {
     Utensils,
     Users,
     Settings,
-    LogOut,
-    TestTube,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/useTranslation';
 import { useRestaurantInfo } from '@/lib/hooks';
