@@ -2,8 +2,8 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 // Import des traductions
-import frCommon from '../../public/locales/fr/common.json';
-import enCommon from '../../public/locales/en/common.json';
+import frCommon from '../locales/fr';
+import enCommon from '../locales/en';
 
 const resources = {
   fr: {

@@ -4,6 +4,9 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   // Configuration i18n supprimée car nous utilisons react-i18next directement
   
+  // Configuration pour Docker
+  output: 'standalone',
+  
   // Proxy pour contourner les problèmes CORS
   async rewrites() {
     return [

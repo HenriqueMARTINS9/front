@@ -95,7 +95,6 @@ dist
 
 # Fichiers Gatsby
 .cache/
-public
 
 # Répertoire de sortie Vuepress
 .vuepress/dist
