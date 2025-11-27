@@ -24,8 +24,8 @@ interface InputRowProps {
     rightType?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'select';
     
     // Options pour les Select
-    leftOptions?: string[];
-    rightOptions?: string[];
+    leftOptions?: string[] | Array<{ value: string; label: string }>;
+    rightOptions?: string[] | Array<{ value: string; label: string }>;
     
     // Personnalisation
     className?: string;
@@ -212,42 +212,61 @@ export default function InputRow({
         );
     };
 
+    // Calculer les classes de colonnes
+    const getLeftColClass = () => {
+        if (!showLeftInput) return '';
+        if (showRightInput && showDeleteButton) return 'col-span-7';
+        if (showRightInput || showDeleteButton) return 'col-span-9';
+        return 'col-span-12';
+    };
+    
+    const getRightColClass = () => {
+        if (!showRightInput) return '';
+        if (showDeleteButton) return 'col-span-3';
+        return 'col-span-4';
+    };
+    
+    const getDeleteColClass = () => {
+        if (!showDeleteButton) return '';
+        return 'col-span-2';
+    };
+    
     return (
         <div className={`grid grid-cols-12 gap-3 items-center ${className}`}>
             {/* Input de gauche */}
             {showLeftInput && (
-                <div className="col-span-8">
+                <div className={getLeftColClass()}>
                     {renderLeftInput()}
                 </div>
             )}
             
             {/* Input de droite */}
             {showRightInput && (
-                <div className="col-span-2">
+                <div className={getRightColClass()}>
                     {renderRightInput()}
                 </div>
             )}
             
             {/* Bouton de suppression */}
             {showDeleteButton && (
-                <div className="col-span-1 flex justify-center">
+                <div className={`${getDeleteColClass()} flex items-center justify-center flex-shrink-0`}>
                     <button
                         type="button"
                         onClick={handleDelete}
                         disabled={disabled}
                         className={`
-                            w-6 h-6 rounded-full flex items-center justify-center
+                            w-10 h-10 flex items-center justify-center
                             transition-all duration-200
-                            ${colors.deleteButton}
-                            ${colors.deleteButtonHover}
+                            text-gray-500 hover:text-red-500
                             ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}   
+                            flex-shrink-0
                         `}
                         title="Supprimer"
                     >
-                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 8L8 14M8 8L14 14M21 11C21 16.5228 16.5228 21 11 21C5.47715 21 1 16.5228 1 11C1 5.47715 5.47715 1 11 1C16.5228 1 21 5.47715 21 11Z" stroke="#717680" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                            <path d="M10 6L6 10M6 6L10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
-
                     </button>
                 </div>
             )}

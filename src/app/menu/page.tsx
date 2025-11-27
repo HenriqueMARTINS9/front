@@ -6,10 +6,11 @@ import Button from '@/components/Button';
 import SectionMenu from '@/components/SectionMenu';
 import PointsDeVenteTabs from '@/components/PointsDeVenteTabs';
 import ModalNouveauPlat from '@/components/ModalNouveauPlat';
-import TableauMenu from '@/components/TableauMenu';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import type { Plat } from '@/components/TableauMenu';
 import { useTranslation } from '@/lib/useTranslation';
+import { useRestaurantDishes, useDeleteDish } from '@/lib/hooks';
+import { convertDishToPlat } from '@/lib/api';
 
 const CUSTOM_SECTIONS_STORAGE_KEY = 'virtualsomm_custom_sections';
 
@@ -34,6 +35,57 @@ export default function MenuPage() {
     const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
     const [sectionNameDraft, setSectionNameDraft] = useState('');
     const [sectionPendingDeletion, setSectionPendingDeletion] = useState<CustomSection | null>(null);
+    
+    // Récupérer les plats de l'API
+    const { data: apiDishes, isLoading: isLoadingApi } = useRestaurantDishes(1);
+    const deleteDishMutation = useDeleteDish(1);
+    
+    // Convertir et grouper les plats de l'API par section
+    // Exclure les sections qui sont déjà dans customSections pour éviter les doublons
+    const apiSections = useMemo(() => {
+        if (!apiDishes || apiDishes.length === 0) return [];
+        
+        const customSectionNames = new Set(customSections.map(s => s.titre.toLowerCase()));
+        const sectionsMap: { [key: string]: CustomSection } = {};
+        
+        apiDishes.forEach((dish) => {
+            const plat = convertDishToPlat(dish, 1);
+            const sectionName = plat.section || t('menu.sections.staticDishes');
+            
+            // Ne pas ajouter si la section existe déjà dans customSections
+            if (customSectionNames.has(sectionName.toLowerCase())) {
+                return;
+            }
+            
+            if (!sectionsMap[sectionName]) {
+                sectionsMap[sectionName] = {
+                    id: `api-section-${sectionName}`,
+                    titre: sectionName,
+                    plats: []
+                };
+            }
+            
+            sectionsMap[sectionName].plats.push(plat);
+        });
+        
+        return Object.values(sectionsMap);
+    }, [apiDishes, customSections, t]);
+    
+    // Fusionner les sections API et personnalisées pour éviter les doublons
+    // Les sections personnalisées ont la priorité
+    const allSections = useMemo(() => {
+        const merged: CustomSection[] = [...customSections];
+        const customNames = new Set(customSections.map(s => s.titre.toLowerCase()));
+        
+        // Ajouter seulement les sections API qui n'existent pas déjà dans customSections
+        apiSections.forEach(apiSection => {
+            if (!customNames.has(apiSection.titre.toLowerCase())) {
+                merged.push(apiSection);
+            }
+        });
+        
+        return merged;
+    }, [customSections, apiSections]);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -102,8 +154,14 @@ export default function MenuPage() {
 
     // Fonction pour ajouter un nouveau plat
     const handleAddPlat = (platData: Omit<Plat, 'id'>) => {
+        // S'assurer que description et motsCles sont bien inclus
         const newPlat: Plat = {
-            ...platData,
+            nom: platData.nom || '',
+            description: platData.description || '',
+            prix: platData.prix || 0,
+            section: platData.section || '',
+            pointsDeVente: platData.pointsDeVente || [true],
+            motsCles: platData.motsCles || [],
             id: `plat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         };
 
@@ -152,17 +210,29 @@ export default function MenuPage() {
         );
     };
 
-    const handleDeleteCustomPlat = (sectionId: string, platId: string) => {
-        setCustomSections(prev =>
-            prev.map(section =>
-                section.id === sectionId
-                    ? {
-                        ...section,
-                        plats: section.plats.filter(plat => plat.id !== platId),
-                    }
-                    : section
-            )
-        );
+    const handleDeleteCustomPlat = async (sectionId: string, platId: string) => {
+        // Vérifier si c'est un plat de l'API (commence par "api-")
+        if (platId.startsWith('api-')) {
+            try {
+                // Supprimer via l'API
+                await deleteDishMutation.mutateAsync(platId);
+                // La liste sera automatiquement rafraîchie via React Query
+            } catch (error) {
+                console.error('Erreur lors de la suppression du plat:', error);
+            }
+        } else {
+            // Pour les plats personnalisés, supprimer de la section
+            setCustomSections(prev =>
+                prev.map(section =>
+                    section.id === sectionId
+                        ? {
+                            ...section,
+                            plats: section.plats.filter(plat => plat.id !== platId),
+                        }
+                        : section
+                )
+            );
+        }
     };
 
     const handleStartRenameSection = (sectionId: string) => {
@@ -290,35 +360,44 @@ export default function MenuPage() {
                          </Button>*/}
                     </div>
 
-                    {/* Tableaux des plats récupérés de l'API */}
-                    <TableauMenu pointDeVenteId="1" restaurantId={1} />
-
-                    {/* Sections personnalisées */}
-                    {customSections.length > 0 && (
+                    {/* Toutes les sections (API + personnalisées, fusionnées) */}
+                    {!isLoadingApi && allSections.length > 0 && (
                         <div className="space-y-6">
-                            {customSections.map((section) => (
-                                <SectionMenu
-                                    key={section.id}
-                                    titre={section.titre}
-                                    plats={section.plats}
-                                    onSavePlat={(plat) => handleSaveCustomPlat(section.id, plat)}
-                                    onDeletePlat={(platId) => handleDeleteCustomPlat(section.id, platId)}
-                                    restaurantId={1}
-                                    onRenameSection={() => handleStartRenameSection(section.id)}
-                                    onDeleteSection={() => handleRequestRemoveSection(section.id)}
-                                    onStartTitleEdit={() => handleStartRenameSection(section.id)}
-                                    isEditingTitle={editingSectionId === section.id}
-                                    titleDraft={editingSectionId === section.id ? sectionNameDraft : ''}
-                                    onChangeTitleDraft={(value) => {
-                                        if (editingSectionId === section.id) {
-                                            handleChangeSectionNameDraft(value);
-                                        }
-                                    }}
-                                    onSubmitTitleEdit={() => handleSubmitSectionName(section.id)}
-                                    onCancelTitleEdit={() => handleCancelSectionNameEdit(section.id)}
-                                    titlePlaceholder={t('menu.newSectionPlaceholder')}
-                                />
-                            ))}
+                            {allSections.map((section) => {
+                                const isCustomSection = customSections.some(s => s.id === section.id);
+                                return (
+                                    <SectionMenu
+                                        key={section.id}
+                                        titre={section.titre}
+                                        plats={section.plats}
+                                        onSavePlat={(plat) => {
+                                            if (isCustomSection) {
+                                                handleSaveCustomPlat(section.id, plat);
+                                            } else {
+                                                // Pour les sections API, on pourrait créer une section personnalisée
+                                                // ou mettre à jour via l'API
+                                            }
+                                        }}
+                                        onDeletePlat={(platId) => {
+                                            handleDeleteCustomPlat(section.id, platId);
+                                        }}
+                                        restaurantId={1}
+                                        onRenameSection={() => handleStartRenameSection(section.id)}
+                                        onDeleteSection={() => handleRequestRemoveSection(section.id)}
+                                        onStartTitleEdit={() => handleStartRenameSection(section.id)}
+                                        isEditingTitle={editingSectionId === section.id}
+                                        titleDraft={editingSectionId === section.id ? sectionNameDraft : ''}
+                                        onChangeTitleDraft={(value) => {
+                                            if (editingSectionId === section.id) {
+                                                handleChangeSectionNameDraft(value);
+                                            }
+                                        }}
+                                        onSubmitTitleEdit={() => handleSubmitSectionName(section.id)}
+                                        onCancelTitleEdit={() => handleCancelSectionNameEdit(section.id)}
+                                        titlePlaceholder={t('menu.newSectionPlaceholder')}
+                                    />
+                                );
+                            })}
                         </div>
                     )}
 

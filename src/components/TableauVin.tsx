@@ -349,7 +349,7 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
 
                                                         {/* Cépage ou assemblage */}
                                                         <CepageAssemblage 
-                                                            cepages={editingData[wine.id]?.cepages || [{ id: '1', nom: wine.cepage, pourcentage: 100 }]} 
+                                                            cepages={editingData[wine.id]?.cepages || wine.cepages || [{ id: '1', nom: wine.cepage, pourcentage: 100 }]} 
                                                             wineType={wine.type} 
                                                         />
 
@@ -378,12 +378,15 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
                                                             wine={{
                                                                 id: wine.id,
                                                                 name: wine.nom,
+                                                                subname: wine.subname,
                                                                 millesime: wine.millesime,
                                                                 type: wine.type as any,
                                                                 pointsDeVente: wine.pointsDeVente,
                                                                 aocRegion: wine.region,
                                                                 pays: wine.pays,
-                                                                cepages: [{ id: '1', nom: wine.cepage, pourcentage: 100 }],
+                                                                cepages: wine.cepages && wine.cepages.length > 0 
+                                                                    ? wine.cepages 
+                                                                    : [{ id: '1', nom: wine.cepage, pourcentage: 100 }],
                                                                 formats: [{ id: '1', nom: 'Bouteille (75 cl)', prix: wine.prix }],
                                                                 motsCles: wine.motsCles
                                                             }}

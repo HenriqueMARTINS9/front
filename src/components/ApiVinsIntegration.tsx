@@ -43,7 +43,7 @@ export default function ApiVinsIntegration({ restaurantId = 0 }: ApiVinsIntegrat
             <div className="bg-white rounded-xl border border-gray-200 p-8">
                 <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7F56D9]"></div>
-                    <span className="ml-3 text-gray-600">{t('test.wines.loading')}</span>
+                    <span className="ml-3 text-gray-600">Chargement</span>
                 </div>
             </div>
         );

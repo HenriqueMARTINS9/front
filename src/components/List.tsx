@@ -40,7 +40,7 @@ type ListProps = {
         label: string;
         type: 'text' | 'number' | 'select';
         placeholder?: string;
-        options?: Array<{ value: string; label: string }>;
+        options?: Array<{ value: string; label: string }> | string[];
         suffix?: string;
         width?: string;
     }>;
@@ -95,9 +95,14 @@ export default function List({
         return 'full';
     };
 
-    const convertOptionsToStringArray = (options?: Array<{ value: string; label: string }>) => {
+    const convertOptions = (options?: Array<{ value: string; label: string }> | string[]) => {
         if (!options) return [];
-        return options.map(option => option.label);
+        // Si c'est déjà un tableau de strings, le retourner tel quel
+        if (options.length > 0 && typeof options[0] === 'string') {
+            return options as string[];
+        }
+        // Sinon, retourner les options complètes pour que Select puisse utiliser value et label
+        return options as Array<{ value: string; label: string }>;
     };
 
     const renderInputRow = (item: ListItem) => {
@@ -126,8 +131,8 @@ export default function List({
                 onDelete={handleDelete}
                 leftType={leftField.type}
                 rightType={rightField?.type}
-                leftOptions={convertOptionsToStringArray(leftField.options)}
-                rightOptions={convertOptionsToStringArray(rightField?.options)}
+                leftOptions={convertOptions(leftField.options)}
+                rightOptions={convertOptions(rightField?.options)}
                 size={size}
                 leftWidth={getColumnWidth(leftField)}
                 rightWidth={getColumnWidth(rightField)}

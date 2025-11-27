@@ -4,6 +4,7 @@ import Button from './Button';
 import InputField from './InputField';
 import Checkbox from './Checkbox';
 import List from './List';
+import Select from './Select';
 import type { Plat } from './TableauMenu';
 import { recommendationsService } from '@/lib/api';
 import { Dish } from '@/lib/api';
@@ -90,7 +91,7 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
     const [isLoadingSections, setIsLoadingSections] = useState(false);
 
     // États pour les arômes
-    const [aromePrincipal, setAromePrincipal] = useState<AromeItem[]>([{ id: '1', label: '', color: 'bg-green-100', textColor: 'text-green-700', puce: false, puceColor: '' }]);
+    const [aromePrincipal, setAromePrincipal] = useState<string>('');
     const [aromesSecondaires, setAromesSecondaires] = useState<AromeItem[]>([]);
 
     // États pour les erreurs de validation
@@ -137,9 +138,12 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                 if (sectionsArray.length > 0) {
                     setSectionsSelectionnees(sectionsArray.map((_, index) => index === 0));
                     setSection(sectionsArray[0]);
+                    setCreerNouvelleSection(false);
                 } else {
+                    // Si aucune section n'existe, cocher "créer une nouvelle section" par défaut
                     setSectionsSelectionnees([]);
                     setSection('');
+                    setCreerNouvelleSection(true);
                 }
             } catch (error) {
                 console.error('Erreur lors de la récupération des types de plats:', error);
@@ -149,9 +153,12 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                 if (defaultSections.length > 0) {
                     setSectionsSelectionnees(defaultSections.map((_, index) => index === 0));
                     setSection(defaultSections[0]);
+                    setCreerNouvelleSection(false);
                 } else {
+                    // Si aucune section n'existe, cocher "créer une nouvelle section" par défaut
                     setSectionsSelectionnees([]);
                     setSection('');
+                    setCreerNouvelleSection(true);
                 }
             } finally {
                 setIsLoadingSections(false);
@@ -199,16 +206,9 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
         }
     };
 
-    // Gestionnaires pour les arômes
-    const handleAromePrincipalChange = (items: any[]) => {
-        setAromePrincipal(items.map(item => ({
-            id: item.id,
-            label: item.label || '',
-            color: item.color || 'bg-green-100',
-            textColor: item.textColor || 'text-green-700',
-            puce: typeof item.puce === 'boolean' ? item.puce : Boolean(item.label?.trim()),
-            puceColor: typeof item.puceColor === 'string' ? item.puceColor : ''
-        })));
+    // Gestionnaire pour l'arôme principal (un seul arôme)
+    const handleAromePrincipalChange = (value: string) => {
+        setAromePrincipal(value);
     };
 
     const handleAromesSecondairesChange = (items: any[]) => {
@@ -237,6 +237,10 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
         if (!sectionFinale.trim()) {
             newErrors.section = true;
         }
+        // Vérifier qu'un arôme principal est sélectionné
+        if (!aromePrincipal || aromePrincipal.trim() === '') {
+            newErrors.aromePrincipal = true;
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -251,8 +255,23 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
         // S'assurer que le prix est un nombre
         const prixNumerique = parseFloat(prix) || 0;
 
-        // Combiner tous les arômes
-        const tousLesAromes = [...aromePrincipal.filter(a => a.label.trim()), ...aromesSecondaires.filter(a => a.label.trim())];
+        // Combiner tous les arômes (arôme principal + arômes secondaires)
+        const tousLesAromes: AromeItem[] = [];
+        
+        // Ajouter l'arôme principal s'il est sélectionné
+        if (aromePrincipal && aromePrincipal.trim() !== '') {
+            tousLesAromes.push({
+                id: 'principal-1',
+                label: aromePrincipal,
+                color: 'bg-green-100',
+                textColor: 'text-green-700',
+                puce: true,
+                puceColor: '#10b981'
+            });
+        }
+        
+        // Ajouter les arômes secondaires
+        tousLesAromes.push(...aromesSecondaires.filter(a => a.label.trim()));
 
         // Utiliser la nouvelle section si elle est saisie, sinon utiliser la section sélectionnée
         const sectionFinale = creerNouvelleSection && nouvelleSection.trim() ? nouvelleSection.trim() : section;
@@ -444,39 +463,36 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                                     </div>
                                 </div>
                             )}
+                            {errors.section && !creerNouvelleSection && !section && (
+                                <p className="text-red-500 text-sm mt-1">{t('menu.sectionRequired') || 'Une section est requise'}</p>
+                            )}
                         </div>
 
                         {/* Arôme principal */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">Arôme principal</label>
-                            <List
-                                items={aromePrincipal}
-                                onItemsChange={handleAromePrincipalChange}
-                                fields={[
-                                    {
-                                        key: 'label',
-                                        label: 'Arôme',
-                                        type: 'select',
-                                        options: createOptionsAromes(t)
-                                    }
-                                ]}
-                                addButtonText={t('menu.dish.addAroma')}
-                                emptyMessage="Aucun arôme principal ajouté"
+                            <label className={`block text-sm font-medium mb-3 ${errors.aromePrincipal ? 'text-red-700' : 'text-gray-700'}`}>
+                                Arôme principal <span className="text-red-500">*</span>
+                            </label>
+                            <Select
+                                value={aromePrincipal}
+                                onChange={handleAromePrincipalChange}
+                                options={createOptionsAromes(t)}
+                                placeholder="Sélectionner un arôme principal"
                                 size="md"
+                                width="full"
                                 colors={{
                                     background: 'bg-white',
-                                    border: 'border-gray-300',
+                                    border: errors.aromePrincipal ? 'border-red-500' : 'border-gray-300',
                                     text: 'text-gray-900',
                                     placeholder: 'placeholder-gray-500',
                                     focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
                                     hover: '',
-                                    addButton: 'bg-[#3E4784] text-white hover:bg-[#2D3A6B] hover:shadow-md transform transition-all duration-200 ease-in-out',
-                                    deleteButton: 'text-gray-400',
-                                    deleteButtonHover: '',
-                                    optionHover: 'hover:bg-gray-50',
-                                    optionSelected: 'bg-purple-50 text-purple-700'
+                                    error: 'border-red-500'
                                 }}
                             />
+                            {errors.aromePrincipal && (
+                                <p className="text-red-500 text-sm mt-1">Un arôme principal est requis</p>
+                            )}
                         </div>
 
                         {/* Arômes secondaires */}

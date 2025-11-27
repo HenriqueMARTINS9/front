@@ -89,7 +89,14 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
     // Fonction pour obtenir la largeur avec suffix
     const getWidthWithSuffix = () => {
         if (suffix) {
-            return 'min-w-[120px]';
+            // Ajuster la largeur minimale pour les champs avec suffixe selon la largeur demandée
+            if (width === 'sm') {
+                return 'min-w-[110px]';
+            }
+            if (width === 'md') {
+                return 'min-w-[120px]';
+            }
+            return 'min-w-[130px]';
         }
         return widthClasses[width];
     };
@@ -241,6 +248,7 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
                         ${suffix === ' CHF' ? 'pr-12 text-right' : ''}
                         ${suffix === ' %' ? 'pr-10 text-right' : ''}
                         ${suffix && suffix !== ' CHF' && suffix !== ' %' ? 'pr-12 text-right' : ''}
+                        ${type === 'number' ? '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none' : ''}
                     `}
                 />
                 

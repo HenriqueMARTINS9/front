@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import MotsCles from './MotsCles';
 import Button from './Button';
 import Checkbox from './Checkbox';
@@ -37,7 +37,26 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
 
     // États pour les listes
     const [cepages, setCepages] = useState([{ id: '1', nom: '', pourcentage: 0 }]);
-    const [format, setFormat] = useState({ nom: '', prix: 0 });
+    // Initialiser le format avec le premier format disponible (Magnum)
+    const [format, setFormat] = useState({ nom: 'Magnum (150 cl)', prix: 0 });
+
+    // Réinitialiser le formulaire quand le modal s'ouvre
+    useEffect(() => {
+        if (isOpen) {
+            setWineName('');
+            setMillesime('');
+            setDomaine('');
+            setAocRegion('');
+            setPays('');
+            setCepages([{ id: '1', nom: '', pourcentage: 0 }]);
+            // Initialiser avec le premier format disponible (Magnum)
+            setFormat({ nom: 'Magnum (150 cl)', prix: 0 });
+            setErrors({});
+            setSelectedWineType('Blanc');
+            setUnknownProportions(false);
+            setRestaurantChecks([true]);
+        }
+    }, [isOpen]);
     // const [motsCles, setMotsCles] = useState([{ id: '1', label: '', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }]);
 
     // États pour les erreurs de validation
@@ -60,10 +79,15 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
     };
 
     const handleFormatChange = (field: string, value: any) => {
-        setFormat(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        console.log('handleFormatChange appelé:', { field, value });
+        setFormat(prev => {
+            const newFormat = {
+                ...prev,
+                [field]: value
+            };
+            console.log('Nouveau format:', newFormat);
+            return newFormat;
+        });
     };
 
     // const handleMotsClesChange = (items: any[]) => {
@@ -110,11 +134,15 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
         if (cepages.length === 0 || !cepages[0].nom.trim()) {
             newErrors.cepages = true;
         }
-        if (!format.nom.trim()) {
+        console.log('Vérification du format:', { formatNom: format.nom, formatNomTrim: format.nom?.trim(), isEmpty: !format.nom?.trim() });
+        if (!format.nom || !format.nom.trim()) {
             newErrors.format = true;
         }
 
         setErrors(newErrors);
+        
+        const isValid = Object.keys(newErrors).length === 0;
+        console.log('Validation du formulaire:', { isValid, errors: newErrors });
 
         // Focus sur le premier champ en erreur
         if (newErrors.wineName && wineNameRef.current) {
@@ -129,14 +157,25 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
             paysRef.current.focus();
         }
 
-        return Object.keys(newErrors).length === 0;
+        return isValid;
     };
 
     // Gestionnaire pour la soumission
-    const handleSubmit = () => {
+    const handleSubmit = (e?: React.MouseEvent<HTMLButtonElement>) => {
+        // Empêcher le comportement par défaut si c'est un événement
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        console.log('handleSubmit appelé');
+        
         if (!validateForm()) {
+            console.log('Validation échouée, erreurs:', errors);
             return; // Arrêter si validation échoue
         }
+
+        console.log('Validation réussie, création du vin...');
 
         // S'assurer que le prix est un nombre
         const prix = parseFloat(format.prix?.toString()) || 0;
@@ -162,14 +201,29 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
             pointsDeVente: restaurantChecks as [boolean],
             // motsCles: motsCles.filter(mc => mc.label.trim() !== '') // Filtrer les mots-clés vides
         };
-        onSave(wineData);
-        onClose();
+        
+        console.log('Données du vin à sauvegarder:', wineData);
+        
+        try {
+            onSave(wineData);
+            onClose();
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde:', error);
+        }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-[#0000005F] bg-opacity-50 flex items-center justify-center z-50 animate-in fade-in duration-300">
+        <div 
+            className="fixed inset-0 bg-[#0000005F] bg-opacity-50 flex items-center justify-center z-50 animate-in fade-in duration-300"
+            onClick={(e) => {
+                // Fermer le modal si on clique sur le fond
+                if (e.target === e.currentTarget) {
+                    onClose();
+                }
+            }}
+        >
             <div className="bg-gray-50 rounded-xl max-w-4xl w-full mx-4 max-h-[90vh] shadow-sm focus:shadow-sm focus:shadow-gray-100 focus:shadow-[4px] overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                 <div className="p-8 overflow-y-auto flex-1">
                 {/* Header */}
@@ -523,12 +577,15 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                     </div>
 
                     {/* Format du vin */}
-                    <div className="grid grid-cols-2 gap-6">
-                        <div>
+                    <div className="grid grid-cols-3 gap-6">
+                        <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-3">{t('common.format')}</label>
                             <Select
-                                value={format.nom}
-                                onChange={(value) => handleFormatChange('nom', value)}
+                                value={format.nom || ''}
+                                onChange={(value) => {
+                                    console.log('Select onChange appelé avec valeur:', value);
+                                    handleFormatChange('nom', value);
+                                }}
                                 options={[
                                     { value: 'Magnum (150 cl)', label: t('common.magnum') },
                                     { value: 'Bouteille (75 cl)', label: t('common.bottle') },
@@ -539,19 +596,22 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 placeholder={t('common.format')}
                                 size="md"
                                 width="full"
+                                position="top"
                                 colors={{
                                     background: 'bg-white',
-                                    border: 'border-gray-300',
+                                    border: errors.format ? 'border-red-500' : 'border-gray-300',
                                     text: 'text-gray-900',
                                     placeholder: 'placeholder-gray-500',
                                     focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
                                     hover: '',
                                     error: 'border-red-500'
                                 }}
-                                error={errors.format ? t('common.formatRequired') : undefined}
                             />
+                            {errors.format && (
+                                <p className="text-red-500 text-sm mt-1">{t('common.formatRequired')}</p>
+                            )}
                         </div>
-                        <div>
+                        <div className="flex-shrink-0 w-[130px]">
                             <InputField
                                 type="number"
                                 value={format.prix.toString()}
@@ -561,6 +621,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 suffix=" CHF"
                                 size="md"
                                 width="full"
+                                className=""
                                 colors={{
                                     background: 'bg-white',
                                     border: 'border-gray-300',
@@ -584,25 +645,34 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                         />
                     </div> */}
                 </div>
+                </div>
 
-                {/* Boutons d'action */}
-                <div className="flex justify-start gap-4 mt-8 pt-6">
+                {/* Boutons d'action - en dehors de la zone scrollable */}
+                <div className="px-8 py-4 border-t border-gray-200 bg-gray-50 flex justify-start gap-4">
                     <Button
-                        onClick={handleSubmit}
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSubmit(e);
+                        }}
                         className="bg-[#3E4784] text-white hover:bg-[#2D3A6B] hover:shadow-lg transform transition-all duration-200 ease-in-out"
                     >
                         {t('common.validate')}
                     </Button>
                     <Button
-                        onClick={onClose}
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onClose();
+                        }}
                         className="bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200"
                     >
                         {t('common.cancel')}
                     </Button>
-
-                                 </div>
                 </div>
-             </div>
-         </div>
-     );
- }
+            </div>
+        </div>
+    );
+}

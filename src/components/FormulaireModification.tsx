@@ -316,8 +316,8 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                 <div className="col-span-6" />
                 {/* Format du vin */}
                 <div className="col-span-6">
-                    <div className="grid grid-cols-2 gap-6">
-                        <div>
+                    <div className="grid grid-cols-3 gap-6">
+                        <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-3">Format</label>
                             <Select
                                 value={format.nom}
@@ -332,6 +332,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                                 placeholder="Sélectionner un format"
                                 size="md"
                                 width="full"
+                                position="top"
                                 colors={{
                                     background: 'bg-white',
                                     border: 'border-gray-300',
@@ -342,7 +343,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                                 }}
                             />
                         </div>
-                        <div>
+                        <div className="flex-shrink-0 w-[130px]">
                             <InputField
                                 type="number"
                                 value={format.prix.toString()}
@@ -352,6 +353,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                                 suffix=" CHF"
                                 size="md"
                                 width="full"
+                                className=""
                                 colors={{
                                     background: 'bg-white',
                                     border: 'border-gray-300',
@@ -381,7 +383,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
 
 
             {/* Boutons d'action */}
-            <div className="flex gap-6 pt-6">
+            <div className="flex gap-6 pt-4">
                 <Button onClick={() => {
                     // S'assurer que le prix est un nombre
                     const formatWithNumericPrice = {

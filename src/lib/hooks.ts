@@ -209,8 +209,8 @@ export const useWineRecommendations = (userList?: User[], wineCategories?: strin
 
 export const useRestaurantWines = (restaurantId?: number) => {
     const { data: restaurantInfo } = useRestaurantInfo();
-    // Forcer l'utilisation du restaurant ID 0 pour les données de démonstration
-    const actualRestaurantId = restaurantId !== undefined ? restaurantId : 0;
+    // Utiliser le restaurant ID 1 par défaut pour l'accueil
+    const actualRestaurantId = restaurantId !== undefined ? restaurantId : (restaurantInfo?.id ?? 1);
     
     return useQuery({
         queryKey: queryKeys.restaurantWines(actualRestaurantId),
@@ -221,8 +221,8 @@ export const useRestaurantWines = (restaurantId?: number) => {
 
 export const useRestaurantDishes = (restaurantId?: number) => {
     const { data: restaurantInfo } = useRestaurantInfo();
-    // Forcer l'utilisation du restaurant ID 0 pour les données de démonstration
-    const actualRestaurantId = restaurantId !== undefined ? restaurantId : 0;
+    // Utiliser le restaurant ID 1 par défaut pour l'accueil
+    const actualRestaurantId = restaurantId !== undefined ? restaurantId : (restaurantInfo?.id ?? 1);
     
     return useQuery({
         queryKey: queryKeys.restaurantDishes(actualRestaurantId),
@@ -240,7 +240,7 @@ export const useBestWinesFromDishes = (restaurantId: number, dishesId: number[],
 };
 
 // Hooks pour les vins (compatibilité avec l'ancien système)
-export const useVins = (restaurantId: number = 0) => {
+export const useVins = (restaurantId: number = 1) => {
     // Récupérer les vins depuis l'API et les convertir au format Vin
     return useQuery({
         queryKey: ['vins', restaurantId],
@@ -255,7 +255,7 @@ export const useVins = (restaurantId: number = 0) => {
     });
 };
 
-export const useCreateVin = (restaurantId: number = 0) => {
+export const useCreateVin = (restaurantId: number = 1) => {
     const queryClient = useQueryClient();
     
     return useMutation({
@@ -280,7 +280,7 @@ export const useCreateVin = (restaurantId: number = 0) => {
     });
 };
 
-export const useUpdateVin = (restaurantId: number = 0) => {
+export const useUpdateVin = (restaurantId: number = 1) => {
     const queryClient = useQueryClient();
     
     return useMutation({
@@ -307,7 +307,7 @@ export const useUpdateVin = (restaurantId: number = 0) => {
     });
 };
 
-export const useDeleteVin = (restaurantId: number = 0) => {
+export const useDeleteVin = (restaurantId: number = 1) => {
     const queryClient = useQueryClient();
     
     return useMutation({
@@ -329,7 +329,7 @@ export const useDeleteVin = (restaurantId: number = 0) => {
 };
 
 // Hooks pour les plats (similaires aux vins)
-export const useCreateDish = (restaurantId: number = 0) => {
+export const useCreateDish = (restaurantId: number = 1) => {
     const queryClient = useQueryClient();
     
     return useMutation({
@@ -353,7 +353,7 @@ export const useCreateDish = (restaurantId: number = 0) => {
     });
 };
 
-export const useUpdateDish = (restaurantId: number = 0) => {
+export const useUpdateDish = (restaurantId: number = 1) => {
     const queryClient = useQueryClient();
     
     return useMutation({
@@ -381,7 +381,7 @@ export const useUpdateDish = (restaurantId: number = 0) => {
     });
 };
 
-export const useDeleteDish = (restaurantId: number = 0) => {
+export const useDeleteDish = (restaurantId: number = 1) => {
     const queryClient = useQueryClient();
     
     return useMutation({

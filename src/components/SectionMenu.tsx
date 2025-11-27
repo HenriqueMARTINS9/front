@@ -66,8 +66,8 @@ export default function SectionMenu({
         setExpanded(prev => ({ ...prev, [platId]: false }));
     }
 
-    const showSectionActions = (!!onRenameSection || !!onDeleteSection) && !isEditingTitle;
-    const showDeleteOnly = !!onDeleteSection && isEditingTitle;
+    const showSectionActions = (!!onRenameSection || (!!onDeleteSection && plats.length === 0)) && !isEditingTitle;
+    const showDeleteOnly = !!onDeleteSection && plats.length === 0 && isEditingTitle;
 
     return (
         <div className="bg-white rounded-xl border border-gray-200">
@@ -132,7 +132,7 @@ export default function SectionMenu({
                                 <Pencil className="h-4 w-4" />
                             </button>
                         )}
-                        {onDeleteSection && (
+                        {onDeleteSection && plats.length === 0 && (
                             <button
                                 onClick={onDeleteSection}
                                 className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-white text-red-600 transition-colors duration-150 hover:bg-red-50"

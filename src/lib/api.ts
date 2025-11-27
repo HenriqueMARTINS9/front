@@ -120,6 +120,11 @@ export interface Vin {
     subname?: string;
     type: string;
     cepage: string;
+    cepages?: Array<{
+        id: string;
+        nom: string;
+        pourcentage: number;
+    }>;
     region: string;
     pays: string;
     millesime: number;
@@ -142,14 +147,25 @@ export const convertRestaurantWineToVin = (wine: RestaurantWine, restaurantId: n
         return obj['fr'] || obj['en-US'] || Object.values(obj)[0] || fallback;
     };
 
+    // Convertir tous les cépages avec leurs pourcentages
+    const cepages = wine.grapes_varieties && wine.grapes_varieties.length > 0
+        ? wine.grapes_varieties.map((gv, index) => ({
+            id: gv.variety_id ? gv.variety_id.toString() : `cep-${index}`,
+            nom: getValue(gv.variety_name),
+            pourcentage: gv.variety_percent || 0
+        }))
+        : [];
+
+    // Le premier cépage pour la compatibilité avec l'ancien format
+    const cepage = cepages.length > 0 ? cepages[0].nom : '';
+
     return {
         id: wine.wine_id != null ? wine.wine_id.toString() : `wine-${Date.now()}`,
         nom: getValue(wine.wine_name),
-        subname: getValue(wine.domain),
+        subname: getValue(wine.domain), // Le domaine est bien récupéré ici
         type: getValue(wine.wine_type),
-        cepage: wine.grapes_varieties && wine.grapes_varieties.length > 0 
-            ? getValue(wine.grapes_varieties[0].variety_name)
-            : '',
+        cepage: cepage,
+        cepages: cepages, // Tous les cépages avec leurs pourcentages
         region: getValue(wine.appellation),
         pays: getValue(wine.country),
         millesime: wine.year || 0,
