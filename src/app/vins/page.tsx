@@ -16,9 +16,11 @@ export default function VinsPage() {
     const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const restaurantId = 1; // ID du restaurant (pourrait venir du contexte ou de l'authentification)
+    
     // Récupération des vins depuis l'API
-    const { data: vins, isLoading, error } = useVins();
-    const createVinMutation = useCreateVin();
+    const { data: vins, isLoading, error } = useVins(restaurantId);
+    const createVinMutation = useCreateVin(restaurantId);
     const { notifications, showSuccess, showError, removeNotification } = useNotification();
 
     function addNewWine() {
@@ -30,9 +32,64 @@ export default function VinsPage() {
             await createVinMutation.mutateAsync(wineData);
             setIsModalOpen(false);
             showSuccess('Vin créé avec succès !');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erreur lors de la création du vin:', error);
-            showError('Erreur lors de la création du vin');
+            
+            // Afficher un message d'erreur plus détaillé
+            let errorMessage = 'Erreur lors de la création du vin';
+            
+            if (error?.response?.data) {
+                const errorData = error.response.data;
+                
+                // Si c'est un tableau d'erreurs de validation (format Pydantic)
+                if (Array.isArray(errorData)) {
+                    const validationErrors = errorData
+                        .map((err: any) => {
+                            if (err.msg && err.loc) {
+                                const field = Array.isArray(err.loc) ? err.loc.slice(1).join('.') : err.loc;
+                                return `${field}: ${err.msg}`;
+                            }
+                            return JSON.stringify(err);
+                        })
+                        .join(', ');
+                    errorMessage = `Erreurs de validation: ${validationErrors}`;
+                }
+                // Si c'est un objet avec un message
+                else if (typeof errorData === 'object') {
+                    if (errorData.error_description) {
+                        errorMessage = errorData.error_description;
+                    } else if (errorData.message) {
+                        errorMessage = errorData.message;
+                    } else if (errorData.detail) {
+                        // Si detail est un tableau (format FastAPI/Pydantic)
+                        if (Array.isArray(errorData.detail)) {
+                            const validationErrors = errorData.detail
+                                .map((err: any) => {
+                                    if (err.msg && err.loc) {
+                                        const field = Array.isArray(err.loc) ? err.loc.slice(1).join('.') : err.loc;
+                                        return `${field}: ${err.msg}`;
+                                    }
+                                    return JSON.stringify(err);
+                                })
+                                .join(', ');
+                            errorMessage = `Erreurs de validation: ${validationErrors}`;
+                        } else {
+                            errorMessage = errorData.detail;
+                        }
+                    } else {
+                        // Essayer de formater l'objet d'erreur
+                        errorMessage = JSON.stringify(errorData);
+                    }
+                }
+                // Si c'est une chaîne
+                else if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                }
+            } else if (error?.message) {
+                errorMessage = error.message;
+            }
+            
+            showError(errorMessage);
         }
     }
 
@@ -61,7 +118,7 @@ export default function VinsPage() {
                         </Button>
                     </div>
                     {/* Vins récupérés de l'API */}
-                    <ApiVinsIntegration restaurantId={0} />
+                    <ApiVinsIntegration restaurantId={1} />
 
                     {/* Séparateur visuel 
                     <div className="border-t border-gray-200 my-8">

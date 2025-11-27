@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Sidebar from '@/components/SideBar';
 import Header from '@/components/Header';
 import Button from '@/components/Button';
@@ -7,8 +7,17 @@ import SectionMenu from '@/components/SectionMenu';
 import PointsDeVenteTabs from '@/components/PointsDeVenteTabs';
 import ModalNouveauPlat from '@/components/ModalNouveauPlat';
 import TableauMenu from '@/components/TableauMenu';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import type { Plat } from '@/components/TableauMenu';
 import { useTranslation } from '@/lib/useTranslation';
+
+const CUSTOM_SECTIONS_STORAGE_KEY = 'virtualsomm_custom_sections';
+
+type CustomSection = {
+    id: string;
+    titre: string;
+    plats: Plat[];
+};
 
 export default function MenuPage() {
     const { t } = useTranslation();
@@ -21,6 +30,64 @@ export default function MenuPage() {
         { id: '1', nom: 'Restaurant #1', actif: true },
     ]);
     const [activeTabId, setActiveTabId] = useState('1');
+    const [customSections, setCustomSections] = useState<CustomSection[]>([]);
+    const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+    const [sectionNameDraft, setSectionNameDraft] = useState('');
+    const [sectionPendingDeletion, setSectionPendingDeletion] = useState<CustomSection | null>(null);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        try {
+            const storedSections = window.localStorage.getItem(CUSTOM_SECTIONS_STORAGE_KEY);
+            if (!storedSections) {
+                return;
+            }
+            const parsedSections = JSON.parse(storedSections);
+            if (!Array.isArray(parsedSections)) {
+                return;
+            }
+            setCustomSections(
+                parsedSections
+                    .filter((section: any) => section && typeof section === 'object')
+                    .map((section: any) => ({
+                        id: typeof section.id === 'string' ? section.id : `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        titre: typeof section.titre === 'string' ? section.titre : '',
+                        plats: Array.isArray(section.plats)
+                            ? section.plats
+                                .filter((plat: any) => plat && typeof plat === 'object')
+                                .map((plat: any) => ({
+                                    id: typeof plat.id === 'string' ? plat.id : `plat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                    nom: typeof plat.nom === 'string' ? plat.nom : '',
+                                    description: typeof plat.description === 'string' ? plat.description : undefined,
+                                    prix: typeof plat.prix === 'number' ? plat.prix : undefined,
+                                    section: typeof plat.section === 'string' ? plat.section : '',
+                                    pointsDeVente: Array.isArray(plat.pointsDeVente) ? plat.pointsDeVente : [],
+                                    motsCles: Array.isArray(plat.motsCles) ? plat.motsCles : [],
+                                }))
+                            : [],
+                    }))
+            );
+        } catch (error) {
+            console.error('Erreur lors du chargement des sections personnalisées depuis le stockage local :', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        try {
+            if (customSections.length === 0) {
+                window.localStorage.removeItem(CUSTOM_SECTIONS_STORAGE_KEY);
+                return;
+            }
+            window.localStorage.setItem(CUSTOM_SECTIONS_STORAGE_KEY, JSON.stringify(customSections));
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde des sections personnalisées dans le stockage local :', error);
+        }
+    }, [customSections]);
 
     const handleTabChange = (id: string) => {
         setActiveTabId(id);
@@ -33,21 +100,35 @@ export default function MenuPage() {
     };
 
 
-    // Fonctions de gestion des plats
-    const handleSavePlat = (plat: Plat, setter: React.Dispatch<React.SetStateAction<Plat[]>>) => {
-        setter(prev => prev.map(p => p.id === plat.id ? plat : p));
-    };
-
-    const handleDeletePlat = (platId: string, setter: React.Dispatch<React.SetStateAction<Plat[]>>) => {
-        setter(prev => prev.filter(p => p.id !== platId));
-    };
-
     // Fonction pour ajouter un nouveau plat
     const handleAddPlat = (platData: Omit<Plat, 'id'>) => {
         const newPlat: Plat = {
             ...platData,
             id: `plat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         };
+
+        const sectionName = platData.section?.trim() || t('menu.sections.staticDishes');
+
+        setCustomSections(prev => {
+            const existingIndex = prev.findIndex(section => section.titre.toLowerCase() === sectionName.toLowerCase());
+            if (existingIndex !== -1) {
+                const updatedSections = [...prev];
+                updatedSections[existingIndex] = {
+                    ...updatedSections[existingIndex],
+                    plats: [...updatedSections[existingIndex].plats, newPlat],
+                };
+                return updatedSections;
+            }
+
+            return [
+                ...prev,
+                {
+                    id: `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    titre: sectionName,
+                    plats: [newPlat],
+                },
+            ];
+        });
     };
 
     const handleOpenModal = () => {
@@ -57,6 +138,110 @@ export default function MenuPage() {
     const handleCloseModal = () => {
         setIsModalOpen(false);
     };
+
+    const handleSaveCustomPlat = (sectionId: string, updatedPlat: Plat) => {
+        setCustomSections(prev =>
+            prev.map(section =>
+                section.id === sectionId
+                    ? {
+                        ...section,
+                        plats: section.plats.map(plat => plat.id === updatedPlat.id ? updatedPlat : plat),
+                    }
+                    : section
+            )
+        );
+    };
+
+    const handleDeleteCustomPlat = (sectionId: string, platId: string) => {
+        setCustomSections(prev =>
+            prev.map(section =>
+                section.id === sectionId
+                    ? {
+                        ...section,
+                        plats: section.plats.filter(plat => plat.id !== platId),
+                    }
+                    : section
+            )
+        );
+    };
+
+    const handleStartRenameSection = (sectionId: string) => {
+        const section = customSections.find(item => item.id === sectionId);
+        if (!section) return;
+        setEditingSectionId(sectionId);
+        setSectionNameDraft(section.titre);
+    };
+
+    const handleChangeSectionNameDraft = (value: string) => {
+        setSectionNameDraft(value);
+    };
+
+    const handleCancelSectionNameEdit = (sectionId: string) => {
+        const section = customSections.find(item => item.id === sectionId);
+        if (section && !section.titre.trim() && section.plats.length === 0) {
+            setCustomSections(prev => prev.filter(item => item.id !== sectionId));
+        }
+        setEditingSectionId(null);
+        setSectionNameDraft('');
+    };
+
+    const handleSubmitSectionName = (sectionId: string) => {
+        const trimmed = sectionNameDraft.trim();
+        if (!trimmed) {
+            window.alert(t('menu.sectionNameRequired'));
+            return;
+        }
+
+        const exists = customSections.some(
+            item => item.id !== sectionId && item.titre.toLowerCase() === trimmed.toLowerCase()
+        );
+        if (exists) {
+            window.alert(t('menu.sectionAlreadyExists'));
+            return;
+        }
+
+        setCustomSections(prev =>
+            prev.map(item =>
+                item.id === sectionId
+                    ? {
+                        ...item,
+                        titre: trimmed,
+                        plats: item.plats.map(plat => ({
+                            ...plat,
+                            section: trimmed,
+                        })),
+                    }
+                    : item
+            )
+        );
+        setEditingSectionId(null);
+        setSectionNameDraft('');
+    };
+
+    const handleRequestRemoveSection = (sectionId: string) => {
+        const section = customSections.find(item => item.id === sectionId);
+        if (!section) return;
+        setSectionPendingDeletion(section);
+    };
+
+    const handleCancelRemoveSection = () => {
+        setSectionPendingDeletion(null);
+    };
+
+    const handleConfirmRemoveSection = () => {
+        if (!sectionPendingDeletion) return;
+        setCustomSections(prev => prev.filter(item => item.id !== sectionPendingDeletion.id));
+        if (editingSectionId === sectionPendingDeletion.id) {
+            setEditingSectionId(null);
+            setSectionNameDraft('');
+        }
+        setSectionPendingDeletion(null);
+    };
+
+    const customSectionNames = useMemo(
+        () => customSections.map(section => section.titre),
+        [customSections]
+    );
 
     return (
         <div className="flex h-screen bg-[#F8F9FC]">
@@ -84,16 +269,6 @@ export default function MenuPage() {
                             {t('menu.addDish')}
                         </Button>
 
-                                                 <Button
-                             onClick={() => {/* TODO: Modifier/ajouter une section */ }}
-                             className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-xs"
-                         >
-                             Modifier / ajouter une section
-                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                 <path d="M9.1665 3.33332H3.33317C2.89114 3.33332 2.46722 3.50891 2.15466 3.82147C1.8421 4.13403 1.6665 4.55796 1.6665 4.99999V16.6667C1.6665 17.1087 1.8421 17.5326 2.15466 17.8452C2.46722 18.1577 2.89114 18.3333 3.33317 18.3333H14.9998C15.4419 18.3333 15.8658 18.1577 16.1783 17.8452C16.4909 17.5326 16.6665 17.1087 16.6665 16.6667V10.8333M15.4165 2.08332C15.748 1.7518 16.1977 1.56555 16.6665 1.56555C17.1353 1.56555 17.585 1.7518 17.9165 2.08332C18.248 2.41484 18.4343 2.86448 18.4343 3.33332C18.4343 3.80216 18.248 4.2518 17.9165 4.58332L9.99984 12.5L6.6665 13.3333L7.49984 9.99999L15.4165 2.08332Z" stroke="#535862" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round" />
-                             </svg>
-                         </Button>
-
                                                 {/*<Button
                              onClick={() => TODO: Importer un menu }}
                              className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-xs"
@@ -116,7 +291,36 @@ export default function MenuPage() {
                     </div>
 
                     {/* Tableaux des plats récupérés de l'API */}
-                    <TableauMenu pointDeVenteId="1" restaurantId={0} />
+                    <TableauMenu pointDeVenteId="1" restaurantId={1} />
+
+                    {/* Sections personnalisées */}
+                    {customSections.length > 0 && (
+                        <div className="space-y-6">
+                            {customSections.map((section) => (
+                                <SectionMenu
+                                    key={section.id}
+                                    titre={section.titre}
+                                    plats={section.plats}
+                                    onSavePlat={(plat) => handleSaveCustomPlat(section.id, plat)}
+                                    onDeletePlat={(platId) => handleDeleteCustomPlat(section.id, platId)}
+                                    restaurantId={1}
+                                    onRenameSection={() => handleStartRenameSection(section.id)}
+                                    onDeleteSection={() => handleRequestRemoveSection(section.id)}
+                                    onStartTitleEdit={() => handleStartRenameSection(section.id)}
+                                    isEditingTitle={editingSectionId === section.id}
+                                    titleDraft={editingSectionId === section.id ? sectionNameDraft : ''}
+                                    onChangeTitleDraft={(value) => {
+                                        if (editingSectionId === section.id) {
+                                            handleChangeSectionNameDraft(value);
+                                        }
+                                    }}
+                                    onSubmitTitleEdit={() => handleSubmitSectionName(section.id)}
+                                    onCancelTitleEdit={() => handleCancelSectionNameEdit(section.id)}
+                                    titlePlaceholder={t('menu.newSectionPlaceholder')}
+                                />
+                            ))}
+                        </div>
+                    )}
 
                     {/* Séparateur visuel 
                     <div className="border-t border-gray-200 my-8">
@@ -190,7 +394,23 @@ export default function MenuPage() {
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 onSave={handleAddPlat}
-                restaurantId={0}
+                restaurantId={1}
+                existingSections={customSectionNames}
+            />
+            <ConfirmDialog
+                isOpen={!!sectionPendingDeletion}
+                title={t('menu.deleteSection')}
+                description={
+                    sectionPendingDeletion
+                        ? t('menu.confirmDeleteSection', {
+                            section: sectionPendingDeletion.titre || t('menu.newSectionPlaceholder'),
+                        })
+                        : ''
+                }
+                confirmLabel={t('common.delete')}
+                cancelLabel={t('common.cancel')}
+                onConfirm={handleConfirmRemoveSection}
+                onCancel={handleCancelRemoveSection}
             />
         </div>
     );

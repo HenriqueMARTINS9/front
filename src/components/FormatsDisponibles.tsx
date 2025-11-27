@@ -39,8 +39,11 @@ export default function FormatsDisponibles({ formats, wineType }: FormatsDisponi
                     </tr>
                 </thead>
                 <tbody>
-                    {formatsWithPrice.map((format) => (
-                        <tr key={format.id} className="text-sm">
+                    {formatsWithPrice.map((format, index) => (
+                        <tr
+                            key={format.id || `${format.nom}-${index}`}
+                            className="text-sm"
+                        >
                             <td className={`py-1 pr-12 ${textColor}`}>
                                 {format.nom}
                             </td>

@@ -35,7 +35,7 @@ export default function VinsStats({ restaurantId }: VinsStatsProps) {
 
     if (isLoading) {
         return (
-            <Card title="Statistiques des vins" number={`${t('common.restaurant')} ${restaurantId}`}>
+            <Card title={t('common.wineStats')} number={`${t('common.restaurant')} ${restaurantId}`}>
                 <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7F56D9]"></div>
                     <span className="ml-3 text-gray-600">{t('test.wines.loading')}</span>
@@ -46,7 +46,7 @@ export default function VinsStats({ restaurantId }: VinsStatsProps) {
 
     if (error) {
         return (
-            <Card title="Statistiques des vins" number={`${t('common.restaurant')} ${restaurantId}`}>
+            <Card title={t('common.wineStats')} number={`${t('common.restaurant')} ${restaurantId}`}>
                 <div className="text-center py-8">
                     <div className="text-red-600 mb-2">❌ {t('common.error')}</div>
                     <div className="text-sm text-gray-600">{error}</div>
@@ -77,7 +77,7 @@ export default function VinsStats({ restaurantId }: VinsStatsProps) {
     });
 
     return (
-        <Card title="Statistiques des vins" number={`Restaurant ${restaurantId}`}>
+            <Card title={t('common.wineStats')} number={`${t('common.restaurant')} ${restaurantId}`}>
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="bg-blue-50 p-3 rounded-lg">

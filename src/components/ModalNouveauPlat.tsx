@@ -4,35 +4,77 @@ import Button from './Button';
 import InputField from './InputField';
 import Checkbox from './Checkbox';
 import List from './List';
-import Select from './Select';
 import type { Plat } from './TableauMenu';
 import { recommendationsService } from '@/lib/api';
 import { Dish } from '@/lib/api';
 import { useTranslation } from '@/lib/useTranslation';
+import { useCreateDish } from '@/lib/hooks';
+
+type AromeItem = {
+    id: string;
+    label: string;
+    color: string;
+    textColor: string;
+    puce?: boolean;
+    puceColor?: string;
+};
 
 type ModalNouveauPlatProps = {
     isOpen: boolean;
     onClose: () => void;
     onSave: (platData: Omit<Plat, 'id'>) => void;
     restaurantId?: number; // ID du restaurant pour récupérer les types de plats
+    existingSections?: string[];
 };
 
 // Les options d'arômes seront traduites dynamiquement dans le composant
 const optionsAromesKeys = [
-    'viande-rouge', 'viande-blanche', 'volaille', 'poisson', 'crustace', 'mollusque',
-    'legume-vert', 'solanacee', 'champignon', 'fromage-dur', 'fromage-bleu', 'fromage-doux',
-    'herbe-fraiche', 'herbe-seche', 'epices-exotiques', 'viande-sechee', 'faisselle', 'fromage-sale'
+    'saltyCrumblyCheese',
+    'pungentBlueCheese',
+    'sourCheeseCream',
+    'delicateButteryCheese',
+    'nuttyHardCheese',
+    'fruityUmamiCheese',
+    'drySaltyUmamiCheese',
+    'mollusk',
+    'finFish',
+    'shellfish',
+    'whiteMeat',
+    'redMeat',
+    'curedMeat',
+    'strongMarinade',
+    'cruciferousVegetable',
+    'greenVegetable',
+    'harvestVegetable',
+    'allium',
+    'nightshade',
+    'bean',
+    'funghi',
+    'aromaticGreenHerb',
+    'dryHerb',
+    'resinousHerb',
+    'exoticSpice',
+    'bakingSpice',
+    'umamiSpice',
+    'redPepper',
+    'tertiaryAromas',
+    'redBlackFruits',
+    'citrusFruits',
+    'whiteFruits'
 ];
 
 // Créer les options d'arômes avec les traductions
 const createOptionsAromes = (t: (key: string) => string) => 
     optionsAromesKeys.map(key => ({
         value: key,
-        label: t(`aromes.${key}`)
+        label: t(`menu.aromas.${key}`)
     }));
 
-export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId = 0 }: ModalNouveauPlatProps) {
+export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId = 0, existingSections = [] }: ModalNouveauPlatProps) {
     const { t } = useTranslation();
+    
+    // Hook pour créer un plat via l'API
+    const createDishMutation = useCreateDish(restaurantId);
     
     // États pour les champs de saisie
     const [nom, setNom] = useState('');
@@ -40,17 +82,35 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
     const [prix, setPrix] = useState('');
     const [section, setSection] = useState('');
     const [sectionsSelectionnees, setSectionsSelectionnees] = useState<boolean[]>([]);
+    const [nouvelleSection, setNouvelleSection] = useState('');
+    const [creerNouvelleSection, setCreerNouvelleSection] = useState(false);
     
     // États pour les types de plats dynamiques
     const [sections, setSections] = useState<string[]>([]);
     const [isLoadingSections, setIsLoadingSections] = useState(false);
 
     // États pour les arômes
-    const [aromePrincipal, setAromePrincipal] = useState([{ id: '1', label: '', color: 'bg-green-100', textColor: 'text-green-700' }]);
-    const [aromesSecondaires, setAromesSecondaires] = useState<{ id: string; label: string; color: string; textColor: string }[]>([]);
+    const [aromePrincipal, setAromePrincipal] = useState<AromeItem[]>([{ id: '1', label: '', color: 'bg-green-100', textColor: 'text-green-700', puce: false, puceColor: '' }]);
+    const [aromesSecondaires, setAromesSecondaires] = useState<AromeItem[]>([]);
 
     // États pour les erreurs de validation
     const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
+
+    // Effet pour réinitialiser le formulaire quand le modal s'ouvre
+    useEffect(() => {
+        if (isOpen) {
+            // Réinitialiser tous les états lors de l'ouverture du modal
+            setNom('');
+            setDescription('');
+            setPrix('');
+            setSection('');
+            setNouvelleSection('');
+            setCreerNouvelleSection(false);
+            setAromePrincipal([{ id: '1', label: '', color: 'bg-green-100', textColor: 'text-green-700', puce: false, puceColor: '' }]);
+            setAromesSecondaires([]);
+            setErrors({});
+        }
+    }, [isOpen]);
 
     // Effet pour récupérer les types de plats de l'API
     useEffect(() => {
@@ -62,7 +122,7 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                 const dishes = await recommendationsService.getRestaurantDishes(restaurantId);
                 
                 // Extraire les types uniques de plats
-                const uniqueTypes = new Set<string>();
+                const uniqueTypes = new Set<string>(existingSections);
                 dishes.forEach(dish => {
                     const dishType = dish.dish_type?.fr || dish.dish_type?.['en-US'] || '';
                     if (dishType) {
@@ -77,27 +137,66 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                 if (sectionsArray.length > 0) {
                     setSectionsSelectionnees(sectionsArray.map((_, index) => index === 0));
                     setSection(sectionsArray[0]);
+                } else {
+                    setSectionsSelectionnees([]);
+                    setSection('');
                 }
             } catch (error) {
                 console.error('Erreur lors de la récupération des types de plats:', error);
                 // Fallback vers les sections par défaut
-                const defaultSections = ['Entrée', 'Plat', 'Dessert'];
+                const defaultSections = existingSections.length > 0 ? existingSections : ['Entrée', 'Plat', 'Dessert'];
                 setSections(defaultSections);
-                setSectionsSelectionnees([true, false, false]);
-                setSection('Entrée');
+                if (defaultSections.length > 0) {
+                    setSectionsSelectionnees(defaultSections.map((_, index) => index === 0));
+                    setSection(defaultSections[0]);
+                } else {
+                    setSectionsSelectionnees([]);
+                    setSection('');
+                }
             } finally {
                 setIsLoadingSections(false);
             }
         };
 
         fetchSections();
-    }, [isOpen, restaurantId]);
+    }, [isOpen, restaurantId, existingSections]);
 
     // Gestionnaires pour les sections
     const handleSectionChange = (index: number, checked: boolean) => {
-        const newSections = [...sectionsSelectionnees];
-        newSections[index] = checked;
+        const newSections = sections.map((_, idx) => idx === index ? checked : false);
         setSectionsSelectionnees(newSections);
+        if (checked) {
+            setSection(sections[index]);
+            setCreerNouvelleSection(false);
+            setNouvelleSection('');
+        } else {
+            const firstSelectedIndex = newSections.findIndex(value => value);
+            setSection(firstSelectedIndex !== -1 ? sections[firstSelectedIndex] : '');
+        }
+    };
+
+    const handleNouvelleSectionChange = (value: string) => {
+        setNouvelleSection(value);
+        if (value.trim()) {
+            setCreerNouvelleSection(true);
+            // Décocher toutes les sections existantes
+            setSectionsSelectionnees(sections.map(() => false));
+            setSection('');
+        } else {
+            setCreerNouvelleSection(false);
+        }
+    };
+
+    const handleToggleCreerSection = () => {
+        if (creerNouvelleSection) {
+            setCreerNouvelleSection(false);
+            setNouvelleSection('');
+        } else {
+            setCreerNouvelleSection(true);
+            // Décocher toutes les sections existantes
+            setSectionsSelectionnees(sections.map(() => false));
+            setSection('');
+        }
     };
 
     // Gestionnaires pour les arômes
@@ -106,7 +205,9 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
             id: item.id,
             label: item.label || '',
             color: item.color || 'bg-green-100',
-            textColor: item.textColor || 'text-green-700'
+            textColor: item.textColor || 'text-green-700',
+            puce: typeof item.puce === 'boolean' ? item.puce : Boolean(item.label?.trim()),
+            puceColor: typeof item.puceColor === 'string' ? item.puceColor : ''
         })));
     };
 
@@ -115,7 +216,9 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
             id: item.id,
             label: item.label || '',
             color: item.color || 'bg-green-100',
-            textColor: item.textColor || 'text-green-700'
+            textColor: item.textColor || 'text-green-700',
+            puce: typeof item.puce === 'boolean' ? item.puce : Boolean(item.label?.trim()),
+            puceColor: typeof item.puceColor === 'string' ? item.puceColor : ''
         })));
     };
 
@@ -129,7 +232,9 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
         if (!prix.trim()) {
             newErrors.prix = true;
         }
-        if (!section.trim()) {
+        // Vérifier qu'une section est sélectionnée OU qu'une nouvelle section est saisie
+        const sectionFinale = creerNouvelleSection && nouvelleSection.trim() ? nouvelleSection.trim() : section;
+        if (!sectionFinale.trim()) {
             newErrors.section = true;
         }
 
@@ -138,7 +243,7 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
     };
 
     // Gestionnaire pour la soumission
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!validateForm()) {
             return;
         }
@@ -149,22 +254,47 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
         // Combiner tous les arômes
         const tousLesAromes = [...aromePrincipal.filter(a => a.label.trim()), ...aromesSecondaires.filter(a => a.label.trim())];
 
-        const platData = {
+        // Utiliser la nouvelle section si elle est saisie, sinon utiliser la section sélectionnée
+        const sectionFinale = creerNouvelleSection && nouvelleSection.trim() ? nouvelleSection.trim() : section;
+
+        const platData: Omit<Plat, 'id'> = {
             nom: nom,
             description: description,
             prix: prixNumerique,
-            section: section,
-            pointsDeVente: [true, true, true, true] as [boolean, boolean, boolean, boolean], // Par défaut tous les restaurants
+            section: sectionFinale,
+            pointsDeVente: [true, true, true, true], // Par défaut tous les restaurants
             motsCles: tousLesAromes.map((arome, index) => ({
                 id: `mc${index + 1}`,
                 label: arome.label,
                 color: arome.color,
-                textColor: arome.textColor
+                textColor: arome.textColor,
+                puce: typeof arome.puce === 'boolean' ? arome.puce : Boolean(arome.label?.trim()),
+                puceColor: arome.puceColor || ''
             }))
         };
 
-        onSave(platData);
-        onClose();
+        try {
+            // Créer le plat via l'API
+            const createdPlat = await createDishMutation.mutateAsync(platData);
+            
+            // Appeler le callback onSave avec le plat créé (qui a maintenant un ID)
+            onSave(platData);
+            onClose();
+            
+            // Réinitialiser le formulaire
+            setNom('');
+            setDescription('');
+            setPrix('');
+            setSection('');
+            setNouvelleSection('');
+            setCreerNouvelleSection(false);
+            setAromePrincipal([{ id: '1', label: '', color: 'bg-green-100', textColor: 'text-green-700', puce: false, puceColor: '' }]);
+            setAromesSecondaires([]);
+            setErrors({});
+        } catch (error) {
+            console.error('Erreur lors de la création du plat:', error);
+            // L'erreur sera gérée par React Query, mais on peut aussi afficher un message à l'utilisateur
+        }
     };
 
     if (!isOpen) return null;
@@ -187,7 +317,7 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                                 value={nom}
                                 onChange={setNom}
                                 label={t('menu.dish.name')}
-                                placeholder="Salade verte"
+                                placeholder={t('common.greenSalad')}
                                 size="md"
                                 width="full"
                                 colors={{
@@ -199,7 +329,7 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                                     hover: '',
                                     error: 'border-red-500'
                                 }}
-                                error={errors.nom ? "Le nom du plat est requis" : undefined}
+                                error={errors.nom ? t('common.dishNameRequired') : undefined}
                             />
                         </div>
 
@@ -225,6 +355,30 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                             />
                         </div>
 
+                        {/* Prix */}
+                        <div className="w-full text-gray-700">
+                            <InputField
+                                type="text"
+                                value={prix}
+                                onChange={setPrix}
+                                label={t('menu.dish.price')}
+                                placeholder="0.00"
+                                size="md"
+                                width="full"
+                                suffix=" CHF"
+                                colors={{
+                                    background: 'bg-white',
+                                    border: 'border-gray-300',
+                                    text: 'text-gray-900',
+                                    placeholder: 'placeholder-gray-500',
+                                    focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
+                                    hover: '',
+                                    error: 'border-red-500'
+                                }}
+                                error={errors.prix ? t('common.dishPriceRequired') : undefined}
+                            />
+                        </div>
+
                         {/* Points de vente */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-3">{t('menu.dish.section')}</label>
@@ -234,20 +388,60 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                                     <span className="ml-2 text-sm text-gray-500">Chargement des sections...</span>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 gap-4">
-                                    {sections.map((sectionName, index) => (
-                                    <div key={index} className="flex items-start">
-                                        <Checkbox
-                                            checked={sectionsSelectionnees[index]}
-                                            onChange={(value) => handleSectionChange(index, value)}
-                                            colors={{
-                                                unchecked: 'border-gray-300 bg-white',
-                                                checked: 'border-[#7F56D9] bg-[#7F56D9]'
-                                            }}
-                                        />
-                                        <span className="ml-3 text-sm text-gray-700">{sectionName}</span>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {sections.map((sectionName, index) => (
+                                        <div key={index} className="flex items-start">
+                                            <Checkbox
+                                                checked={sectionsSelectionnees[index] && !creerNouvelleSection}
+                                                onChange={(value) => handleSectionChange(index, value)}
+                                                colors={{
+                                                    unchecked: 'border-gray-300 bg-white',
+                                                    checked: 'border-[#7F56D9] bg-[#7F56D9]'
+                                                }}
+                                                disabled={creerNouvelleSection}
+                                            />
+                                            <span className={`ml-3 text-sm text-gray-700 ${creerNouvelleSection ? 'text-gray-400' : ''}`}>{sectionName}</span>
+                                        </div>
+                                        ))}
                                     </div>
-                                    ))}
+                                    
+                                    {/* Option pour créer une nouvelle section */}
+                                    <div className="pt-2 border-t border-gray-200">
+                                        <div className="flex items-start mb-3">
+                                            <Checkbox
+                                                checked={creerNouvelleSection}
+                                                onChange={handleToggleCreerSection}
+                                                colors={{
+                                                    unchecked: 'border-gray-300 bg-white',
+                                                    checked: 'border-[#7F56D9] bg-[#7F56D9]'
+                                                }}
+                                            />
+                                            <span className="ml-3 text-sm font-medium text-gray-700">{t('menu.createNewSection')}</span>
+                                        </div>
+                                        {creerNouvelleSection && (
+                                            <div className="ml-8 mt-2">
+                                                <InputField
+                                                    type="text"
+                                                    value={nouvelleSection}
+                                                    onChange={handleNouvelleSectionChange}
+                                                    placeholder={t('menu.enterSectionName')}
+                                                    size="md"
+                                                    width="full"
+                                                    colors={{
+                                                        background: 'bg-white',
+                                                        border: errors.section && !nouvelleSection.trim() ? 'border-red-500' : 'border-gray-300',
+                                                        text: 'text-gray-900',
+                                                        placeholder: 'placeholder-gray-500',
+                                                        focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
+                                                        hover: '',
+                                                        error: 'border-red-500'
+                                                    }}
+                                                    error={errors.section && creerNouvelleSection && !nouvelleSection.trim() ? t('menu.sectionNameRequired') : undefined}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

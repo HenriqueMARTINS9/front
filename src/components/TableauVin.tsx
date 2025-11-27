@@ -48,6 +48,7 @@ export type Wine = {
 
 type TableauVinProps = {
     vins: Vin[];
+    restaurantId?: number;
 };
 
 function createInitialData(): Wine[] {
@@ -121,15 +122,33 @@ function createInitialData(): Wine[] {
     ];
 }
 
-export default function TableauVin({ vins }: TableauVinProps) {
-    const { t } = useTranslation();
+export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) {
+    const { t, i18n } = useTranslation();
+    
+    // Fonction pour traduire les types de vins
+    const translateWineType = (wineType: string) => {
+        // Mapping direct des types de vins
+        const wineTypeMap: Record<string, string> = {
+            'red': i18n.language === 'en' ? 'Red' : 'Rouge',
+            'white': i18n.language === 'en' ? 'White' : 'Blanc',
+            'rose': i18n.language === 'en' ? 'Rosé' : 'Rosé',
+            'sparkling': i18n.language === 'en' ? 'Sparkling' : 'Mousseux',
+            'fortified': i18n.language === 'en' ? 'Fortified' : 'Fortifié',
+            'sweet': i18n.language === 'en' ? 'Sweet' : 'Doux',
+            'old white': i18n.language === 'en' ? 'Old White' : 'Blanc vieux',
+            'orange': i18n.language === 'en' ? 'Orange' : 'Orange'
+        };
+        
+        const typeKey = wineType.toLowerCase();
+        return wineTypeMap[typeKey] || wineType;
+    };
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [editingWineId, setEditingWineId] = useState<string | null>(null);
     const [localVins, setLocalVins] = useState<Vin[]>(vins);
     const [editingData, setEditingData] = useState<Record<string, { cepages: any[], formats: any[] }>>({});
 
-    const updateVinMutation = useUpdateVin();
-    const deleteVinMutation = useDeleteVin();
+    const updateVinMutation = useUpdateVin(restaurantId);
+    const deleteVinMutation = useDeleteVin(restaurantId);
 
     // Mettre à jour les vins locaux quand les props changent
     React.useEffect(() => {
@@ -137,12 +156,12 @@ export default function TableauVin({ vins }: TableauVinProps) {
     }, [vins]);
 
     const columns = useMemo(() => [
-        { key: 'name', label: 'Nom du vin' },
-        { key: 'millesime', label: 'Millésime' },
-        { key: 'type', label: 'Type' },
-        { key: 'pdv1', label: 'Restaurant #1' },
+        { key: 'name', label: t('common.wineName') },
+        { key: 'millesime', label: t('common.vintage') },
+        { key: 'type', label: t('common.type') },
+        { key: 'pdv1', label: t('common.restaurantNumber') },
         { key: 'actions', label: '' },
-    ], []);
+    ], [t]);
 
     async function togglePointDeVente(wineId: string, index: number) {
         const wine = localVins.find(v => v.id === wineId);
@@ -238,8 +257,8 @@ export default function TableauVin({ vins }: TableauVinProps) {
         <div className="bg-white rounded-xl border border-gray-200">
             <div className="px-6 py-6 text-lg text-gray-900 flex items-center justify-between bg-[#D5D9EB] rounded-t-xl">
                 <div className="flex items-center gap-2">
-                    Vins
-                    <Tag label={`${localVins.length} vins`} color="bg-[#EEF4FF]" textColor="text-indigo-700" />
+                    {i18n.language === 'en' ? 'Wines' : 'Vins'}
+                    <Tag label={`${localVins.length} ${i18n.language === 'en' ? 'wines' : 'vins'}`} color="bg-[#EEF4FF]" textColor="text-indigo-700" />
                 </div>
             </div>
             <div className="">
@@ -269,7 +288,7 @@ export default function TableauVin({ vins }: TableauVinProps) {
                                             <td className="px-10 py-3 text-sm text-gray-900">{wine.millesime}</td>
                                             <td className="px-10 py-3 text-sm text-gray-900">
                                                 <Tag
-                                                    label={wine.type}
+                                                    label={translateWineType(wine.type)}
                                                     puce={true}
                                                 />
                                             </td>
@@ -303,7 +322,7 @@ export default function TableauVin({ vins }: TableauVinProps) {
                                                         </svg>
                                                     </button>
                                                     <button
-                                                        aria-label="Modifier"
+                                                        aria-label={t('common.modify')}
                                                         onClick={() => startEditing(wine.id)}
                                                         className="transition-all duration-300 rounded p-1"
                                                     >

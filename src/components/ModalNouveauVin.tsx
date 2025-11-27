@@ -37,8 +37,8 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
 
     // États pour les listes
     const [cepages, setCepages] = useState([{ id: '1', nom: '', pourcentage: 0 }]);
-    const [formats, setFormats] = useState([{ id: '1', nom: '', capacite: '', prix: 0 }]);
-    const [motsCles, setMotsCles] = useState([{ id: '1', label: '', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }]);
+    const [format, setFormat] = useState({ nom: '', prix: 0 });
+    // const [motsCles, setMotsCles] = useState([{ id: '1', label: '', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }]);
 
     // États pour les erreurs de validation
     const [errors, setErrors] = useState<{[key: string]: boolean}>({});
@@ -59,23 +59,21 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
         })));
     };
 
-    const handleFormatsChange = (items: any[]) => {
-        setFormats(items.map(item => ({
-            id: item.id,
-            nom: item.nom || '',
-            capacite: item.capacite || '',
-            prix: item.prix || 0
-        })));
+    const handleFormatChange = (field: string, value: any) => {
+        setFormat(prev => ({
+            ...prev,
+            [field]: value
+        }));
     };
 
-    const handleMotsClesChange = (items: any[]) => {
-        setMotsCles(items.map(item => ({
-            id: item.id,
-            label: item.label || '',
-            color: item.color || 'bg-[#FFFAEB]',
-            textColor: item.textColor || 'text-[#B54708]'
-        })));
-    };
+    // const handleMotsClesChange = (items: any[]) => {
+    //     setMotsCles(items.map(item => ({
+    //         id: item.id,
+    //         label: item.label || '',
+    //         color: item.color || 'bg-[#FFFAEB]',
+    //         textColor: item.textColor || 'text-[#B54708]'
+    //     })));
+    // };
 
     // Gestionnaires pour les checkboxes des restaurants
     const handleRestaurantCheck = (index: number, checked: boolean) => {
@@ -112,8 +110,8 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
         if (cepages.length === 0 || !cepages[0].nom.trim()) {
             newErrors.cepages = true;
         }
-        if (formats.length === 0 || !formats[0].nom.trim()) {
-            newErrors.formats = true;
+        if (!format.nom.trim()) {
+            newErrors.format = true;
         }
 
         setErrors(newErrors);
@@ -141,7 +139,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
         }
 
         // S'assurer que le prix est un nombre
-        const prix = formats.length > 0 ? parseFloat(formats[0].prix?.toString()) || 0 : 0;
+        const prix = parseFloat(format.prix?.toString()) || 0;
         
         // Créer un objet vin avec la structure correcte
         const wineData = {
@@ -149,13 +147,20 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
             subname: domaine,
             type: selectedWineType,
             cepage: cepages.length > 0 ? cepages[0].nom : '',
+            cepages: cepages.map(c => ({ 
+                id: c.id, 
+                nom: c.nom, 
+                pourcentage: typeof c.pourcentage === 'string' ? parseFloat(c.pourcentage) || 0 : (c.pourcentage || 0)
+            })),
             region: aocRegion,
             pays: pays,
             millesime: parseInt(millesime) || 2024,
             prix: prix,
+            format: format.nom,
+            formats: [{ id: '1', nom: format.nom, prix: prix }],
             restaurant: 'Restaurant Principal',
             pointsDeVente: restaurantChecks as [boolean],
-            motsCles: motsCles.filter(mc => mc.label.trim() !== '') // Filtrer les mots-clés vides
+            // motsCles: motsCles.filter(mc => mc.label.trim() !== '') // Filtrer les mots-clés vides
         };
         onSave(wineData);
         onClose();
@@ -169,8 +174,8 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                 <div className="p-8 overflow-y-auto flex-1">
                 {/* Header */}
                 <div className="mb-6">
-                    <h2 className="text-4xl font-bold text-gray-900 mb-2">Nouveau vin</h2>
-                    <p className="text-gray-900 text-md">Remplir tous les champs le plus précisément possible afin d'assurer des recommendations optimales.</p>
+                    <h2 className="text-4xl font-bold text-gray-900 mb-2">{t('common.newWine')}</h2>
+                    <p className="text-gray-900 text-md">{t('common.fillFieldsPrecisely')}</p>
                 </div>
 
                 <div className="space-y-6">
@@ -192,7 +197,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 }}
                                 className="flex items-center justify-start"
                             >
-                                <span className="text-sm text-gray-700">Vin mousseux</span>
+                                <span className="text-sm text-gray-700">{t('common.sparklingWine')}</span>
                             </RadioButton>
                             <RadioButton
                                 name="wine-type"
@@ -208,7 +213,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 }}
                                 className="flex items-center justify-start"
                             >
-                                <span className="text-sm text-gray-700">Vin blanc</span>
+                                <span className="text-sm text-gray-700">{t('common.whiteWine')}</span>
                             </RadioButton>
                             <RadioButton
                                 name="wine-type"
@@ -224,7 +229,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 }}
                                 className="flex items-center justify-start"
                             >
-                                <span className="text-sm text-gray-700">Vin rouge</span>
+                                <span className="text-sm text-gray-700">{t('common.redWine')}</span>
                             </RadioButton>
                             <RadioButton
                                 name="wine-type"
@@ -240,7 +245,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 }}
                                 className="flex items-center justify-start"
                             >
-                                <span className="text-sm text-gray-700">Vin rosé</span>
+                                <span className="text-sm text-gray-700">{t('common.roseWine')}</span>
                             </RadioButton>
                             <RadioButton
                                 name="wine-type"
@@ -256,7 +261,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 }}
                                 className="flex items-center justify-start"
                             >
-                                <span className="text-sm text-gray-700">Vin orange</span>
+                                <span className="text-sm text-gray-700">{t('common.orangeWine')}</span>
                             </RadioButton>
                             <RadioButton
                                 name="wine-type"
@@ -272,7 +277,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 }}
                                 className="flex items-center justify-start"
                             >
-                                <span className="text-sm text-gray-700">Vin fortifié</span>
+                                <span className="text-sm text-gray-700">{t('common.fortifiedWine')}</span>
                             </RadioButton>
                             <RadioButton
                                 name="wine-type"
@@ -288,7 +293,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 }}
                                 className="flex items-center justify-start"
                             >
-                                <span className="text-sm text-gray-700">Vin doux (Sweet)</span>
+                                <span className="text-sm text-gray-700">{t('common.sweetWine')}</span>
                             </RadioButton>
                             <RadioButton
                                 name="wine-type"
@@ -304,7 +309,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 }}
                                 className="flex items-center justify-start"
                             >
-                                <span className="text-sm text-gray-700">Blanc vieux (Old White)</span>
+                                <span className="text-sm text-gray-700">{t('common.oldWhiteWine')}</span>
                             </RadioButton>
                         </div>
                     </div>
@@ -331,7 +336,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                     error: 'border-red-500'
                                 }}
                                 ref={wineNameRef}
-                                error={errors.wineName ? "Le nom du vin est requis" : undefined}
+                                error={errors.wineName ? t('common.wineNameRequired') : undefined}
                             />
                         </div>
 
@@ -342,7 +347,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                     type="text"
                                     value={domaine}
                                     onChange={setDomaine}
-                                    label="Domaine / producteur"
+                                    label={t('common.domainProducer')}
                                     placeholder="Domaine de la Harpe"
                                     size="md"
                                     width="full"
@@ -356,7 +361,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                         error: 'border-red-500'
                                     }}
                                     ref={domaineRef}
-                                    error={errors.domaine ? "Le domaine est requis" : undefined}
+                                    error={errors.domaine ? t('common.domainRequired') : undefined}
                                 />
                             </div>
                             <div className="col-span-1 ">
@@ -378,7 +383,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                         error: 'border-red-500'
                                     }}
                                     ref={millesimeRef}
-                                    error={errors.millesime ? "Le millésime est requis" : undefined}
+                                    error={errors.millesime ? t('common.vintageRequired') : undefined}
                                 />
                             </div>
                         </div>
@@ -404,7 +409,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                         error: 'border-red-500'
                                     }}
                                     ref={aocRegionRef}
-                                    error={errors.aocRegion ? "La région est requise" : undefined}
+                                    error={errors.aocRegion ? t('common.regionRequired') : undefined}
                                 />
                             </div>
                             <div className="col-span-2 ">
@@ -426,7 +431,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                         error: 'border-red-500'
                                     }}
                                     ref={paysRef}
-                                    error={errors.pays ? "Le pays est requis" : undefined}
+                                    error={errors.pays ? t('common.countryRequired') : undefined}
                                 />
                             </div>
                         </div>
@@ -449,8 +454,8 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 className="mt-1"
                             >
                                 <div>
-                                    <div className="text-sm font-medium text-gray-700">Je ne connais pas les proportions de l'assemblage</div>
-                                    <p className="text-sm text-gray-500 mt-1">Ajouter les % permet une plus grande précision des recommandations proposées à vos clients.</p>
+                                    <div className="text-sm font-medium text-gray-700">{t('common.unknownProportions')}</div>
+                                    <p className="text-sm text-gray-500 mt-1">{t('common.proportionsHelp')}</p>
                                 </div>
                             </Checkbox>
                         </div>
@@ -460,9 +465,9 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                             fields={[
                                 {
                                     key: 'nom',
-                                    label: 'Nom du cépage',
+                                    label: t('common.grapeVarietyName'),
                                     type: 'text',
-                                    placeholder: 'Nom du cépage',
+                                    placeholder: t('common.grapeVarietyPlaceholder'),
                                     width: 'full'
                                 },
                                 {
@@ -474,8 +479,8 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                     width: 'full'
                                 }
                             ]}
-                            addButtonText="Ajouter un cépage"
-                            emptyMessage="Aucun cépage ajouté"
+                            addButtonText={t('common.addGrapeVariety')}
+                            emptyMessage={t('common.noGrapeVarieties')}
                             size="md"
                             colors={{
                                 background: 'bg-white',
@@ -493,13 +498,13 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                             }}
                         />
                         {errors.cepages && (
-                            <p className="text-red-500 text-sm mt-1">Au moins un cépage est requis</p>
+                            <p className="text-red-500 text-sm mt-1">{t('common.grapeVarietyRequired')}</p>
                         )}
                     </div>
 
                     {/* Restaurants */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-900 mb-3">Dans quels restaurants ce vin est-il disponible ?</label>
+                        <label className="block text-sm font-medium text-gray-900 mb-3">{t('common.whichRestaurants')}</label>
                         <div className="grid grid-cols-1 gap-4">
                             {restaurantChecks.map((checked, index) => (
                                 <div key={index} className="flex items-start">
@@ -511,61 +516,73 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                             checked: 'border-[#7F56D9] bg-[#7F56D9]'
                                         }}
                                     />
-                                    <span className="ml-3 text-sm text-gray-700 baseline align-">Restaurant {index + 1}</span>
+                                    <span className="ml-3 text-sm text-gray-700 baseline align-">{t('common.restaurant')} {index + 1}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Formats disponibles */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">Formats disponibles</label>
-                        <List
-                            items={formats}
-                            onItemsChange={handleFormatsChange}
-                            title=""
-                            addButtonText="Ajouter un format"
-                            colors={{
-                                background: 'bg-white',
-                                border: 'border-gray-300',
-                                text: 'text-gray-900',
-                                placeholder: 'placeholder-gray-500',
-                                focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                                hover: '',
-                                addButton: 'bg-[#3E4784] text-white hover:bg-[#2D3A6B] hover:shadow-md transform transition-all duration-200 ease-in-out',
-                                deleteButton: '',
-                                deleteButtonHover: '',
-                                suffix: 'text-gray-500',
-                                optionHover: 'hover:bg-gray-50',
-                                optionSelected: ''
-                            }}
-                            fields={[
-                                {
-                                    key: 'nom', label: 'Format', type: 'select', options: [
-                                        { value: 'Magnum (150 cl)', label: 'Magnum (150 cl)' },
-                                        { value: 'Bouteille (75 cl)', label: 'Bouteille (75 cl)' },
-                                        { value: 'Désirée (50 cl)', label: 'Désirée (50 cl)' },
-                                        { value: 'Demi-bouteille (37.5 cl)', label: 'Demi-bouteille (37.5 cl)' },
-                                        { value: 'Verre (10 cl)', label: 'Verre (10 cl)' }
-                                    ]
-                                },
-                                { key: 'prix', label: t('wines.wine.price'), type: 'text', placeholder: '42.00', suffix: ' CHF', width: 'full' }
-                            ]}
-                        />
-                        {errors.formats && (
-                            <p className="text-red-500 text-sm mt-1">Au moins un format est requis</p>
-                        )}
+                    {/* Format du vin */}
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-3">{t('common.format')}</label>
+                            <Select
+                                value={format.nom}
+                                onChange={(value) => handleFormatChange('nom', value)}
+                                options={[
+                                    { value: 'Magnum (150 cl)', label: t('common.magnum') },
+                                    { value: 'Bouteille (75 cl)', label: t('common.bottle') },
+                                    { value: 'Désirée (50 cl)', label: t('common.desired') },
+                                    { value: 'Demi-bouteille (37.5 cl)', label: t('common.halfBottle') },
+                                    { value: 'Verre (10 cl)', label: t('common.glass') }
+                                ]}
+                                placeholder={t('common.format')}
+                                size="md"
+                                width="full"
+                                colors={{
+                                    background: 'bg-white',
+                                    border: 'border-gray-300',
+                                    text: 'text-gray-900',
+                                    placeholder: 'placeholder-gray-500',
+                                    focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
+                                    hover: '',
+                                    error: 'border-red-500'
+                                }}
+                                error={errors.format ? t('common.formatRequired') : undefined}
+                            />
+                        </div>
+                        <div>
+                            <InputField
+                                type="number"
+                                value={format.prix.toString()}
+                                onChange={(value) => handleFormatChange('prix', parseFloat(value) || 0)}
+                                label={t('wines.wine.price')}
+                                placeholder="42.00"
+                                suffix=" CHF"
+                                size="md"
+                                width="full"
+                                colors={{
+                                    background: 'bg-white',
+                                    border: 'border-gray-300',
+                                    text: 'text-gray-900',
+                                    placeholder: 'placeholder-gray-500',
+                                    focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
+                                    hover: '',
+                                    error: 'border-red-500'
+                                }}
+                            />
+                        </div>
                     </div>
 
-                    {/* Mots clés */}
-                    <div>
+                    {/* Mots clés - Désactivé */}
+                    {/* <div>
                         <MotsCles 
                             motsCles={motsCles}
                             wineType={selectedWineType}
                             editable={true}
                             onMotsClesChange={handleMotsClesChange}
                         />
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Boutons d'action */}
@@ -574,7 +591,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                         onClick={handleSubmit}
                         className="bg-[#3E4784] text-white hover:bg-[#2D3A6B] hover:shadow-lg transform transition-all duration-200 ease-in-out"
                     >
-                        Valider
+                        {t('common.validate')}
                     </Button>
                     <Button
                         onClick={onClose}

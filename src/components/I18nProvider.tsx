@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from 'react';
-import '@/lib/i18n';
+import i18n from '@/lib/i18n';
 
 interface I18nProviderProps {
   children: React.ReactNode;
@@ -8,8 +8,10 @@ interface I18nProviderProps {
 
 export default function I18nProvider({ children }: I18nProviderProps) {
   useEffect(() => {
-    // Initialiser i18n côté client
-    import('@/lib/i18n');
+    // S'assurer que i18n est initialisé côté client
+    if (!i18n.isInitialized) {
+      i18n.init();
+    }
   }, []);
 
   return <>{children}</>;

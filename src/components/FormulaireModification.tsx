@@ -47,19 +47,21 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
         pourcentage: c.pourcentage
     })));
     
-    const [formats, setFormats] = useState(wine.formats.map(f => ({
-        id: f.id,
-        nom: f.nom,
-        capacite: f.capacite,
-        prix: f.prix
-    })));
+    const [format, setFormat] = useState(() => {
+        // Prendre le premier format s'il existe, sinon valeurs par défaut
+        const firstFormat = wine.formats[0];
+        return {
+            nom: firstFormat?.nom || '',
+            prix: firstFormat?.prix || 0
+        };
+    });
     
-    const [motsCles, setMotsCles] = useState(wine.motsCles.map(mc => ({
-        id: mc.id,
-        label: mc.label,
-        color: mc.color,
-        textColor: mc.textColor
-    })));
+    // const [motsCles, setMotsCles] = useState(wine.motsCles.map(mc => ({
+    //     id: mc.id,
+    //     label: mc.label,
+    //     color: mc.color,
+    //     textColor: mc.textColor
+    // })));
     
     // Gestionnaires pour les listes
     const handleCepagesChange = (items: any[]) => {
@@ -72,26 +74,25 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
         onDataChange?.({ cepages: newCepages });
     };
     
-    const handleFormatsChange = (items: any[]) => {
-        const newFormats = items.map(item => ({
-            id: item.id,
-            nom: item.nom || '',
-            capacite: item.capacite || '',
-            prix: item.prix || 0
-        }));
-        setFormats(newFormats);
-        onDataChange?.({ formats: newFormats });
+    const handleFormatChange = (field: string, value: any) => {
+        const newFormat = {
+            ...format,
+            [field]: value
+        };
+        setFormat(newFormat);
+        // Convertir en format de liste pour la compatibilité
+        onDataChange?.({ formats: [newFormat] });
     };
     
-    const handleMotsClesChange = (items: any[]) => {
-        const newMotsCles = items.map(item => ({
-            id: item.id,
-            label: item.label || '',
-            color: item.color || 'bg-[#FFFAEB]',
-            textColor: item.textColor || 'text-[#B54708]'
-        }));
-        setMotsCles(newMotsCles);
-    };
+    // const handleMotsClesChange = (items: any[]) => {
+    //     const newMotsCles = items.map(item => ({
+    //         id: item.id,
+    //         label: item.label || '',
+    //         color: item.color || 'bg-[#FFFAEB]',
+    //         textColor: item.textColor || 'text-[#B54708]'
+    //     }));
+    //     setMotsCles(newMotsCles);
+    // };
 
     // Gestionnaires pour les checkboxes des restaurants
     const handleRestaurantCheck = (index: number, checked: boolean) => {
@@ -313,57 +314,60 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                     />
                 </div>
                 <div className="col-span-6" />
-                {/* Formats disponibles */}
+                {/* Format du vin */}
                 <div className="col-span-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Formats disponibles</label>
-                    <List
-                        items={formats}
-                        onItemsChange={handleFormatsChange}
-                        fields={[
-                            {
-                                key: 'nom',
-                                label: 'Format',
-                                type: 'select',
-                                placeholder: 'Sélectionner un format',
-                                options: [
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-3">Format</label>
+                            <Select
+                                value={format.nom}
+                                onChange={(value) => handleFormatChange('nom', value)}
+                                options={[
                                     { value: 'Magnum (150 cl)', label: 'Magnum (150 cl)' },
                                     { value: 'Bouteille (75 cl)', label: 'Bouteille (75 cl)' },
                                     { value: 'Désirée (50 cl)', label: 'Désirée (50 cl)' },
                                     { value: 'Demi-bouteille (37.5 cl)', label: 'Demi-bouteille (37.5 cl)' },
                                     { value: 'Verre (10 cl)', label: 'Verre (10 cl)' }
-                                ]
-                            },
-                            {
-                                key: 'prix',
-                                label: 'Prix',
-                                type: 'text',
-                                placeholder: '42.00',
-                                suffix: ' CHF',
-                                width: 'full'
-                            }
-                        ]}
-                        addButtonText="Ajouter un format"
-                        emptyMessage="Aucun format ajouté"
-                        size="md"
-                        colors={{
-                            background: 'bg-white',
-                            border: 'border-gray-300',
-                            text: 'text-gray-900',
-                            placeholder: 'placeholder-gray-500',
-                            focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                            hover: '',
-                            suffix: 'text-gray-500',
-                            deleteButton: 'text-gray-400',
-                            deleteButtonHover: '',
-                            optionHover: 'hover:bg-gray-100',
-                            optionSelected: 'bg-gray-50',
-                            addButton: 'bg-[#7C3AED] text-white hover:bg-[#6D28D9] transition-colors duration-200'
-                        }}
-                    />
+                                ]}
+                                placeholder="Sélectionner un format"
+                                size="md"
+                                width="full"
+                                colors={{
+                                    background: 'bg-white',
+                                    border: 'border-gray-300',
+                                    text: 'text-gray-900',
+                                    placeholder: 'placeholder-gray-500',
+                                    focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
+                                    hover: ''
+                                }}
+                            />
+                        </div>
+                        <div>
+                            <InputField
+                                type="number"
+                                value={format.prix.toString()}
+                                onChange={(value) => handleFormatChange('prix', parseFloat(value) || 0)}
+                                label="Prix"
+                                placeholder="42.00"
+                                suffix=" CHF"
+                                size="md"
+                                width="full"
+                                colors={{
+                                    background: 'bg-white',
+                                    border: 'border-gray-300',
+                                    text: 'text-gray-900',
+                                    placeholder: 'placeholder-gray-500',
+                                    focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
+                                    hover: '',
+                                    label: 'text-gray-700'
+                                }}
+                            />
+                        </div>
+                    </div>
                 </div>
                 <div className="col-span-6" />
-                {/* Mots clefs descriptifs */}
-                <div className="col-span-6">
+                {/* Mots clefs descriptifs - Désactivé */}
+                {/* <div className="col-span-6">
                     <MotsCles 
                         motsCles={motsCles}
                         wineType={selectedWineType}
@@ -371,7 +375,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                         onMotsClesChange={handleMotsClesChange}
                         addButtonColor="bg-[#7C3AED] text-white hover:bg-[#6D28D9] transition-colors duration-200"
                     />
-                </div>
+                </div> */}
             </div>
 
 
@@ -379,19 +383,19 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
             {/* Boutons d'action */}
             <div className="flex gap-6 pt-6">
                 <Button onClick={() => {
-                    // S'assurer que les prix sont des nombres
-                    const formatsWithNumericPrices = formats.map(format => ({
+                    // S'assurer que le prix est un nombre
+                    const formatWithNumericPrice = {
                         ...format,
                         prix: typeof format.prix === 'string' ? parseFloat(format.prix) || 0 : format.prix || 0
-                    }));
+                    };
                     
                     onSave({
                         ...wine,
                         type: selectedWineType,
                         pointsDeVente: restaurantChecks as [boolean],
                         cepages: cepages,
-                        formats: formatsWithNumericPrices,
-                        motsCles: motsCles.filter(mc => mc.label.trim() !== ''), // Filtrer les mots-clés vides
+                        formats: [formatWithNumericPrice], // Convertir en liste pour la compatibilité
+                        // motsCles: motsCles.filter(mc => mc.label.trim() !== ''), // Filtrer les mots-clés vides
                         name: wineName,
                         subname: subname,
                         millesime: millesime,

@@ -54,7 +54,7 @@ export function getTagColors(label: string | undefined | null): { bg: string; pu
     
     // Catégorie 5: Types de vins (Orange/Yellowish, Red/Pinkish, Pink)
     if (lowerLabel.includes('vin')) {
-        if (['orange', 'moelleux', 'liquoreux', 'moelleux ou liquoreux'].some(type => lowerLabel.includes(type))) {
+        if (['orange', 'moelleux', 'liquoreux', 'moelleux ou liquoreux', 'doux'].some(type => lowerLabel.includes(type))) {
             return {
                 bg: 'bg-[#FFF6ED]',
                 puce: '#FB6514',
@@ -82,7 +82,7 @@ export function getTagColors(label: string | undefined | null): { bg: string; pu
     }
     
     // Types de vins simples (sans "vin" dans le nom) - PRIORITÉ ÉLEVÉE
-    if (['orange', 'moelleux', 'liquoreux', 'moelleux ou liquoreux', 'sweet'].includes(lowerLabel)) {
+    if (['orange', 'moelleux', 'liquoreux', 'moelleux ou liquoreux', 'sweet', 'doux'].includes(lowerLabel)) {
         return {
             bg: 'bg-[#FFF6ED]',
             puce: '#FB6514',
@@ -106,7 +106,7 @@ export function getTagColors(label: string | undefined | null): { bg: string; pu
             puce: '#EE46BC',
             text: 'text-[#C11574]'
         };
-    } else if (['old white', 'oldwhite'].includes(lowerLabel)) {
+    } else if (['old white', 'oldwhite', 'blanc vieux', 'blancvieux'].includes(lowerLabel)) {
         return {
             bg: 'bg-[#F0FDF4]',
             puce: '#16A34A',

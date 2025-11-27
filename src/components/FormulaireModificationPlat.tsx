@@ -18,14 +18,111 @@ type FormulaireModificationPlatProps = {
 };
 
 // Les options d'arômes seront traduites dynamiquement dans le composant
+// Utiliser les mêmes clés que dans ModalNouveauPlat
 const optionsAromesKeys = [
-    'viande-rouge', 'viande-blanche', 'volaille', 'poisson', 'crustace', 'mollusque',
-    'legume-vert', 'solanacee', 'champignon', 'fromage-dur', 'fromage-bleu', 'fromage-doux',
-    'herbe-fraiche', 'herbe-seche', 'epices-exotiques', 'viande-sechee', 'faisselle', 'fromage-sale'
+    'saltyCrumblyCheese',
+    'pungentBlueCheese',
+    'sourCheeseCream',
+    'delicateButteryCheese',
+    'nuttyHardCheese',
+    'fruityUmamiCheese',
+    'drySaltyUmamiCheese',
+    'mollusk',
+    'finFish',
+    'shellfish',
+    'whiteMeat',
+    'redMeat',
+    'curedMeat',
+    'strongMarinade',
+    'cruciferousVegetable',
+    'greenVegetable',
+    'harvestVegetable',
+    'allium',
+    'nightshade',
+    'bean',
+    'funghi',
+    'aromaticGreenHerb',
+    'dryHerb',
+    'resinousHerb',
+    'exoticSpice',
+    'bakingSpice',
+    'umamiSpice',
+    'redPepper',
+    'tertiaryAromas',
+    'redBlackFruits',
+    'citrusFruits',
+    'whiteFruits'
 ];
+
+// Créer les options d'arômes avec les traductions
+const createOptionsAromes = (t: (key: string) => string) => 
+    optionsAromesKeys.map(key => ({
+        value: key,
+        label: t(`menu.aromas.${key}`)
+    }));
 
 export default function FormulaireModificationPlat({ plat, onSave, onCancel, onDelete, restaurantId = 0 }: FormulaireModificationPlatProps) {
     const { t } = useTranslation();
+    
+    // Fonction pour convertir un label d'arôme en sa clé correspondante
+    const getAromaKeyFromLabel = (label: string): string => {
+        // Si le label est déjà une clé (ex: 'redMeat'), la retourner telle quelle
+        if (optionsAromesKeys.includes(label)) {
+            return label;
+        }
+        
+        // Chercher la clé correspondant au label traduit
+        for (const key of optionsAromesKeys) {
+            const translatedLabel = t(`menu.aromas.${key}`);
+            if (translatedLabel.toLowerCase() === label.toLowerCase() || translatedLabel === label) {
+                return key;
+            }
+        }
+        
+        // Mapper les anciennes clés vers les nouvelles
+        const oldKeyMap: Record<string, string> = {
+            'viande-rouge': 'redMeat',
+            'viande-blanche': 'whiteMeat',
+            'volaille': 'whiteMeat',
+            'poisson': 'finFish',
+            'crustace': 'shellfish',
+            'mollusque': 'mollusk',
+            'legume-vert': 'greenVegetable',
+            'solanacee': 'nightshade',
+            'champignon': 'funghi',
+            'fromage-dur': 'nuttyHardCheese',
+            'fromage-bleu': 'pungentBlueCheese',
+            'fromage-doux': 'delicateButteryCheese',
+            'herbe-fraiche': 'aromaticGreenHerb',
+            'herbe-seche': 'dryHerb',
+            'epices-exotiques': 'exoticSpice',
+            'viande-sechee': 'curedMeat',
+            'faisselle': 'sourCheeseCream',
+            'fromage-sale': 'saltyCrumblyCheese'
+        };
+        
+        if (oldKeyMap[label]) {
+            return oldKeyMap[label];
+        }
+        
+        // Si aucune correspondance, retourner le label original
+        return label;
+    };
+    
+    // Fonction pour convertir les arômes du plat au format attendu par la List
+    const convertMotsClesToAromeItems = (motsCles: typeof plat.motsCles) => {
+        return motsCles.map((motCle, index) => {
+            const aromaKey = getAromaKeyFromLabel(motCle.label);
+            return {
+                id: motCle.id || `arome-${index}`,
+                label: aromaKey, // Stocker la clé pour le select
+                color: motCle.color || 'bg-green-100',
+                textColor: motCle.textColor || 'text-green-700',
+                puce: motCle.puce !== undefined ? motCle.puce : true,
+                puceColor: motCle.puceColor || ''
+            };
+        });
+    };
     
     // États pour les champs de saisie
     const [nom, setNom] = useState(plat.nom);
@@ -37,12 +134,26 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
     const [availableSections, setAvailableSections] = useState<string[]>([]);
     const [isLoadingSections, setIsLoadingSections] = useState(false);
     
-    // Séparer les arômes en principal et secondaires
-    const aromePrincipal = plat.motsCles.length > 0 ? [plat.motsCles[0]] : [];
-    const aromesSecondaires = plat.motsCles.length > 1 ? plat.motsCles.slice(1) : [];
+    // Séparer les arômes en principal et secondaires et les convertir
+    const allAromesInitial = convertMotsClesToAromeItems(plat.motsCles);
+    const aromePrincipalInitial = allAromesInitial.length > 0 ? [allAromesInitial[0]] : [];
+    const aromesSecondairesInitial = allAromesInitial.length > 1 ? allAromesInitial.slice(1) : [];
     
-    const [aromePrincipalList, setAromePrincipalList] = useState<{ id: string; label: string; color: string; textColor: string }[]>(aromePrincipal.length > 0 ? aromePrincipal : [{ id: 'temp', label: '', color: 'bg-green-100', textColor: 'text-green-700' }]);
-    const [aromesSecondairesList, setAromesSecondairesList] = useState<{ id: string; label: string; color: string; textColor: string }[]>(aromesSecondaires);
+    const [aromePrincipalList, setAromePrincipalList] = useState<{ id: string; label: string; color: string; textColor: string; puce?: boolean; puceColor?: string }[]>(
+        aromePrincipalInitial.length > 0 ? aromePrincipalInitial : [{ id: 'temp', label: '', color: 'bg-green-100', textColor: 'text-green-700', puce: false, puceColor: '' }]
+    );
+    const [aromesSecondairesList, setAromesSecondairesList] = useState<{ id: string; label: string; color: string; textColor: string; puce?: boolean; puceColor?: string }[]>(aromesSecondairesInitial);
+
+    // Effet pour mettre à jour les arômes quand le plat change
+    useEffect(() => {
+        const allAromes = convertMotsClesToAromeItems(plat.motsCles);
+        const aromePrincipal = allAromes.length > 0 ? [allAromes[0]] : [];
+        const aromesSecondaires = allAromes.length > 1 ? allAromes.slice(1) : [];
+        
+        setAromePrincipalList(aromePrincipal.length > 0 ? aromePrincipal : [{ id: 'temp', label: '', color: 'bg-green-100', textColor: 'text-green-700', puce: false, puceColor: '' }]);
+        setAromesSecondairesList(aromesSecondaires);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [plat.motsCles, plat.id, t]); // Réinitialiser quand les mots-clés ou l'ID du plat changent
 
     // Effet pour récupérer les sections dynamiques
     useEffect(() => {
@@ -92,7 +203,9 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
             id: item.id,
             label: item.label || '',
             color: item.color || 'bg-green-100',
-            textColor: item.textColor || 'text-green-700'
+            textColor: item.textColor || 'text-green-700',
+            puce: item.puce !== undefined ? item.puce : true,
+            puceColor: item.puceColor || ''
         })));
     };
 
@@ -101,8 +214,28 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
             id: item.id,
             label: item.label || '',
             color: item.color || 'bg-green-100',
-            textColor: item.textColor || 'text-green-700'
+            textColor: item.textColor || 'text-green-700',
+            puce: item.puce !== undefined ? item.puce : true,
+            puceColor: item.puceColor || ''
         })));
+    };
+    
+    // Fonction pour convertir les clés d'arômes en objets MotCle pour la sauvegarde
+    const convertAromeItemsToMotsCles = (items: { id: string; label: string; color: string; textColor: string; puce?: boolean; puceColor?: string }[]): typeof plat.motsCles => {
+        return items
+            .filter(item => item.label && item.label.trim())
+            .map(item => {
+                const aromaKey = item.label;
+                const translatedLabel = t(`menu.aromas.${aromaKey}`);
+                return {
+                    id: item.id,
+                    label: translatedLabel !== `menu.aromas.${aromaKey}` ? translatedLabel : aromaKey,
+                    color: item.color,
+                    textColor: item.textColor,
+                    puce: item.puce !== undefined ? item.puce : true,
+                    puceColor: item.puceColor || ''
+                };
+            });
     };
 
     return (
@@ -218,7 +351,7 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
                                 key: 'label',
                                 label: 'Arôme principal',
                                 type: 'select',
-                                options: optionsAromesKeys.map(key => ({ value: key, label: t(`aromas.${key}`) })),
+                                options: createOptionsAromes(t),
                                 width: 'full'
                             }
                         ]}
@@ -262,7 +395,7 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
                                 label: 'Arôme secondaire',
                                 type: 'select',
                                 placeholder: 'Sélectionner un arôme secondaire',
-                                options: optionsAromesKeys.map(key => ({ value: key, label: t(`aromas.${key}`) })),
+                                options: createOptionsAromes(t),
                                 width: 'full'
                             }
                         ]}
@@ -291,6 +424,8 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
             <div className="flex gap-6 pt-6">
                 <Button 
                     onClick={() => {
+                        const allAromes = [...aromePrincipalList, ...aromesSecondairesList];
+                        const motsCles = convertAromeItemsToMotsCles(allAromes);
                         onSave({
                             ...plat,
                             nom,
@@ -298,7 +433,7 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
                             prix: plat.prix, // Garder le prix existant
                             section,
                             pointsDeVente,
-                            motsCles: [...aromePrincipalList, ...aromesSecondairesList]
+                            motsCles
                         });
                     }} 
                     className="!bg-[#7F56D9] !text-white hover:!bg-[#6941C6] focus:!outline-none focus:!ring-2 focus:!ring-purple-100 focus:!border-purple-300 focus:!shadow-xs transition-colors duration-200"

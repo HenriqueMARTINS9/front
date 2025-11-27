@@ -1,9 +1,10 @@
 'use client';
 import React, { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Check, Pencil, Trash2, X } from 'lucide-react';
 import Tag from './Tag';
 import FormulaireModificationPlat from './FormulaireModificationPlat';
 import type { Plat } from './TableauMenu';
+import { useTranslation } from '@/lib/useTranslation';
 
 type SectionMenuProps = {
     titre: string;
@@ -12,9 +13,35 @@ type SectionMenuProps = {
     onDeletePlat: (platId: string) => void;
     isApiSection?: boolean;
     restaurantId?: number;
+    onRenameSection?: () => void;
+    onDeleteSection?: () => void;
+    isEditingTitle?: boolean;
+    titleDraft?: string;
+    onChangeTitleDraft?: (value: string) => void;
+    onSubmitTitleEdit?: () => void;
+    onCancelTitleEdit?: () => void;
+    onStartTitleEdit?: () => void;
+    titlePlaceholder?: string;
 };
 
-export default function SectionMenu({ titre, plats, onSavePlat, onDeletePlat, isApiSection = false, restaurantId = 0 }: SectionMenuProps) {
+export default function SectionMenu({
+    titre,
+    plats,
+    onSavePlat,
+    onDeletePlat,
+    isApiSection = false,
+    restaurantId = 0,
+    onRenameSection,
+    onDeleteSection,
+    isEditingTitle = false,
+    titleDraft = '',
+    onChangeTitleDraft,
+    onSubmitTitleEdit,
+    onCancelTitleEdit,
+    onStartTitleEdit,
+    titlePlaceholder,
+}: SectionMenuProps) {
+    const { t } = useTranslation();
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [editingPlatId, setEditingPlatId] = useState<string | null>(null);
 
@@ -39,11 +66,54 @@ export default function SectionMenu({ titre, plats, onSavePlat, onDeletePlat, is
         setExpanded(prev => ({ ...prev, [platId]: false }));
     }
 
+    const showSectionActions = (!!onRenameSection || !!onDeleteSection) && !isEditingTitle;
+    const showDeleteOnly = !!onDeleteSection && isEditingTitle;
+
     return (
         <div className="bg-white rounded-xl border border-gray-200">
             <div className={`px-6 py-6 text-lg font-medium text-gray-900 flex items-center justify-between rounded-t-xl ${isApiSection ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200' : 'bg-[#D5D9EB]'}`}>
-                <div className="flex items-center gap-2">
-                    {titre}
+                <div className="flex items-center gap-3 flex-wrap">
+                    {isEditingTitle ? (
+                        <div className="flex items-center gap-2">
+                            <input
+                                value={titleDraft}
+                                onChange={(event) => onChangeTitleDraft?.(event.target.value)}
+                                placeholder={titlePlaceholder}
+                                className="w-56 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                autoFocus
+                            />
+                            <button
+                                type="button"
+                                onClick={onSubmitTitleEdit}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-indigo-200 bg-white text-indigo-600 transition-colors duration-150 hover:bg-indigo-50"
+                                aria-label={t('common.save')}
+                            >
+                                <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onCancelTitleEdit}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 transition-colors duration-150 hover:bg-gray-50"
+                                aria-label={t('common.cancel')}
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+                    ) : onStartTitleEdit ? (
+                        <button
+                            type="button"
+                            onClick={onStartTitleEdit}
+                            className="flex items-center gap-2 text-left"
+                        >
+                            <span className={`text-lg font-semibold ${titre ? 'text-gray-900' : 'text-gray-500 italic'}`}>
+                                {titre || titlePlaceholder}
+                            </span>
+                        </button>
+                    ) : (
+                        <span className={`text-lg font-semibold ${titre ? 'text-gray-900' : 'text-gray-500 italic'}`}>
+                            {titre || titlePlaceholder}
+                        </span>
+                    )}
                     {isApiSection && (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             API
@@ -51,6 +121,37 @@ export default function SectionMenu({ titre, plats, onSavePlat, onDeletePlat, is
                     )}
                     <Tag label={`${plats.length} éléments`} color={isApiSection ? "bg-blue-100" : "bg-[#EEF4FF]"} textColor={isApiSection ? "text-blue-700" : "text-indigo-700"} />
                 </div>
+                {showSectionActions && (
+                    <div className="flex items-center gap-2">
+                        {onRenameSection && (
+                            <button
+                                onClick={onRenameSection}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 transition-colors duration-150 hover:bg-gray-50"
+                                aria-label={t('menu.renameSection')}
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </button>
+                        )}
+                        {onDeleteSection && (
+                            <button
+                                onClick={onDeleteSection}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-white text-red-600 transition-colors duration-150 hover:bg-red-50"
+                                aria-label={t('menu.deleteSection')}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </button>
+                        )}
+                    </div>
+                )}
+                {showDeleteOnly && (
+                    <button
+                        onClick={onDeleteSection}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 bg-white text-red-600 transition-colors duration-150 hover:bg-red-50"
+                        aria-label={t('menu.deleteSection')}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </button>
+                )}
             </div>
             <div className="">
                 <div className="overflow-x-auto">
