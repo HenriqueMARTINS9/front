@@ -1,4 +1,5 @@
 import Card from "./Card";
+import { Wine } from 'lucide-react';
 
 export default function AlertCard({ alerts }: { alerts: { type: 'error' | 'success' | 'warning'; message: string; category?: 'wine' | 'dish' | 'menu' }[] }) {
     return (
@@ -14,12 +15,14 @@ export default function AlertCard({ alerts }: { alerts: { type: 'error' | 'succe
             warning: 'bg-[#FFFAEB] text-[#B54708]'
           };
   
-          // Icône de verre à pied pour les alertes liées aux vins
+          // Icône de verre de vin pour les alertes liées aux vins
+          const wineIconColor = alert.type === 'error' ? '#D92D20' : alert.type === 'success' ? '#12B76A' : '#DC6803';
           const wineIcon = (
-            <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8.5 2V8M16.5 2V8M3.5 8H21.5C22.6046 8 23.5 8.89543 23.5 10V19C23.5 20.1046 22.6046 21 21.5 21H3.5C2.39543 21 1.5 20.1046 1.5 19V10C1.5 8.89543 2.39543 8 3.5 8Z" stroke={alert.type === 'error' ? '#D92D20' : alert.type === 'success' ? '#12B76A' : '#DC6803'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M12.5 21V22M12.5 22C11.3954 22 10.5 22.8954 10.5 24H14.5C14.5 22.8954 13.6046 22 12.5 22Z" stroke={alert.type === 'error' ? '#D92D20' : alert.type === 'success' ? '#12B76A' : '#DC6803'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <Wine 
+              size={25} 
+              strokeWidth={2} 
+              color={wineIconColor}
+            />
           );
 
           const defaultIcons = {
