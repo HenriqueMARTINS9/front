@@ -26,6 +26,7 @@ import {
     type Vin,
     type Plat
 } from './api';
+import { getRestaurantId, getLastModifiedDate, setLastModifiedDate } from './auth';
 
 // Clés de cache pour React Query
 export const queryKeys = {
@@ -103,10 +104,11 @@ export const useRestaurantLogin = () => {
         mutationFn: ({ email, password }: { email: string; password: string }) => 
             restaurantAuthService.login(email, password),
         onSuccess: (data) => {
-            // Stocker le token restaurant dans localStorage
+            // Stocker le token et le restaurant ID dans localStorage
             const storage = getLocalStorage();
             if (storage) {
                 storage.setItem('restaurant_token', data.access_token);
+                storage.setItem('restaurant_id', data.restaurant.id.toString());
             }
             // Invalider les requêtes restaurant
             queryClient.invalidateQueries({ queryKey: queryKeys.restaurant });
@@ -209,8 +211,11 @@ export const useWineRecommendations = (userList?: User[], wineCategories?: strin
 
 export const useRestaurantWines = (restaurantId?: number) => {
     const { data: restaurantInfo } = useRestaurantInfo();
-    // Utiliser le restaurant ID 1 par défaut pour l'accueil
-    const actualRestaurantId = restaurantId !== undefined ? restaurantId : (restaurantInfo?.id ?? 1);
+    // Utiliser le restaurant ID depuis le localStorage ou restaurantInfo, sinon 1 par défaut
+    const storedRestaurantId = getRestaurantId();
+    const actualRestaurantId = restaurantId !== undefined 
+        ? restaurantId 
+        : (restaurantInfo?.id ?? storedRestaurantId ?? 1);
     
     return useQuery({
         queryKey: queryKeys.restaurantWines(actualRestaurantId),
@@ -221,8 +226,11 @@ export const useRestaurantWines = (restaurantId?: number) => {
 
 export const useRestaurantDishes = (restaurantId?: number) => {
     const { data: restaurantInfo } = useRestaurantInfo();
-    // Utiliser le restaurant ID 1 par défaut pour l'accueil
-    const actualRestaurantId = restaurantId !== undefined ? restaurantId : (restaurantInfo?.id ?? 1);
+    // Utiliser le restaurant ID depuis le localStorage ou restaurantInfo, sinon 1 par défaut
+    const storedRestaurantId = getRestaurantId();
+    const actualRestaurantId = restaurantId !== undefined 
+        ? restaurantId 
+        : (restaurantInfo?.id ?? storedRestaurantId ?? 1);
     
     return useQuery({
         queryKey: queryKeys.restaurantDishes(actualRestaurantId),
@@ -240,14 +248,18 @@ export const useBestWinesFromDishes = (restaurantId: number, dishesId: number[],
 };
 
 // Hooks pour les vins (compatibilité avec l'ancien système)
-export const useVins = (restaurantId: number = 1) => {
+export const useVins = (restaurantId?: number) => {
+    const { data: restaurantInfo } = useRestaurantInfo();
+    const storedRestaurantId = getRestaurantId();
+    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
+    
     // Récupérer les vins depuis l'API et les convertir au format Vin
     return useQuery({
-        queryKey: ['vins', restaurantId],
+        queryKey: ['vins', actualRestaurantId],
         queryFn: async () => {
-            const restaurantWines = await recommendationsService.getRestaurantWines(restaurantId);
+            const restaurantWines = await recommendationsService.getRestaurantWines(actualRestaurantId);
             if (restaurantWines && restaurantWines.length > 0) {
-                return restaurantWines.map(wine => convertRestaurantWineToVin(wine, restaurantId));
+                return restaurantWines.map(wine => convertRestaurantWineToVin(wine, actualRestaurantId));
             }
             return [];
         },
@@ -255,8 +267,11 @@ export const useVins = (restaurantId: number = 1) => {
     });
 };
 
-export const useCreateVin = (restaurantId: number = 1) => {
+export const useCreateVin = (restaurantId?: number) => {
     const queryClient = useQueryClient();
+    const { data: restaurantInfo } = useRestaurantInfo();
+    const storedRestaurantId = getRestaurantId();
+    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
     
     return useMutation({
         mutationFn: async (vinData: Omit<Vin, 'id'>) => {
@@ -264,24 +279,30 @@ export const useCreateVin = (restaurantId: number = 1) => {
             const wineData = convertVinToRestaurantWineData(vinData);
             
             // Créer le vin via l'API
-            const createdWine = await winesService.createWine(restaurantId, wineData);
+            const createdWine = await winesService.createWine(actualRestaurantId, wineData);
             
             // Convertir le résultat en format Vin
-            return convertRestaurantWineToVin(createdWine, restaurantId);
+            return convertRestaurantWineToVin(createdWine, actualRestaurantId);
         },
         onSuccess: (newVin) => {
             // Invalider et rafraîchir les requêtes de vins
-            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', restaurantId] });
-            queryClient.invalidateQueries({ queryKey: ['vins', restaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', actualRestaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['vins', actualRestaurantId] });
             
             // Forcer le refetch immédiatement
-            queryClient.refetchQueries({ queryKey: ['restaurant-wines', restaurantId] });
+            queryClient.refetchQueries({ queryKey: ['restaurant-wines', actualRestaurantId] });
+            
+            // Mettre à jour la date de dernière modification
+            setLastModifiedDate();
         },
     });
 };
 
-export const useUpdateVin = (restaurantId: number = 1) => {
+export const useUpdateVin = (restaurantId?: number) => {
     const queryClient = useQueryClient();
+    const { data: restaurantInfo } = useRestaurantInfo();
+    const storedRestaurantId = getRestaurantId();
+    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
     
     return useMutation({
         mutationFn: async ({ id, vin }: { id: string; vin: Partial<Vin> }) => {
@@ -294,21 +315,27 @@ export const useUpdateVin = (restaurantId: number = 1) => {
             const wineData = convertVinToRestaurantWineData(vin as Vin);
             
             // Mettre à jour le vin via l'API
-            const updatedWine = await winesService.updateWine(restaurantId, wineId, wineData);
+            const updatedWine = await winesService.updateWine(actualRestaurantId, wineId, wineData);
             
             // Convertir le résultat en format Vin
-            return convertRestaurantWineToVin(updatedWine, restaurantId);
+            return convertRestaurantWineToVin(updatedWine, actualRestaurantId);
         },
         onSuccess: (updatedVin) => {
             // Invalider et rafraîchir les requêtes de vins
-            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', restaurantId] });
-            queryClient.invalidateQueries({ queryKey: ['vins', restaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', actualRestaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['vins', actualRestaurantId] });
+            
+            // Mettre à jour la date de dernière modification
+            setLastModifiedDate();
         },
     });
 };
 
-export const useDeleteVin = (restaurantId: number = 1) => {
+export const useDeleteVin = (restaurantId?: number) => {
     const queryClient = useQueryClient();
+    const { data: restaurantInfo } = useRestaurantInfo();
+    const storedRestaurantId = getRestaurantId();
+    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
     
     return useMutation({
         mutationFn: async (id: string) => {
@@ -318,19 +345,25 @@ export const useDeleteVin = (restaurantId: number = 1) => {
             }
             
             // Supprimer le vin via l'API
-            await winesService.deleteWine(restaurantId, wineId);
+            await winesService.deleteWine(actualRestaurantId, wineId);
         },
         onSuccess: () => {
             // Invalider et rafraîchir les requêtes de vins
-            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', restaurantId] });
-            queryClient.invalidateQueries({ queryKey: ['vins', restaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', actualRestaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['vins', actualRestaurantId] });
+            
+            // Mettre à jour la date de dernière modification
+            setLastModifiedDate();
         },
     });
 };
 
 // Hooks pour les plats (similaires aux vins)
-export const useCreateDish = (restaurantId: number = 1) => {
+export const useCreateDish = (restaurantId?: number) => {
     const queryClient = useQueryClient();
+    const { data: restaurantInfo } = useRestaurantInfo();
+    const storedRestaurantId = getRestaurantId();
+    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
     
     return useMutation({
         mutationFn: async (platData: Omit<Plat, 'id'>) => {
@@ -338,23 +371,29 @@ export const useCreateDish = (restaurantId: number = 1) => {
             const dishData = convertPlatToDishData(platData);
             
             // Créer le plat via l'API
-            const createdDish = await dishesService.createDish(restaurantId, dishData);
+            const createdDish = await dishesService.createDish(actualRestaurantId, dishData);
             
             // Convertir le résultat en format Plat
-            return convertDishToPlat(createdDish, restaurantId);
+            return convertDishToPlat(createdDish, actualRestaurantId);
         },
         onSuccess: (newPlat) => {
             // Invalider et rafraîchir les requêtes de plats
-            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(restaurantId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(actualRestaurantId) });
             
             // Forcer le refetch immédiatement
-            queryClient.refetchQueries({ queryKey: queryKeys.restaurantDishes(restaurantId) });
+            queryClient.refetchQueries({ queryKey: queryKeys.restaurantDishes(actualRestaurantId) });
+            
+            // Mettre à jour la date de dernière modification
+            setLastModifiedDate();
         },
     });
 };
 
-export const useUpdateDish = (restaurantId: number = 1) => {
+export const useUpdateDish = (restaurantId?: number) => {
     const queryClient = useQueryClient();
+    const { data: restaurantInfo } = useRestaurantInfo();
+    const storedRestaurantId = getRestaurantId();
+    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
     
     return useMutation({
         mutationFn: async ({ id, plat }: { id: string; plat: Partial<Plat> }) => {
@@ -369,20 +408,26 @@ export const useUpdateDish = (restaurantId: number = 1) => {
             const dishData = convertPlatToDishData(plat as Plat);
             
             // Mettre à jour le plat via l'API
-            const updatedDish = await dishesService.updateDish(restaurantId, dishId, dishData);
+            const updatedDish = await dishesService.updateDish(actualRestaurantId, dishId, dishData);
             
             // Convertir le résultat en format Plat
-            return convertDishToPlat(updatedDish, restaurantId);
+            return convertDishToPlat(updatedDish, actualRestaurantId);
         },
         onSuccess: (updatedPlat) => {
             // Invalider et rafraîchir les requêtes de plats
-            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(restaurantId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(actualRestaurantId) });
+            
+            // Mettre à jour la date de dernière modification
+            setLastModifiedDate();
         },
     });
 };
 
-export const useDeleteDish = (restaurantId: number = 1) => {
+export const useDeleteDish = (restaurantId?: number) => {
     const queryClient = useQueryClient();
+    const { data: restaurantInfo } = useRestaurantInfo();
+    const storedRestaurantId = getRestaurantId();
+    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
     
     return useMutation({
         mutationFn: async (id: string) => {
@@ -394,11 +439,11 @@ export const useDeleteDish = (restaurantId: number = 1) => {
             const dishId = parseInt(dishIdMatch[1]);
             
             // Supprimer le plat via l'API
-            await dishesService.deleteDish(restaurantId, dishId);
+            await dishesService.deleteDish(actualRestaurantId, dishId);
         },
         onSuccess: () => {
             // Invalider et rafraîchir les requêtes de plats
-            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(restaurantId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(actualRestaurantId) });
         },
     });
 };
@@ -635,5 +680,127 @@ export const useWineStats = () => {
         isLoading: false,
         error: null,
         isOffline: false,
+    };
+};
+
+// Hook pour calculer les alertes
+export const useAlerts = () => {
+    const { data: wines, isLoading: isLoadingWines } = useRestaurantWines();
+    const { data: dishes, isLoading: isLoadingDishes } = useRestaurantDishes();
+    
+    const isLoading = isLoadingWines || isLoadingDishes;
+    
+    if (isLoading) {
+        return {
+            alerts: [],
+            incompleteWinesCount: 0,
+            isLoading: true,
+        };
+    }
+    
+    const alerts: Array<{ type: 'error' | 'success' | 'warning'; message: string; category?: 'wine' | 'dish' | 'menu' }> = [];
+    const winesArray = wines || [];
+    const dishesArray = dishes || [];
+    
+    // Vérifier si un vin n'a pas de cépages
+    const winesWithoutGrapes = winesArray.filter((wine: RestaurantWine) => 
+        !wine.grapes_varieties || wine.grapes_varieties.length === 0
+    );
+    if (winesWithoutGrapes.length > 0) {
+        alerts.push({
+            type: 'warning',
+            message: `${winesWithoutGrapes.length} vin${winesWithoutGrapes.length > 1 ? 's' : ''} n'a${winesWithoutGrapes.length > 1 ? 'ient' : ''} pas de cépages.`,
+            category: 'wine'
+        });
+    }
+    
+    // Vérifier si un prix est à 0 pour un vin
+    const winesWithZeroPrice = winesArray.filter((wine: RestaurantWine) => 
+        !wine.price || wine.price === 0
+    );
+    if (winesWithZeroPrice.length > 0) {
+        alerts.push({
+            type: 'warning',
+            message: `${winesWithZeroPrice.length} vin${winesWithZeroPrice.length > 1 ? 's' : ''} a${winesWithZeroPrice.length > 1 ? ' un' : ''} un prix à 0.`,
+            category: 'wine'
+        });
+    }
+    
+    // Vérifier si un prix est à 0 pour un plat
+    const dishesWithZeroPrice = dishesArray.filter((dish: Dish) => 
+        !dish.price || dish.price === 0
+    );
+    if (dishesWithZeroPrice.length > 0) {
+        alerts.push({
+            type: 'warning',
+            message: `${dishesWithZeroPrice.length} plat${dishesWithZeroPrice.length > 1 ? 's' : ''} a${dishesWithZeroPrice.length > 1 ? ' un' : ''} un prix à 0.`,
+            category: 'dish'
+        });
+    }
+    
+    // Vérifier si le menu n'a pas été mis à jour depuis 30 jours
+    const lastModified = getLastModifiedDate();
+    if (lastModified) {
+        const daysSinceUpdate = Math.floor((new Date().getTime() - lastModified.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysSinceUpdate >= 30) {
+            alerts.push({
+                type: 'error',
+                message: `Votre menu n'a pas été mis à jour depuis ${daysSinceUpdate} jours.`,
+                category: 'menu'
+            });
+        }
+    }
+    
+    // Vérifier s'il n'y a pas de vins créés
+    if (winesArray.length === 0) {
+        alerts.push({
+            type: 'warning',
+            message: 'Aucun vin n\'a été créé.',
+            category: 'wine'
+        });
+    }
+    
+    // Vérifier s'il n'y a pas de plats créés
+    if (dishesArray.length === 0) {
+        alerts.push({
+            type: 'warning',
+            message: 'Aucun plat n\'a été créé.',
+            category: 'dish'
+        });
+    }
+    
+    // Vérifier si une fiche vin est incomplète (pas de cépages OU pas de région OU pas de prix)
+    const incompleteWines = winesArray.filter((wine: RestaurantWine) => {
+        const hasNoGrapes = !wine.grapes_varieties || wine.grapes_varieties.length === 0;
+        const hasNoRegion = !wine.appellation?.fr && !wine.appellation?.['en-US'];
+        const hasNoPrice = !wine.price || wine.price === 0;
+        return hasNoGrapes || hasNoRegion || hasNoPrice;
+    });
+    
+    return {
+        alerts,
+        incompleteWinesCount: incompleteWines.length,
+        isLoading: false,
+    };
+};
+
+// Hook pour vérifier les plats sans arôme principal
+export const useDishesWithoutPrincipalAroma = () => {
+    const { data: dishes, isLoading } = useRestaurantDishes();
+    
+    if (isLoading || !dishes) {
+        return {
+            count: 0,
+            isLoading: true,
+        };
+    }
+    
+    const dishesWithoutAroma = dishes.filter((dish: Dish) => 
+        !dish.food_cat_1 || dish.food_cat_1 === null || dish.food_cat_1 === undefined
+    );
+    
+    return {
+        count: dishesWithoutAroma.length,
+        isLoading: false,
     };
 };

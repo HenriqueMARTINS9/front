@@ -36,9 +36,9 @@ export default function MenuPage() {
     const [sectionNameDraft, setSectionNameDraft] = useState('');
     const [sectionPendingDeletion, setSectionPendingDeletion] = useState<CustomSection | null>(null);
     
-    // Récupérer les plats de l'API
-    const { data: apiDishes, isLoading: isLoadingApi } = useRestaurantDishes(1);
-    const deleteDishMutation = useDeleteDish(1);
+    // Récupérer les plats de l'API (le restaurant ID sera récupéré automatiquement depuis le localStorage)
+    const { data: apiDishes, isLoading: isLoadingApi } = useRestaurantDishes();
+    const deleteDishMutation = useDeleteDish();
     
     // Convertir et grouper les plats de l'API par section
     // Exclure les sections qui sont déjà dans customSections pour éviter les doublons
@@ -222,16 +222,16 @@ export default function MenuPage() {
             }
         } else {
             // Pour les plats personnalisés, supprimer de la section
-            setCustomSections(prev =>
-                prev.map(section =>
-                    section.id === sectionId
-                        ? {
-                            ...section,
-                            plats: section.plats.filter(plat => plat.id !== platId),
-                        }
-                        : section
-                )
-            );
+        setCustomSections(prev =>
+            prev.map(section =>
+                section.id === sectionId
+                    ? {
+                        ...section,
+                        plats: section.plats.filter(plat => plat.id !== platId),
+                    }
+                    : section
+            )
+        );
         }
     };
 
@@ -366,10 +366,10 @@ export default function MenuPage() {
                             {allSections.map((section) => {
                                 const isCustomSection = customSections.some(s => s.id === section.id);
                                 return (
-                                    <SectionMenu
-                                        key={section.id}
-                                        titre={section.titre}
-                                        plats={section.plats}
+                                <SectionMenu
+                                    key={section.id}
+                                    titre={section.titre}
+                                    plats={section.plats}
                                         onSavePlat={(plat) => {
                                             if (isCustomSection) {
                                                 handleSaveCustomPlat(section.id, plat);
@@ -381,21 +381,20 @@ export default function MenuPage() {
                                         onDeletePlat={(platId) => {
                                             handleDeleteCustomPlat(section.id, platId);
                                         }}
-                                        restaurantId={1}
-                                        onRenameSection={() => handleStartRenameSection(section.id)}
-                                        onDeleteSection={() => handleRequestRemoveSection(section.id)}
-                                        onStartTitleEdit={() => handleStartRenameSection(section.id)}
-                                        isEditingTitle={editingSectionId === section.id}
-                                        titleDraft={editingSectionId === section.id ? sectionNameDraft : ''}
-                                        onChangeTitleDraft={(value) => {
-                                            if (editingSectionId === section.id) {
-                                                handleChangeSectionNameDraft(value);
-                                            }
-                                        }}
-                                        onSubmitTitleEdit={() => handleSubmitSectionName(section.id)}
-                                        onCancelTitleEdit={() => handleCancelSectionNameEdit(section.id)}
-                                        titlePlaceholder={t('menu.newSectionPlaceholder')}
-                                    />
+                                    onRenameSection={() => handleStartRenameSection(section.id)}
+                                    onDeleteSection={() => handleRequestRemoveSection(section.id)}
+                                    onStartTitleEdit={() => handleStartRenameSection(section.id)}
+                                    isEditingTitle={editingSectionId === section.id}
+                                    titleDraft={editingSectionId === section.id ? sectionNameDraft : ''}
+                                    onChangeTitleDraft={(value) => {
+                                        if (editingSectionId === section.id) {
+                                            handleChangeSectionNameDraft(value);
+                                        }
+                                    }}
+                                    onSubmitTitleEdit={() => handleSubmitSectionName(section.id)}
+                                    onCancelTitleEdit={() => handleCancelSectionNameEdit(section.id)}
+                                    titlePlaceholder={t('menu.newSectionPlaceholder')}
+                                />
                                 );
                             })}
                         </div>
@@ -473,7 +472,6 @@ export default function MenuPage() {
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 onSave={handleAddPlat}
-                restaurantId={1}
                 existingSections={customSectionNames}
             />
             <ConfirmDialog

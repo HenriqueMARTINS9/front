@@ -94,7 +94,7 @@ const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
                 return 'min-w-[110px]';
             }
             if (width === 'md') {
-                return 'min-w-[120px]';
+            return 'min-w-[120px]';
             }
             return 'min-w-[130px]';
         }

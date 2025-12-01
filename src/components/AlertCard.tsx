@@ -1,6 +1,6 @@
 import Card from "./Card";
 
-export default function AlertCard({ alerts }: { alerts: { type: 'error' | 'success' | 'warning'; message: string }[] }) {
+export default function AlertCard({ alerts }: { alerts: { type: 'error' | 'success' | 'warning'; message: string; category?: 'wine' | 'dish' | 'menu' }[] }) {
     return (
       <Card title="Alertes" number={alerts.length === 0 ? 'Aucune notification' : alerts.length.toString()}>
         {alerts.length === 0 ? (
@@ -14,7 +14,15 @@ export default function AlertCard({ alerts }: { alerts: { type: 'error' | 'succe
             warning: 'bg-[#FFFAEB] text-[#B54708]'
           };
   
-          const icons = {
+          // Icône de verre à pied pour les alertes liées aux vins
+          const wineIcon = (
+            <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8.5 2V8M16.5 2V8M3.5 8H21.5C22.6046 8 23.5 8.89543 23.5 10V19C23.5 20.1046 22.6046 21 21.5 21H3.5C2.39543 21 1.5 20.1046 1.5 19V10C1.5 8.89543 2.39543 8 3.5 8Z" stroke={alert.type === 'error' ? '#D92D20' : alert.type === 'success' ? '#12B76A' : '#DC6803'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12.5 21V22M12.5 22C11.3954 22 10.5 22.8954 10.5 24H14.5C14.5 22.8954 13.6046 22 12.5 22Z" stroke={alert.type === 'error' ? '#D92D20' : alert.type === 'success' ? '#12B76A' : '#DC6803'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          );
+
+          const defaultIcons = {
             error: (
               <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M16.5 2V6M8.5 2V6M3.5 10H21.5M5.5 4H19.5C20.6046 4 21.5 4.89543 21.5 6V20C21.5 21.1046 20.6046 22 19.5 22H5.5C4.39543 22 3.5 21.1046 3.5 20V6C3.5 4.89543 4.39543 4 5.5 4Z" stroke="#D92D20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -38,13 +46,16 @@ export default function AlertCard({ alerts }: { alerts: { type: 'error' | 'succe
               </svg>
             )
           };
+
+          // Utiliser l'icône de verre à pied si c'est une alerte liée aux vins, sinon l'icône par défaut
+          const icon = alert.category === 'wine' ? wineIcon : defaultIcons[alert.type];
   
           return (
             <div
               key={i}
               className={`flex items-center p-1 gap-6 text-sm rounded font-medium ${styles[alert.type]}`}
             >
-              {icons[alert.type]}
+              {icon}
               <span>{alert.message}</span>
             </div>
           );

@@ -4,24 +4,29 @@ import { convertRestaurantWineToVin, type Vin } from '@/lib/api';
 import TableauVin from './TableauVin';
 import { useTranslation } from '@/lib/useTranslation';
 import { useRestaurantWines } from '@/lib/hooks';
+import { getRestaurantId } from '@/lib/auth';
 
 type ApiVinsIntegrationProps = {
     restaurantId?: number;
 };
 
-export default function ApiVinsIntegration({ restaurantId = 0 }: ApiVinsIntegrationProps) {
+export default function ApiVinsIntegration({ restaurantId }: ApiVinsIntegrationProps) {
     const { t } = useTranslation();
     
     // Utiliser le hook React Query pour récupérer les vins (se met à jour automatiquement)
     const { data: restaurantWines, isLoading, error: queryError } = useRestaurantWines(restaurantId);
+    
+    // Récupérer le restaurant ID depuis le localStorage si non fourni
+    const storedRestaurantId = getRestaurantId();
+    const actualRestaurantId = restaurantId ?? storedRestaurantId ?? 1;
 
     // Conversion des vins de l'API en format local
     const vins = useMemo(() => {
         if (!restaurantWines || restaurantWines.length === 0) {
             return [];
         }
-        return restaurantWines.map(wine => convertRestaurantWineToVin(wine, restaurantId));
-    }, [restaurantWines, restaurantId]);
+        return restaurantWines.map(wine => convertRestaurantWineToVin(wine, actualRestaurantId));
+    }, [restaurantWines, actualRestaurantId]);
     
     const error = queryError ? (queryError instanceof Error ? queryError.message : t('common.error')) : null;
 
@@ -64,7 +69,7 @@ export default function ApiVinsIntegration({ restaurantId = 0 }: ApiVinsIntegrat
         <div className="space-y-6">
             <TableauVin
                 vins={vins}
-                restaurantId={restaurantId}
+                restaurantId={actualRestaurantId}
             />
         </div>
     );

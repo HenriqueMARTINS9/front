@@ -10,13 +10,14 @@ import Header from '@/components/Header';
 import MenuCard from '@/components/MenuCard';
 import MembersCard from '@/components/MembersCard';
 import { useTranslation } from '@/lib/useTranslation';
-import { useRestaurantInfo } from '@/lib/hooks';
+import { useRestaurantInfo, useAlerts } from '@/lib/hooks';
 
 
 export default function HomePage() {
     const router = useRouter();
     const { t } = useTranslation();
     const { data: restaurantInfo } = useRestaurantInfo();
+    const { alerts, isLoading: isLoadingAlerts } = useAlerts();
 
     useEffect(() => {
         // Vérifier si l'utilisateur ou le restaurant est connecté
@@ -42,12 +43,7 @@ export default function HomePage() {
                     <div className="mb-0 col-span-8 space-y-10">
                         <div>
                             <AlertCard
-                                /*alerts={[
-                                    { type: 'warning', message: t('home.alerts.missingAromas') },
-                                    { type: 'error', message: t('home.alerts.menuNotUpdated') },
-                                    { type: 'success', message: t('home.alerts.addWineByGlass') },
-                                ]}*/
-                                alerts={[]}
+                                alerts={isLoadingAlerts ? [] : alerts}
                             />
 
                         </div>

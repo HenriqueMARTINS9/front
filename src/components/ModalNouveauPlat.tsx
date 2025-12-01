@@ -96,6 +96,9 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
 
     // États pour les erreurs de validation
     const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
+    
+    // État pour le modal d'exemples
+    const [showExamplesModal, setShowExamplesModal] = useState(false);
 
     // Effet pour réinitialiser le formulaire quand le modal s'ouvre
     useEffect(() => {
@@ -107,7 +110,7 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
             setSection('');
             setNouvelleSection('');
             setCreerNouvelleSection(false);
-            setAromePrincipal([{ id: '1', label: '', color: 'bg-green-100', textColor: 'text-green-700', puce: false, puceColor: '' }]);
+            setAromePrincipal('');
             setAromesSecondaires([]);
             setErrors({});
         }
@@ -307,7 +310,7 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
             setSection('');
             setNouvelleSection('');
             setCreerNouvelleSection(false);
-            setAromePrincipal([{ id: '1', label: '', color: 'bg-green-100', textColor: 'text-green-700', puce: false, puceColor: '' }]);
+            setAromePrincipal('');
             setAromesSecondaires([]);
             setErrors({});
         } catch (error) {
@@ -468,11 +471,42 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                             )}
                         </div>
 
+                        {/* Encadré vert avec instructions */}
+                        <div className="bg-green-50 rounded-lg p-4 mb-4">
+                            <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-[#12B76A] bg-transparent flex items-center justify-center">
+                                    <span className="text-[#12B76A] text-xs font-bold">i</span>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm text-green-800 mb-2">
+                                        {t('menu.dish.aromaInfo')}
+                                    </p>
+                                    <p className="text-sm text-green-800 font-medium">
+                                        {t('menu.dish.aromaExample')}
+                                    </p>
+                                    <ul className="text-sm text-green-800 mt-1 ml-4 list-disc">
+                                        <li>{t('menu.dish.aromaExampleMain')}</li>
+                                        <li>{t('menu.dish.aromaExampleSecondary')}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Arôme principal */}
                         <div>
-                            <label className={`block text-sm font-medium mb-3 ${errors.aromePrincipal ? 'text-red-700' : 'text-gray-700'}`}>
-                                Arôme principal <span className="text-red-500">*</span>
-                            </label>
+                            <div className="flex items-center justify-between mb-3">
+                                <label className={`block text-sm font-medium ${errors.aromePrincipal ? 'text-red-700' : 'text-gray-700'}`}>
+                                    Arôme principal <span className="text-red-500">*</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowExamplesModal(true)}
+                                    className="w-5 h-5 rounded-full border-2 border-black hover:bg-gray-100 flex items-center justify-center transition-colors"
+                                    title="Voir les exemples d'arômes"
+                                >
+                                    <span className="text-black text-xs font-bold">i</span>
+                                </button>
+                            </div>
                             <Select
                                 value={aromePrincipal}
                                 onChange={handleAromePrincipalChange}
@@ -486,8 +520,7 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                                     text: 'text-gray-900',
                                     placeholder: 'placeholder-gray-500',
                                     focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                                    hover: '',
-                                    error: 'border-red-500'
+                                    hover: ''
                                 }}
                             />
                             {errors.aromePrincipal && (
@@ -528,21 +561,122 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
                             />
                         </div>
                     </div>
-                    {/* Boutons d'action */}
-                    <div className="flex justify-start gap-4 mt-10 pt-10">
-                        <Button
-                            onClick={handleSubmit}
-                            className="bg-[#3E4784] text-white hover:bg-[#2D3A6B] hover:shadow-lg transform transition-all duration-200 ease-in-out"
-                        >
-                            Valider
-                        </Button>
-                        <Button
-                            onClick={onClose}
-                            className="bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200"
-                        >
-                            {t('common.cancel')}
-                        </Button>
+                </div>
+
+                {/* Modal d'exemples d'arômes */}
+                {showExamplesModal && (
+                    <div 
+                        className="fixed inset-0 bg-[#0000005F] bg-opacity-50 flex items-center justify-center z-[60] animate-in fade-in duration-300"
+                        onClick={(e) => {
+                            if (e.target === e.currentTarget) {
+                                setShowExamplesModal(false);
+                            }
+                        }}
+                    >
+                        <div className="bg-[#3E4784] rounded-xl max-w-3xl w-full mx-4 max-h-[80vh] shadow-lg overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+                            <div className="p-6 overflow-y-auto flex-1">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-2xl font-bold text-white">{t('menu.dish.examplesTitle')}</h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowExamplesModal(false)}
+                                        className="w-8 h-8 rounded-full border-2 border-white bg-transparent hover:bg-white/10 flex items-center justify-center transition-colors"
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 4L4 12M4 4L12 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    {/* Fromage */}
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-white mb-2">{t('menu.dish.examplesCategories.cheese')}</h3>
+                                        <div className="space-y-1.5 text-sm text-white/90">
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.saltyCrumblyCheese')}</span> {t('menu.dish.examplesItems.saltyCrumblyCheese')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.pungentBlueCheese')}</span> {t('menu.dish.examplesItems.pungentBlueCheese')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.sourCheeseCream')}</span> {t('menu.dish.examplesItems.sourCheeseCream')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.delicateButteryCheese')}</span> {t('menu.dish.examplesItems.delicateButteryCheese')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.nuttyHardCheese')}</span> {t('menu.dish.examplesItems.nuttyHardCheese')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.fruityUmamiCheese')}</span> {t('menu.dish.examplesItems.fruityUmamiCheese')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.drySaltyUmamiCheese')}</span> {t('menu.dish.examplesItems.drySaltyUmamiCheese')}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Protéines */}
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-white mb-2">{t('menu.dish.examplesCategories.proteins')}</h3>
+                                        <div className="space-y-1.5 text-sm text-white/90">
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.mollusk')}</span> {t('menu.dish.examplesItems.mollusk')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.finFish')}</span> {t('menu.dish.examplesItems.finFish')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.shellfish')}</span> {t('menu.dish.examplesItems.shellfish')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.whiteMeat')}</span> {t('menu.dish.examplesItems.whiteMeat')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.redMeat')}</span> {t('menu.dish.examplesItems.redMeat')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.curedMeat')}</span> {t('menu.dish.examplesItems.curedMeat')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.strongMarinade')}</span> {t('menu.dish.examplesItems.strongMarinade')}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Légumes */}
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-white mb-2">{t('menu.dish.examplesCategories.vegetables')}</h3>
+                                        <div className="space-y-1.5 text-sm text-white/90">
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.cruciferousVegetable')}</span> {t('menu.dish.examplesItems.cruciferousVegetable')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.greenVegetable')}</span> {t('menu.dish.examplesItems.greenVegetable')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.harvestVegetable')}</span> {t('menu.dish.examplesItems.harvestVegetable')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.allium')}</span> {t('menu.dish.examplesItems.allium')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.nightshade')}</span> {t('menu.dish.examplesItems.nightshade')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.bean')}</span> {t('menu.dish.examplesItems.bean')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.funghi')}</span> {t('menu.dish.examplesItems.funghi')}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Épices et herbes aromatiques */}
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-white mb-3">{t('menu.dish.examplesCategories.spices')}</h3>
+                                        <div className="space-y-2 text-sm text-white/90">
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.aromaticGreenHerb')}</span> {t('menu.dish.examplesItems.aromaticGreenHerb')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.dryHerb')}</span> {t('menu.dish.examplesItems.dryHerb')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.resinousHerb')}</span> {t('menu.dish.examplesItems.resinousHerb')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.exoticSpice')}</span> {t('menu.dish.examplesItems.exoticSpice')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.bakingSpice')}</span> {t('menu.dish.examplesItems.bakingSpice')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.umamiSpice')}</span> {t('menu.dish.examplesItems.umamiSpice')}</div>
+                                            <div><span className="font-medium text-white">{t('menu.dish.examples.redPepper')}</span> {t('menu.dish.examplesItems.redPepper')}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Bouton de fermeture */}
+                            <div className="px-6 py-4 border-t border-white/20 flex justify-end">
+                                <Button
+                                    type="button"
+                                    onClick={() => setShowExamplesModal(false)}
+                                    className="bg-white text-[#3E4784] hover:bg-white/90 transition-colors duration-200"
+                                >
+                                    {t('common.close')}
+                                </Button>
+                            </div>
+                        </div>
                     </div>
+                )}
+
+                {/* Boutons d'action - en dehors de la zone scrollable */}
+                <div className="px-8 py-4 border-t border-gray-200 bg-gray-50 flex justify-start gap-4">
+                    <Button
+                        type="button"
+                        onClick={() => handleSubmit()}
+                        className="bg-[#3E4784] text-white hover:bg-[#2D3A6B] hover:shadow-lg transform transition-all duration-200 ease-in-out"
+                    >
+                        Valider
+                    </Button>
+                    <Button
+                        type="button"
+                        onClick={() => onClose()}
+                        className="bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200"
+                    >
+                        {t('common.cancel')}
+                    </Button>
                 </div>
             </div>
         </div>

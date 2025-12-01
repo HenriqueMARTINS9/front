@@ -1,31 +1,37 @@
 'use client';
 import { useState } from 'react';
-import { authApi } from '@/lib/api';
+import { restaurantAuthService } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { setToken } from '@/lib/auth';
+import { setRestaurantToken, setRestaurantId, extractRestaurantIdFromEmail } from '@/lib/auth';
 
 
 export default function LoginPage() {
-    const [username, setUsername] = useState('admin');
-    const [password, setPassword] = useState('admin123');
+    const [email, setEmail] = useState('restaurant1@test.com');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
 
 
     const handleLogin = async () => {
         try {
-            const form = new URLSearchParams();
-            form.append('username', username);
-            form.append('password', password);
-            form.append('grant_type', 'password');
-            form.append('client_id', '250684173847-7f1vs6bi5852mel1k2ddogijlrffemf8.apps.googleusercontent.com');
-            form.append('client_secret', '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');
+            setError(null);
+            
+            // Vérifier le format de l'email
+            const restaurantId = extractRestaurantIdFromEmail(email);
+            if (!restaurantId) {
+                setError('Format d\'email invalide. Utilisez le format: restaurantX@test.com (ex: restaurant1@test.com)');
+                return;
+            }
 
-            const res = await authApi.post('/token', form);
+            const res = await restaurantAuthService.login(email, password);
 
-            setToken(res.data.access_token);
+            // Stocker le token et le restaurant ID
+            setRestaurantToken(res.access_token);
+            setRestaurantId(res.restaurant.id);
+            
             router.push('/home');
-        } catch (err) {
-            alert('Erreur de connexion');
+        } catch (err: any) {
+            setError(err.message || 'Erreur de connexion');
         }
     };
 
@@ -78,11 +84,11 @@ export default function LoginPage() {
 
                                 </span>
                                 <input
-                                    type="text"
-                                    placeholder="olivia@hotel.com"
+                                    type="email"
+                                    placeholder="restaurant1@test.com"
                                     className="input"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -107,6 +113,11 @@ export default function LoginPage() {
                             </div>
                         </div>
                     </div>
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+                            {error}
+                        </div>
+                    )}
                     <button
                         onClick={handleLogin}
                         className="btn w-full text-white font-medium"
@@ -116,15 +127,8 @@ export default function LoginPage() {
                     <p className="forgotMdp">
                         J&apos;ai oublié mon mot de passe
                     </p>
-                    
-                    <div className="border-t border-gray-200 pt-4 text-center">
-                        <p className="text-sm text-gray-600 mb-2">Vous êtes un restaurant ?</p>
-                        <button
-                            onClick={() => router.push('/restaurant-login')}
-                            className="text-[#7C3AED] hover:text-[#6D28D9] text-sm font-medium"
-                        >
-                            Connexion Restaurant
-                        </button>
+                    <div className="text-xs text-gray-500 text-center mt-2">
+                        Format: restaurantX@test.com (ex: restaurant1@test.com)
                     </div>
                 </div>
             </div>

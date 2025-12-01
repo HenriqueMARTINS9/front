@@ -2,14 +2,18 @@ import { AlertTriangle } from 'lucide-react';
 import Card from './Card';
 import Tag from './Tag';
 import { getTagColors } from '@/lib/tagColors';
-import { useWineStats } from '@/lib/hooks';
+import { useWineStats, useAlerts } from '@/lib/hooks';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/useTranslation';
+import { getLastModifiedDate, formatLastModifiedDate } from '@/lib/auth';
 
 export default function VinsCard() {
     const { data: stats, isLoading, isOffline } = useWineStats();
+    const { incompleteWinesCount } = useAlerts();
     const router = useRouter();
     const { t } = useTranslation();
+    const lastModified = getLastModifiedDate();
+    const formattedDate = formatLastModifiedDate(lastModified);
 
     const handleUpdateClick = () => {
         router.push('/vins');
@@ -43,19 +47,20 @@ export default function VinsCard() {
                 </div>
             )}
 
-            {/* Alerte 
-            <div className="flex items-center justify-between bg-red-50 text-red-600 px-3 py-2 rounded text-xs font-medium">
-                <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    {stats.incomplete} fiche{stats.incomplete > 1 ? 's' : ''} vin{stats.incomplete > 1 ? 's' : ''} à compléter
+            {incompleteWinesCount > 0 && (
+                <div className="flex items-center justify-between bg-red-50 text-red-600 px-3 py-2 rounded text-xs font-medium mb-4">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4" />
+                        {incompleteWinesCount} fiche{incompleteWinesCount > 1 ? 's' : ''} vin{incompleteWinesCount > 1 ? 's' : ''} à compléter
+                    </div>
+                    <button 
+                        onClick={handleUpdateClick}
+                        className="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded hover:bg-red-200 transition-colors duration-200 cursor-pointer"
+                    >
+                        Mettre à jour
+                    </button>
                 </div>
-                <button 
-                    onClick={handleUpdateClick}
-                    className="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded hover:bg-red-200 transition-colors duration-200 cursor-pointer"
-                >
-                    Mettre à jour
-                </button>
-            </div>*/}
+            )}
 
             {/* Tags organisés en deux colonnes */}
             <div className="grid grid-cols-2 gap-6">
@@ -146,7 +151,9 @@ export default function VinsCard() {
                 </div>
             </div>
 
-            <div className="text-gray-400 text-xs mt-4">{t('common.lastModifiedDate')}</div>
+            {formattedDate && (
+                <div className="text-gray-400 text-xs mt-4">Dernière modification le {formattedDate}</div>
+            )}
         </Card>
     );
 }

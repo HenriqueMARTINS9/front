@@ -131,9 +131,6 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
         if (!pays.trim()) {
             newErrors.pays = true;
         }
-        if (cepages.length === 0 || !cepages[0].nom.trim()) {
-            newErrors.cepages = true;
-        }
         console.log('Vérification du format:', { formatNom: format.nom, formatNomTrim: format.nom?.trim(), isEmpty: !format.nom?.trim() });
         if (!format.nom || !format.nom.trim()) {
             newErrors.format = true;
@@ -217,12 +214,6 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
     return (
         <div 
             className="fixed inset-0 bg-[#0000005F] bg-opacity-50 flex items-center justify-center z-50 animate-in fade-in duration-300"
-            onClick={(e) => {
-                // Fermer le modal si on clique sur le fond
-                if (e.target === e.currentTarget) {
-                    onClose();
-                }
-            }}
         >
             <div className="bg-gray-50 rounded-xl max-w-4xl w-full mx-4 max-h-[90vh] shadow-sm focus:shadow-sm focus:shadow-gray-100 focus:shadow-[4px] overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                 <div className="p-8 overflow-y-auto flex-1">
@@ -513,46 +504,46 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 </div>
                             </Checkbox>
                         </div>
-                        <List
-                            items={cepages}
-                            onItemsChange={handleCepagesChange}
-                            fields={[
-                                {
-                                    key: 'nom',
-                                    label: t('common.grapeVarietyName'),
-                                    type: 'text',
-                                    placeholder: t('common.grapeVarietyPlaceholder'),
-                                    width: 'full'
-                                },
-                                {
-                                    key: 'pourcentage',
-                                    label: '%',
-                                    type: 'text',
-                                    placeholder: '10',
-                                    suffix: ' %',
-                                    width: 'full'
-                                }
-                            ]}
-                            addButtonText={t('common.addGrapeVariety')}
-                            emptyMessage={t('common.noGrapeVarieties')}
-                            size="md"
-                            colors={{
-                                background: 'bg-white',
-                                border: 'border-gray-300',
-                                text: 'text-gray-900',
-                                placeholder: 'placeholder-gray-500',
-                                focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                                hover: '',
-                                suffix: 'text-gray-500',
-                                deleteButton: 'text-gray-400',
-                                deleteButtonHover: '',
-                                addButton: 'bg-[#3E4784] text-white hover:bg-[#2D3A6B] hover:shadow-md transform transition-all duration-200 ease-in-out',
-                                optionHover: 'hover:bg-gray-50',
-                                optionSelected: 'bg-purple-50 text-purple-700'
-                            }}
-                        />
-                        {errors.cepages && (
-                            <p className="text-red-500 text-sm mt-1">{t('common.grapeVarietyRequired')}</p>
+                        {!unknownProportions && (
+                            <List
+                                items={cepages}
+                                onItemsChange={handleCepagesChange}
+                                fields={[
+                                    {
+                                        key: 'nom',
+                                        label: t('common.grapeVarietyName'),
+                                        type: 'text',
+                                        placeholder: t('common.grapeVarietyPlaceholder'),
+                                        width: 'full'
+                                    },
+                                    {
+                                        key: 'pourcentage',
+                                        label: '%',
+                                        type: 'text',
+                                        placeholder: '10',
+                                        suffix: ' %',
+                                        width: 'full'
+                                    }
+                                ]}
+                                addButtonText={t('common.addGrapeVariety')}
+                                emptyMessage={t('common.noGrapeVarieties')}
+                                size="md"
+                                showAddButton={!unknownProportions}
+                                colors={{
+                                    background: 'bg-white',
+                                    border: 'border-gray-300',
+                                    text: 'text-gray-900',
+                                    placeholder: 'placeholder-gray-500',
+                                    focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
+                                    hover: '',
+                                    suffix: 'text-gray-500',
+                                    deleteButton: 'text-gray-400',
+                                    deleteButtonHover: '',
+                                    addButton: 'bg-[#3E4784] text-white hover:bg-[#2D3A6B] hover:shadow-md transform transition-all duration-200 ease-in-out',
+                                    optionHover: 'hover:bg-gray-50',
+                                    optionSelected: 'bg-purple-50 text-purple-700'
+                                }}
+                            />
                         )}
                     </div>
 

@@ -1,11 +1,15 @@
 import Card from './Card';
 import SubCard from './SubCard';
-import { useAllRestaurantDishes } from '@/lib/hooks';
+import { useAllRestaurantDishes, useDishesWithoutPrincipalAroma } from '@/lib/hooks';
 import { useTranslation } from '@/lib/useTranslation';
+import { getLastModifiedDate, formatLastModifiedDate } from '@/lib/auth';
 
 export default function MenuCard() {
     const { data: dishesCount, isLoading } = useAllRestaurantDishes();
+    const { count: dishesWithoutAromaCount, isLoading: isLoadingAromaCheck } = useDishesWithoutPrincipalAroma();
     const { t } = useTranslation();
+    const lastModified = getLastModifiedDate();
+    const formattedDate = formatLastModifiedDate(lastModified) || '8 août 2025';
 
     if (isLoading) {
         return (
@@ -34,8 +38,8 @@ export default function MenuCard() {
                         key={restaurant.id}
                         title={restaurant.name}
                         count={restaurant.count}
-                        date="8 août 2025"
-                        alert={restaurant.count === 0 ? t('common.missingAromas') : undefined}
+                        date={formattedDate}
+                        alert={!isLoadingAromaCheck && dishesWithoutAromaCount > 0 ? t('common.missingAromas') : undefined}
                     />
                 ))}
             </div>

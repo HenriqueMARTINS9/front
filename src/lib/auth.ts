@@ -8,6 +8,17 @@ const getLocalStorage = () => {
     return null;
 };
 
+// Fonction pour extraire le restaurant ID depuis l'email
+// Format attendu: restaurantX@test.com où X est le restaurant ID
+export const extractRestaurantIdFromEmail = (email: string): number | null => {
+    const match = email.match(/^restaurant(\d+)@test\.com$/i);
+    if (match && match[1]) {
+        const restaurantId = parseInt(match[1], 10);
+        return isNaN(restaurantId) ? null : restaurantId;
+    }
+    return null;
+};
+
 export const setToken = (token: string) => {
     const storage = getLocalStorage();
     if (storage) {
@@ -65,4 +76,60 @@ export const isRestaurantLoggedIn = () => {
 
 export const isUserLoggedIn = () => {
     return !!getToken();
+};
+
+// Fonctions pour gérer le restaurant ID
+export const setRestaurantId = (restaurantId: number) => {
+    const storage = getLocalStorage();
+    if (storage) {
+        storage.setItem('restaurant_id', restaurantId.toString());
+    }
+};
+
+export const getRestaurantId = (): number | null => {
+    const storage = getLocalStorage();
+    if (storage) {
+        const restaurantId = storage.getItem('restaurant_id');
+        return restaurantId ? parseInt(restaurantId, 10) : null;
+    }
+    return null;
+};
+
+export const clearRestaurantId = () => {
+    const storage = getLocalStorage();
+    if (storage) {
+        storage.removeItem('restaurant_id');
+    }
+};
+
+// Fonctions pour gérer la date de dernière modification
+export const setLastModifiedDate = (date: Date = new Date()) => {
+    const storage = getLocalStorage();
+    if (storage) {
+        storage.setItem('last_modified_date', date.toISOString());
+    }
+};
+
+export const getLastModifiedDate = (): Date | null => {
+    const storage = getLocalStorage();
+    if (storage) {
+        const dateStr = storage.getItem('last_modified_date');
+        return dateStr ? new Date(dateStr) : null;
+    }
+    return null;
+};
+
+export const formatLastModifiedDate = (date: Date | null): string => {
+    if (!date) return '';
+    
+    const months = [
+        'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    ];
+    
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    
+    return `${day} ${month} ${year}`;
 };

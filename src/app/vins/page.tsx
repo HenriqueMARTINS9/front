@@ -16,11 +16,9 @@ export default function VinsPage() {
     const { t } = useTranslation();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const restaurantId = 1; // ID du restaurant (pourrait venir du contexte ou de l'authentification)
-    
-    // Récupération des vins depuis l'API
-    const { data: vins, isLoading, error } = useVins(restaurantId);
-    const createVinMutation = useCreateVin(restaurantId);
+    // Récupération des vins depuis l'API (le restaurant ID sera récupéré automatiquement depuis le localStorage)
+    const { data: vins, isLoading, error } = useVins();
+    const createVinMutation = useCreateVin();
     const { notifications, showSuccess, showError, removeNotification } = useNotification();
 
     function addNewWine() {
@@ -118,7 +116,7 @@ export default function VinsPage() {
                         </Button>
                     </div>
                     {/* Vins récupérés de l'API */}
-                    <ApiVinsIntegration restaurantId={1} />
+                    <ApiVinsIntegration />
 
                     {/* Séparateur visuel 
                     <div className="border-t border-gray-200 my-8">

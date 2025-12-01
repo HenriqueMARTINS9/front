@@ -391,29 +391,32 @@ export const restaurantAuthService = {
         // Simuler un délai de réseau
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Rechercher le restaurant par email
-        const restaurant = TEST_RESTAURANTS.find(r => r.email === email);
-        
-        if (!restaurant) {
-            throw new Error('Restaurant non trouvé');
+        // Extraire le restaurant ID depuis l'email (format: restaurantX@test.com)
+        const emailMatch = email.match(/^restaurant(\d+)@test\.com$/i);
+        if (!emailMatch || !emailMatch[1]) {
+            throw new Error('Format d\'email invalide. Utilisez le format: restaurantX@test.com');
         }
         
-        if (restaurant.password !== password) {
-            throw new Error('Mot de passe incorrect');
+        const restaurantId = parseInt(emailMatch[1], 10);
+        if (isNaN(restaurantId)) {
+            throw new Error('ID de restaurant invalide dans l\'email');
         }
+        
+        // Pour le test, on accepte n'importe quel mot de passe
+        // En production, vous devriez vérifier le mot de passe via l'API
         
         // Générer un token simulé
-        const token = `restaurant_${restaurant.id}_${Date.now()}`;
+        const token = `restaurant_${restaurantId}_${Date.now()}`;
         
         return {
             access_token: token,
             token_type: 'Bearer',
             restaurant: {
-                id: restaurant.id,
-                name: restaurant.name,
-                email: restaurant.email,
-                address: restaurant.address,
-                phone: restaurant.phone
+                id: restaurantId,
+                name: `Restaurant ${restaurantId}`,
+                email: email,
+                address: `Adresse du restaurant ${restaurantId}`,
+                phone: `+41 21 ${restaurantId.toString().padStart(3, '0')} 00 00`
             }
         };
     },
@@ -422,25 +425,23 @@ export const restaurantAuthService = {
     getRestaurantInfo: async (): Promise<Restaurant> => {
         const storage = getLocalStorage();
         const token = storage?.getItem('restaurant_token');
+        const restaurantId = storage?.getItem('restaurant_id');
         
-        if (!token) {
+        if (!token || !restaurantId) {
             throw new Error('Aucun token restaurant trouvé');
         }
         
-        // Extraire l'ID du restaurant du token
-        const restaurantId = parseInt(token.split('_')[1]);
-        const restaurant = TEST_RESTAURANTS.find(r => r.id === restaurantId);
-        
-        if (!restaurant) {
-            throw new Error('Restaurant non trouvé');
+        const id = parseInt(restaurantId, 10);
+        if (isNaN(id)) {
+            throw new Error('ID de restaurant invalide');
         }
         
         return {
-            id: restaurant.id,
-            name: restaurant.name,
-            email: restaurant.email,
-            address: restaurant.address,
-            phone: restaurant.phone
+            id: id,
+            name: `Restaurant ${id}`,
+            email: `restaurant${id}@test.com`,
+            address: `Adresse du restaurant ${id}`,
+            phone: `+41 21 ${id.toString().padStart(3, '0')} 00 00`
         };
     },
 
