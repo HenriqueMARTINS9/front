@@ -1,9 +1,11 @@
 import Card from "./Card";
 import { Wine } from 'lucide-react';
+import { useTranslation } from '@/lib/useTranslation';
 
 export default function AlertCard({ alerts }: { alerts: { type: 'error' | 'success' | 'warning'; message: string; category?: 'wine' | 'dish' | 'menu' }[] }) {
+    const { t } = useTranslation();
     return (
-      <Card title="Alertes" number={alerts.length === 0 ? 'Aucune notification' : alerts.length.toString()}>
+      <Card title={t('common.alerts')} number={alerts.length === 0 ? t('common.noNotifications') : alerts.length.toString()}>
         {alerts.length === 0 ? (
           <div className="">
           </div>

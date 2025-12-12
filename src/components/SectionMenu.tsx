@@ -44,6 +44,8 @@ export default function SectionMenu({
     const { t } = useTranslation();
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [editingPlatId, setEditingPlatId] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const itemsPerPage = 10;
 
     function startEditing(platId: string) {
         setEditingPlatId(platId);
@@ -157,7 +159,18 @@ export default function SectionMenu({
                 <div className="overflow-x-auto">
                     <table className="min-w-full">
                         <tbody className="align-center text-center text-gray-900">
-                            {plats.map((plat) => {
+                            {(() => {
+                                const totalPages = Math.ceil(plats.length / itemsPerPage);
+                                const startIndex = (currentPage - 1) * itemsPerPage;
+                                const endIndex = startIndex + itemsPerPage;
+                                const paginatedPlats = plats.slice(startIndex, endIndex);
+                                
+                                // Réinitialiser la page si elle dépasse le nombre total de pages
+                                if (currentPage > totalPages && totalPages > 0) {
+                                    setCurrentPage(1);
+                                }
+                                
+                                return paginatedPlats.map((plat) => {
                                 const isOpen = !!expanded[plat.id];
                                 return (
                                     <React.Fragment key={plat.id}>
@@ -174,12 +187,21 @@ export default function SectionMenu({
                                                 <div className="flex items-center justify-end gap-4">
                                                     {/* Mots-clés */}
                                                     <div className="flex space-x-2">
-                                                        {plat.motsCles.map((motCle) => {        
+                                                        {plat.motsCles.map((motCle) => {
+                                                            // Traduire le label si c'est une clé d'arôme
+                                                            const translationKey = `menu.aromas.${motCle.label}`;
+                                                            const translatedLabel = t(translationKey);
+                                                            // Si la traduction existe (ne retourne pas la clé), l'utiliser, sinon utiliser le label original
+                                                            const displayLabel = translatedLabel !== translationKey ? translatedLabel : motCle.label;
+                                                            
                                                             return (
                                                                 <Tag
                                                                     key={motCle.id}
-                                                                    label={motCle.label}
+                                                                    label={displayLabel}
+                                                                    color={motCle.color}
+                                                                    textColor={motCle.textColor}
                                                                     puce={true}
+                                                                    puceColor={motCle.puceColor}
                                                                 />
                                                             );
                                                         })}
@@ -215,7 +237,8 @@ export default function SectionMenu({
                                         )}
                                     </React.Fragment>
                                 );
-                            })}
+                            })
+                            })()}
                         </tbody>
                     </table>
                 </div>

@@ -51,7 +51,7 @@ export default function VinsCard() {
                 <div className="flex items-center justify-between bg-red-50 text-red-600 px-3 py-2 rounded text-xs font-medium mb-4">
                     <div className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4" />
-                        {incompleteWinesCount} fiche{incompleteWinesCount > 1 ? 's' : ''} vin{incompleteWinesCount > 1 ? 's' : ''} à compléter
+                        {t('common.alertIncompleteWineSheets', { count: incompleteWinesCount, plural: incompleteWinesCount > 1 ? 's' : '' })}
                     </div>
                     <button 
                         onClick={handleUpdateClick}
@@ -152,7 +152,7 @@ export default function VinsCard() {
             </div>
 
             {formattedDate && (
-                <div className="text-gray-400 text-xs mt-4">Dernière modification le {formattedDate}</div>
+                <div className="text-gray-400 text-xs mt-4">{t('common.lastModification')} {formattedDate}</div>
             )}
         </Card>
     );

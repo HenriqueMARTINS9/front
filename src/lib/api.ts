@@ -393,12 +393,12 @@ export const restaurantAuthService = {
         
         // Extraire le restaurant ID depuis l'email (format: restaurantX@test.com)
         const emailMatch = email.match(/^restaurant(\d+)@test\.com$/i);
-        if (!emailMatch || !emailMatch[1]) {
+        if (!emailMatch || emailMatch[1] === undefined) {
             throw new Error('Format d\'email invalide. Utilisez le format: restaurantX@test.com');
         }
         
         const restaurantId = parseInt(emailMatch[1], 10);
-        if (isNaN(restaurantId)) {
+        if (isNaN(restaurantId) || restaurantId < 0) {
             throw new Error('ID de restaurant invalide dans l\'email');
         }
         
@@ -895,6 +895,8 @@ export const convertPlatToDishData = (plat: Omit<Plat, 'id'> | Plat, language: '
 };
 
 // Fonction pour convertir un Dish de l'API vers le format Plat
+import { getAromaColors } from './aromaColors';
+
 export const convertDishToPlat = (dish: Dish, restaurantId: number = 0): Plat => {
     // Cette fonction est déjà implémentée dans TableauMenu.tsx, mais on la duplique ici pour l'utiliser dans les hooks
     // On va l'utiliser depuis TableauMenu si nécessaire, ou la recréer ici
@@ -946,40 +948,41 @@ export const convertDishToPlat = (dish: Dish, restaurantId: number = 0): Plat =>
     // Arôme principal (food_cat_1)
     if (dish.food_cat_1 !== undefined && dish.food_cat_1 !== null) {
         const aromaKey = getAromaKeyFromNumber(dish.food_cat_1);
-        // On ne peut pas traduire ici car on n'a pas accès à la fonction de traduction
-        // On utilisera le label brut et la traduction sera faite dans le composant
+        const colors = getAromaColors(aromaKey) || { bg: 'bg-gray-100', text: 'text-gray-700', puce: '#6B7280' };
         motsCles.push({
             id: `mc-api-${dish.dish_id}-1`,
             label: aromaKey, // Le composant traduira ce label
-            color: 'bg-green-100',
-            textColor: 'text-green-700',
+            color: colors.bg,
+            textColor: colors.text,
             puce: true,
-            puceColor: '#10b981'
+            puceColor: colors.puce
         });
     }
     
     // Arômes secondaires (food_cat_2 et food_cat_3)
     if (dish.food_cat_2 !== undefined && dish.food_cat_2 !== null) {
         const aromaKey = getAromaKeyFromNumber(dish.food_cat_2);
+        const colors = getAromaColors(aromaKey) || { bg: 'bg-gray-100', text: 'text-gray-700', puce: '#6B7280' };
         motsCles.push({
             id: `mc-api-${dish.dish_id}-2`,
             label: aromaKey,
-            color: 'bg-blue-100',
-            textColor: 'text-blue-700',
+            color: colors.bg,
+            textColor: colors.text,
             puce: true,
-            puceColor: '#3b82f6'
+            puceColor: colors.puce
         });
     }
     
     if (dish.food_cat_3 !== undefined && dish.food_cat_3 !== null) {
         const aromaKey = getAromaKeyFromNumber(dish.food_cat_3);
+        const colors = getAromaColors(aromaKey) || { bg: 'bg-gray-100', text: 'text-gray-700', puce: '#6B7280' };
         motsCles.push({
             id: `mc-api-${dish.dish_id}-3`,
             label: aromaKey,
-            color: 'bg-purple-100',
-            textColor: 'text-purple-700',
+            color: colors.bg,
+            textColor: colors.text,
             puce: true,
-            puceColor: '#8b5cf6'
+            puceColor: colors.puce
         });
     }
 

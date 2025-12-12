@@ -8,16 +8,31 @@ export default function Tag({ count, label, color, textColor, borderColor, puce 
     // Déterminer la couleur de la puce
     let finalPuceColor: string;
     if (puceColor) {
-        // Si puceColor est fourni (pour les arômes), utiliser le mapping Tailwind -> CSS
-        finalPuceColor = puceColor === 'bg-red-600' ? '#DC2626' :
-                        puceColor === 'bg-red-500' ? '#EF4444' :
-                        puceColor === 'bg-green-600' ? '#16A34A' :
-                        puceColor === 'bg-green-500' ? '#22C55E' :
-                        puceColor === 'bg-blue-600' ? '#2563EB' :
-                        puceColor === 'bg-blue-500' ? '#3B82F6' :
-                        puceColor === 'bg-yellow-600' ? '#CA8A04' :
-                        puceColor === 'bg-yellow-500' ? '#EAB308' :
-                        '#6B7280'; // gris par défaut
+        // Si puceColor est fourni (pour les arômes), utiliser directement la valeur
+        // Si c'est une classe Tailwind, convertir en couleur hex
+        if (puceColor.startsWith('bg-') || puceColor.startsWith('#')) {
+            // Si c'est déjà une couleur hex, utiliser directement
+            if (puceColor.startsWith('#')) {
+                finalPuceColor = puceColor;
+            } else {
+                // Mapping Tailwind -> CSS
+                finalPuceColor = puceColor === 'bg-red-600' ? '#DC2626' :
+                                puceColor === 'bg-red-500' ? '#EF4444' :
+                                puceColor === 'bg-green-600' ? '#16A34A' :
+                                puceColor === 'bg-green-500' ? '#22C55E' :
+                                puceColor === 'bg-blue-600' ? '#2563EB' :
+                                puceColor === 'bg-blue-500' ? '#3B82F6' :
+                                puceColor === 'bg-yellow-600' ? '#CA8A04' :
+                                puceColor === 'bg-yellow-500' ? '#EAB308' :
+                                puceColor === 'bg-pink-600' ? '#DB2777' :
+                                puceColor === 'bg-pink-500' ? '#EC4899' :
+                                puceColor === 'bg-orange-600' ? '#EA580C' :
+                                puceColor === 'bg-orange-500' ? '#F97316' :
+                                '#6B7280'; // gris par défaut
+            }
+        } else {
+            finalPuceColor = puceColor;
+        }
     } else {
         // Si pas de puceColor fourni (pour les vins), utiliser getTagColors
         finalPuceColor = colors.puce;

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from '@/lib/useTranslation';
 import { 
     authService, 
     restaurantAuthService,
@@ -215,7 +216,7 @@ export const useRestaurantWines = (restaurantId?: number) => {
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId !== undefined 
         ? restaurantId 
-        : (restaurantInfo?.id ?? storedRestaurantId ?? 1);
+        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
     
     return useQuery({
         queryKey: queryKeys.restaurantWines(actualRestaurantId),
@@ -230,7 +231,7 @@ export const useRestaurantDishes = (restaurantId?: number) => {
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId !== undefined 
         ? restaurantId 
-        : (restaurantInfo?.id ?? storedRestaurantId ?? 1);
+        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
     
     return useQuery({
         queryKey: queryKeys.restaurantDishes(actualRestaurantId),
@@ -251,7 +252,9 @@ export const useBestWinesFromDishes = (restaurantId: number, dishesId: number[],
 export const useVins = (restaurantId?: number) => {
     const { data: restaurantInfo } = useRestaurantInfo();
     const storedRestaurantId = getRestaurantId();
-    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
+    const actualRestaurantId = restaurantId !== undefined 
+        ? restaurantId 
+        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
     
     // Récupérer les vins depuis l'API et les convertir au format Vin
     return useQuery({
@@ -271,7 +274,9 @@ export const useCreateVin = (restaurantId?: number) => {
     const queryClient = useQueryClient();
     const { data: restaurantInfo } = useRestaurantInfo();
     const storedRestaurantId = getRestaurantId();
-    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
+    const actualRestaurantId = restaurantId !== undefined 
+        ? restaurantId 
+        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
     
     return useMutation({
         mutationFn: async (vinData: Omit<Vin, 'id'>) => {
@@ -302,7 +307,9 @@ export const useUpdateVin = (restaurantId?: number) => {
     const queryClient = useQueryClient();
     const { data: restaurantInfo } = useRestaurantInfo();
     const storedRestaurantId = getRestaurantId();
-    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
+    const actualRestaurantId = restaurantId !== undefined 
+        ? restaurantId 
+        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
     
     return useMutation({
         mutationFn: async ({ id, vin }: { id: string; vin: Partial<Vin> }) => {
@@ -335,7 +342,9 @@ export const useDeleteVin = (restaurantId?: number) => {
     const queryClient = useQueryClient();
     const { data: restaurantInfo } = useRestaurantInfo();
     const storedRestaurantId = getRestaurantId();
-    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
+    const actualRestaurantId = restaurantId !== undefined 
+        ? restaurantId 
+        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
     
     return useMutation({
         mutationFn: async (id: string) => {
@@ -363,7 +372,9 @@ export const useCreateDish = (restaurantId?: number) => {
     const queryClient = useQueryClient();
     const { data: restaurantInfo } = useRestaurantInfo();
     const storedRestaurantId = getRestaurantId();
-    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
+    const actualRestaurantId = restaurantId !== undefined 
+        ? restaurantId 
+        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
     
     return useMutation({
         mutationFn: async (platData: Omit<Plat, 'id'>) => {
@@ -393,7 +404,9 @@ export const useUpdateDish = (restaurantId?: number) => {
     const queryClient = useQueryClient();
     const { data: restaurantInfo } = useRestaurantInfo();
     const storedRestaurantId = getRestaurantId();
-    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
+    const actualRestaurantId = restaurantId !== undefined 
+        ? restaurantId 
+        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
     
     return useMutation({
         mutationFn: async ({ id, plat }: { id: string; plat: Partial<Plat> }) => {
@@ -427,7 +440,9 @@ export const useDeleteDish = (restaurantId?: number) => {
     const queryClient = useQueryClient();
     const { data: restaurantInfo } = useRestaurantInfo();
     const storedRestaurantId = getRestaurantId();
-    const actualRestaurantId = restaurantId ?? restaurantInfo?.id ?? storedRestaurantId ?? 1;
+    const actualRestaurantId = restaurantId !== undefined 
+        ? restaurantId 
+        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
     
     return useMutation({
         mutationFn: async (id: string) => {
@@ -685,6 +700,7 @@ export const useWineStats = () => {
 
 // Hook pour calculer les alertes
 export const useAlerts = () => {
+    const { t } = useTranslation();
     const { data: wines, isLoading: isLoadingWines } = useRestaurantWines();
     const { data: dishes, isLoading: isLoadingDishes } = useRestaurantDishes();
     
@@ -707,9 +723,11 @@ export const useAlerts = () => {
         !wine.grapes_varieties || wine.grapes_varieties.length === 0
     );
     if (winesWithoutGrapes.length > 0) {
+        const plural = winesWithoutGrapes.length > 1 ? 's' : '';
+        const has = winesWithoutGrapes.length > 1 ? 'ont' : 'a';
         alerts.push({
             type: 'warning',
-            message: `${winesWithoutGrapes.length} vin${winesWithoutGrapes.length > 1 ? 's' : ''} n'a${winesWithoutGrapes.length > 1 ? 'ient' : ''} pas de cépages.`,
+            message: t('common.alertWinesWithoutGrapes', { count: winesWithoutGrapes.length, plural, has }),
             category: 'wine'
         });
     }
@@ -719,9 +737,11 @@ export const useAlerts = () => {
         !wine.price || wine.price === 0
     );
     if (winesWithZeroPrice.length > 0) {
+        const plural = winesWithZeroPrice.length > 1 ? 's' : '';
+        const has = winesWithZeroPrice.length > 1 ? ' ont' : ' a';
         alerts.push({
             type: 'warning',
-            message: `${winesWithZeroPrice.length} vin${winesWithZeroPrice.length > 1 ? 's' : ''} a${winesWithZeroPrice.length > 1 ? ' un' : ''} un prix à 0.`,
+            message: t('common.alertWinesWithZeroPrice', { count: winesWithZeroPrice.length, plural, has }),
             category: 'wine'
         });
     }
@@ -731,9 +751,11 @@ export const useAlerts = () => {
         !dish.price || dish.price === 0
     );
     if (dishesWithZeroPrice.length > 0) {
+        const plural = dishesWithZeroPrice.length > 1 ? 's' : '';
+        const has = dishesWithZeroPrice.length > 1 ? ' ont' : ' a';
         alerts.push({
             type: 'warning',
-            message: `${dishesWithZeroPrice.length} plat${dishesWithZeroPrice.length > 1 ? 's' : ''} a${dishesWithZeroPrice.length > 1 ? ' un' : ''} un prix à 0.`,
+            message: t('common.alertDishesWithZeroPrice', { count: dishesWithZeroPrice.length, plural, has }),
             category: 'dish'
         });
     }
@@ -745,7 +767,7 @@ export const useAlerts = () => {
         if (daysSinceUpdate >= 30) {
             alerts.push({
                 type: 'error',
-                message: `Votre menu n'a pas été mis à jour depuis ${daysSinceUpdate} jours.`,
+                message: t('common.alertMenuNotUpdated', { days: daysSinceUpdate }),
                 category: 'menu'
             });
         }
@@ -755,7 +777,7 @@ export const useAlerts = () => {
     if (winesArray.length === 0) {
         alerts.push({
             type: 'warning',
-            message: 'Aucun vin n\'a été créé.',
+            message: t('common.alertNoWinesCreated'),
             category: 'wine'
         });
     }
@@ -764,7 +786,7 @@ export const useAlerts = () => {
     if (dishesArray.length === 0) {
         alerts.push({
             type: 'warning',
-            message: 'Aucun plat n\'a été créé.',
+            message: t('common.alertNoDishesCreated'),
             category: 'dish'
         });
     }

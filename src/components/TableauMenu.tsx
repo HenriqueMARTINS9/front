@@ -623,7 +623,20 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
                         <div className="overflow-x-auto">
                             <table className="min-w-full">
                                 <tbody className="align-center text-center text-gray-900">
-                                    {platsDuType.map((plat) => {
+                                    {(() => {
+                                        const pageKey = type;
+                                        const currentPageForType = currentPage[pageKey] || 1;
+                                        const totalPages = Math.ceil(platsDuType.length / itemsPerPage);
+                                        const startIndex = (currentPageForType - 1) * itemsPerPage;
+                                        const endIndex = startIndex + itemsPerPage;
+                                        const paginatedPlats = platsDuType.slice(startIndex, endIndex);
+                                        
+                                        // Réinitialiser la page si elle dépasse le nombre total de pages
+                                        if (currentPageForType > totalPages && totalPages > 0) {
+                                            setCurrentPage(prev => ({ ...prev, [pageKey]: 1 }));
+                                        }
+                                        
+                                        return paginatedPlats.map((plat) => {
                                 const isOpen = !!expanded[plat.id];
                                 return (
                                     <React.Fragment key={plat.id}>
@@ -641,16 +654,24 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
 
                                                     {/* Mots-clés */}
                                                     <div className="flex space-x-2">
-                                                        {plat.motsCles.map((motCle) => (
-                                                            <Tag
-                                                                key={motCle.id}
-                                                                label={motCle.label}
-                                                                color={motCle.color}
-                                                                textColor={motCle.textColor}
-                                                                puce={motCle.puce}
-                                                                puceColor={motCle.puceColor}
-                                                            />
-                                                        ))}
+                                                        {plat.motsCles.map((motCle) => {
+                                                            // Traduire le label si c'est une clé d'arôme
+                                                            const translationKey = `menu.aromas.${motCle.label}`;
+                                                            const translatedLabel = t(translationKey);
+                                                            // Si la traduction existe (ne retourne pas la clé), l'utiliser, sinon utiliser le label original
+                                                            const displayLabel = translatedLabel !== translationKey ? translatedLabel : motCle.label;
+                                                            
+                                                            return (
+                                                                <Tag
+                                                                    key={motCle.id}
+                                                                    label={displayLabel}
+                                                                    color={motCle.color}
+                                                                    textColor={motCle.textColor}
+                                                                    puce={motCle.puce}
+                                                                    puceColor={motCle.puceColor}
+                                                                />
+                                                            );
+                                                        })}
                                                     </div>
 
                                                     {/* Bouton d'action */}
@@ -682,11 +703,72 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
                                         )}
                                     </React.Fragment>
                                 );
-                            })}
+                            })})()}
                                 </tbody>
                             </table>
                         </div>
                     </div>
+                    {(() => {
+                        const pageKey = type;
+                        const currentPageForType = currentPage[pageKey] || 1;
+                        const totalPages = Math.ceil(platsDuType.length / itemsPerPage);
+                        if (totalPages <= 1) return null;
+                        
+                        return (
+                            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                                <div className="text-sm text-gray-700">
+                                    {t('common.showingResults', {
+                                        start: (currentPageForType - 1) * itemsPerPage + 1,
+                                        end: Math.min(currentPageForType * itemsPerPage, platsDuType.length),
+                                        total: platsDuType.length
+                                    }) || `Affichage de ${(currentPageForType - 1) * itemsPerPage + 1} à ${Math.min(currentPageForType * itemsPerPage, platsDuType.length)} sur ${platsDuType.length} plats`}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage(prev => ({ ...prev, [pageKey]: Math.max(1, (prev[pageKey] || 1) - 1) }))}
+                                        disabled={currentPageForType === 1}
+                                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {t('common.previous') || 'Précédent'}
+                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            let pageNum;
+                                            if (totalPages <= 5) {
+                                                pageNum = i + 1;
+                                            } else if (currentPageForType <= 3) {
+                                                pageNum = i + 1;
+                                            } else if (currentPageForType >= totalPages - 2) {
+                                                pageNum = totalPages - 4 + i;
+                                            } else {
+                                                pageNum = currentPageForType - 2 + i;
+                                            }
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => setCurrentPage(prev => ({ ...prev, [pageKey]: pageNum }))}
+                                                    className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                                                        currentPageForType === pageNum
+                                                            ? 'bg-[#4E5BA6] text-white'
+                                                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <button
+                                        onClick={() => setCurrentPage(prev => ({ ...prev, [pageKey]: Math.min(totalPages, (prev[pageKey] || 1) + 1) }))}
+                                        disabled={currentPageForType === totalPages}
+                                        className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {t('common.next') || 'Suivant'}
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
             ))}
         </div>

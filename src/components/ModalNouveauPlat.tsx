@@ -10,6 +10,7 @@ import { recommendationsService } from '@/lib/api';
 import { Dish } from '@/lib/api';
 import { useTranslation } from '@/lib/useTranslation';
 import { useCreateDish } from '@/lib/hooks';
+import { getAromaColors } from '@/lib/aromaColors';
 
 type AromeItem = {
     id: string;
@@ -215,14 +216,18 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
     };
 
     const handleAromesSecondairesChange = (items: any[]) => {
-        setAromesSecondaires(items.map(item => ({
-            id: item.id,
-            label: item.label || '',
-            color: item.color || 'bg-green-100',
-            textColor: item.textColor || 'text-green-700',
-            puce: typeof item.puce === 'boolean' ? item.puce : Boolean(item.label?.trim()),
-            puceColor: typeof item.puceColor === 'string' ? item.puceColor : ''
-        })));
+        setAromesSecondaires(items.map(item => {
+            const label = item.label || '';
+            const colors = getAromaColors(label) || { bg: 'bg-gray-100', text: 'text-gray-700', puce: '#6B7280' };
+            return {
+                id: item.id,
+                label: label,
+                color: item.color || colors.bg,
+                textColor: item.textColor || colors.text,
+                puce: typeof item.puce === 'boolean' ? item.puce : Boolean(label?.trim()),
+                puceColor: typeof item.puceColor === 'string' ? item.puceColor : colors.puce
+            };
+        }));
     };
 
     // Fonction de validation
@@ -263,18 +268,28 @@ export default function ModalNouveauPlat({ isOpen, onClose, onSave, restaurantId
         
         // Ajouter l'arôme principal s'il est sélectionné
         if (aromePrincipal && aromePrincipal.trim() !== '') {
+            const colors = getAromaColors(aromePrincipal) || { bg: 'bg-gray-100', text: 'text-gray-700', puce: '#6B7280' };
             tousLesAromes.push({
                 id: 'principal-1',
                 label: aromePrincipal,
-                color: 'bg-green-100',
-                textColor: 'text-green-700',
+                color: colors.bg,
+                textColor: colors.text,
                 puce: true,
-                puceColor: '#10b981'
+                puceColor: colors.puce
             });
         }
         
-        // Ajouter les arômes secondaires
-        tousLesAromes.push(...aromesSecondaires.filter(a => a.label.trim()));
+        // Ajouter les arômes secondaires avec leurs couleurs
+        aromesSecondaires.filter(a => a.label.trim()).forEach(arome => {
+            const colors = getAromaColors(arome.label) || { bg: 'bg-gray-100', text: 'text-gray-700', puce: '#6B7280' };
+            tousLesAromes.push({
+                ...arome,
+                color: colors.bg,
+                textColor: colors.text,
+                puce: true,
+                puceColor: colors.puce
+            });
+        });
 
         // Utiliser la nouvelle section si elle est saisie, sinon utiliser la section sélectionnée
         const sectionFinale = creerNouvelleSection && nouvelleSection.trim() ? nouvelleSection.trim() : section;

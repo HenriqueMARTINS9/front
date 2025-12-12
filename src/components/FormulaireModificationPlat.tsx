@@ -8,6 +8,7 @@ import type { Plat } from './TableauMenu';
 import { recommendationsService } from '@/lib/api';
 import { Dish } from '@/lib/api';
 import { useTranslation } from '@/lib/useTranslation';
+import { getAromaColors } from '@/lib/aromaColors';
 
 type FormulaireModificationPlatProps = {
     plat: Plat;
@@ -111,15 +112,17 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
     
     // Fonction pour convertir les arômes du plat au format attendu par la List
     const convertMotsClesToAromeItems = (motsCles: typeof plat.motsCles) => {
+        const { getAromaColors } = require('@/lib/aromaColors');
         return motsCles.map((motCle, index) => {
             const aromaKey = getAromaKeyFromLabel(motCle.label);
+            const colors = getAromaColors(aromaKey) || { bg: 'bg-gray-100', text: 'text-gray-700', puce: '#6B7280' };
             return {
                 id: motCle.id || `arome-${index}`,
                 label: aromaKey, // Stocker la clé pour le select
-                color: motCle.color || 'bg-green-100',
-                textColor: motCle.textColor || 'text-green-700',
+                color: motCle.color || colors.bg,
+                textColor: motCle.textColor || colors.text,
                 puce: motCle.puce !== undefined ? motCle.puce : true,
-                puceColor: motCle.puceColor || ''
+                puceColor: motCle.puceColor || colors.puce
             };
         });
     };
@@ -199,25 +202,33 @@ export default function FormulaireModificationPlat({ plat, onSave, onCancel, onD
     };
 
     const handleAromePrincipalChange = (items: any[]) => {
-        setAromePrincipalList(items.map(item => ({
-            id: item.id,
-            label: item.label || '',
-            color: item.color || 'bg-green-100',
-            textColor: item.textColor || 'text-green-700',
-            puce: item.puce !== undefined ? item.puce : true,
-            puceColor: item.puceColor || ''
-        })));
+        setAromePrincipalList(items.map(item => {
+            const label = item.label || '';
+            const colors = getAromaColors(label) || { bg: 'bg-gray-100', text: 'text-gray-700', puce: '#6B7280' };
+            return {
+                id: item.id,
+                label: label,
+                color: item.color || colors.bg,
+                textColor: item.textColor || colors.text,
+                puce: item.puce !== undefined ? item.puce : true,
+                puceColor: item.puceColor || colors.puce
+            };
+        }));
     };
 
     const handleAromesSecondairesChange = (items: any[]) => {
-        setAromesSecondairesList(items.map(item => ({
-            id: item.id,
-            label: item.label || '',
-            color: item.color || 'bg-green-100',
-            textColor: item.textColor || 'text-green-700',
-            puce: item.puce !== undefined ? item.puce : true,
-            puceColor: item.puceColor || ''
-        })));
+        setAromesSecondairesList(items.map(item => {
+            const label = item.label || '';
+            const colors = getAromaColors(label) || { bg: 'bg-gray-100', text: 'text-gray-700', puce: '#6B7280' };
+            return {
+                id: item.id,
+                label: label,
+                color: item.color || colors.bg,
+                textColor: item.textColor || colors.text,
+                puce: item.puce !== undefined ? item.puce : true,
+                puceColor: item.puceColor || colors.puce
+            };
+        }));
     };
     
     // Fonction pour convertir les clés d'arômes en objets MotCle pour la sauvegarde

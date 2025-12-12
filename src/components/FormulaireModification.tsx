@@ -277,43 +277,43 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                         </Checkbox>
                     </div>
                     {!unknownProportions && (
-                        <List
-                            items={cepages}
-                            onItemsChange={handleCepagesChange}
-                            fields={[
-                                {
-                                    key: 'nom',
-                                    label: 'Nom du cépage',
-                                    type: 'text',
-                                    placeholder: 'Nom du cépage',
-                                    width: 'full'
-                                },
-                                {
-                                    key: 'pourcentage',
-                                    label: '%',
-                                    type: 'text',
-                                    placeholder: '10',
-                                    suffix: ' %',
-                                    width: 'full'
-                                }
-                            ]}
-                            addButtonText="Ajouter un cépage"
-                            emptyMessage="Aucun cépage ajouté"
-                            size="md"
+                    <List
+                        items={cepages}
+                        onItemsChange={handleCepagesChange}
+                        fields={[
+                            {
+                                key: 'nom',
+                                label: 'Nom du cépage',
+                                type: 'text',
+                                placeholder: 'Nom du cépage',
+                                width: 'full'
+                            },
+                            {
+                                key: 'pourcentage',
+                                label: '%',
+                                type: 'text',
+                                placeholder: '10',
+                                suffix: ' %',
+                                width: 'full'
+                            }
+                        ]}
+                        addButtonText="Ajouter un cépage"
+                        emptyMessage="Aucun cépage ajouté"
+                        size="md"
                             showAddButton={!unknownProportions}
-                            colors={{
-                                background: 'bg-white',
-                                border: 'border-gray-300',
-                                text: 'text-gray-900',
-                                placeholder: 'placeholder-gray-500',
-                                focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                                hover: '',
-                                suffix: 'text-gray-500',
-                                deleteButton: 'text-gray-400',
-                                deleteButtonHover: '',
-                                addButton: 'bg-[#7C3AED] text-white hover:bg-[#6D28D9] transition-colors duration-200'
-                            }}
-                        />
+                        colors={{
+                            background: 'bg-white',
+                            border: 'border-gray-300',
+                            text: 'text-gray-900',
+                            placeholder: 'placeholder-gray-500',
+                            focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
+                            hover: '',
+                            suffix: 'text-gray-500',
+                            deleteButton: 'text-gray-400',
+                            deleteButtonHover: '',
+                            addButton: 'bg-[#7C3AED] text-white hover:bg-[#6D28D9] transition-colors duration-200'
+                        }}
+                    />
                     )}
                 </div>
                 <div className="col-span-6" />

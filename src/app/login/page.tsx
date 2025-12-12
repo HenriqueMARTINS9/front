@@ -6,7 +6,7 @@ import { setRestaurantToken, setRestaurantId, extractRestaurantIdFromEmail } fro
 
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('restaurant1@test.com');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
@@ -18,7 +18,7 @@ export default function LoginPage() {
             
             // Vérifier le format de l'email
             const restaurantId = extractRestaurantIdFromEmail(email);
-            if (!restaurantId) {
+            if (restaurantId === null) {
                 setError('Format d\'email invalide. Utilisez le format: restaurantX@test.com (ex: restaurant1@test.com)');
                 return;
             }
@@ -85,7 +85,7 @@ export default function LoginPage() {
                                 </span>
                                 <input
                                     type="email"
-                                    placeholder="restaurant1@test.com"
+                                    placeholder="restaurant@virtualsomm.com"
                                     className="input"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -124,12 +124,6 @@ export default function LoginPage() {
                     >
                         Connexion
                     </button>
-                    <p className="forgotMdp">
-                        J&apos;ai oublié mon mot de passe
-                    </p>
-                    <div className="text-xs text-gray-500 text-center mt-2">
-                        Format: restaurantX@test.com (ex: restaurant1@test.com)
-                    </div>
                 </div>
             </div>
         </div>

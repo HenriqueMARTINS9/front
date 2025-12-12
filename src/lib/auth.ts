@@ -12,7 +12,7 @@ const getLocalStorage = () => {
 // Format attendu: restaurantX@test.com où X est le restaurant ID
 export const extractRestaurantIdFromEmail = (email: string): number | null => {
     const match = email.match(/^restaurant(\d+)@test\.com$/i);
-    if (match && match[1]) {
+    if (match && match[1] !== undefined) {
         const restaurantId = parseInt(match[1], 10);
         return isNaN(restaurantId) ? null : restaurantId;
     }
@@ -90,7 +90,10 @@ export const getRestaurantId = (): number | null => {
     const storage = getLocalStorage();
     if (storage) {
         const restaurantId = storage.getItem('restaurant_id');
-        return restaurantId ? parseInt(restaurantId, 10) : null;
+        if (restaurantId !== null && restaurantId !== undefined) {
+            const parsed = parseInt(restaurantId, 10);
+            return isNaN(parsed) ? null : parsed;
+        }
     }
     return null;
 };
