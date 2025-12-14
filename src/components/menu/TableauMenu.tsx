@@ -1,15 +1,16 @@
 "use client";
 import React, { useMemo, useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
-import Tag from './Tag';
-import Button from './Button';
+import Tag from '../common/Tag';
+import Button from '../common/Button';
 import FormulaireModificationPlat from './FormulaireModificationPlat';
 import { recommendationsService } from '@/lib/api';
 import { Dish } from '@/lib/api';
 import { useTranslation } from '@/lib/useTranslation';
 import { useTranslation as useI18n } from 'react-i18next';
-import { getAromaColorByType } from '@/lib/aromaColors';
+import { getAromaColors } from '@/lib/aromaColors';
 import { useUpdateDish, useDeleteDish } from '@/lib/hooks';
+import { getRestaurantId } from '@/lib/auth';
 
 type MotCle = {
     id: string;
@@ -22,137 +23,46 @@ type MotCle = {
 
 export type Plat = {
     id: string;
-    nom: string;
-    description?: string;
+    nom: string; // Pour compatibilité, utilise nomFr par défaut
+    nomFr?: string;
+    nomEn?: string;
+    description?: string; // Pour compatibilité, utilise descriptionFr par défaut
+    descriptionFr?: string;
+    descriptionEn?: string;
     prix?: number;
-    section: string;
+    section: string; // Pour compatibilité, utilise sectionFr par défaut
+    sectionFr?: string;
+    sectionEn?: string;
     pointsDeVente: boolean[];
     motsCles: MotCle[];
 };
 
-const API_MENU_STORAGE_PREFIX = 'virtualsomm_api_menu_';
-
-function createInitialData(): Plat[] {
-    return [
-        {
-            id: 'p1',
-            nom: 'Salade verte',
-            description: 'Salade fraîche du jardin',
-            prix: 12.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc1', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }
-            ]
-        },
-        {
-            id: 'p2',
-            nom: 'Salade mêlée',
-            description: 'Mélange de salades variées',
-            prix: 14.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc2', label: 'Légume vert', color: 'bg-green-100', textColor: 'text-green-700' }
-            ]
-        },
-        {
-            id: 'p3',
-            nom: 'Gaspacho andalou',
-            description: 'Perles de melon et lard grillé',
-            prix: 16.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc3', label: 'Solanacée', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc4', label: 'Viande séchée', color: 'bg-red-100', textColor: 'text-red-700' }
-            ]
-        },
-        {
-            id: 'p4',
-            nom: 'Carpaccio de tomate à l\'ancienne',
-            description: 'Vinaigrette balsamique, sorbet basilic maison',
-            prix: 18.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc5', label: 'Solanacée', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc6', label: 'Herbe fraîche aromatique', color: 'bg-purple-100', textColor: 'text-purple-700' }
-            ]
-        },
-        {
-            id: 'p5',
-            nom: 'Feuilleté aux champignons',
-            description: 'Mélange de champignons et sauce morilles',
-            prix: 20.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc7', label: 'Champignon', color: 'bg-green-100', textColor: 'text-green-700' },
-                { id: 'mc8', label: 'Herbe sèche', color: 'bg-purple-100', textColor: 'text-purple-700' }
-            ]
-        },
-        {
-            id: 'p6',
-            nom: 'Crevettes Royales sautées à l\'huile d\'olive & noix st-jacques',
-            description: 'Sur lit de julienne de légumes et sauce exotique',
-            prix: 28.00,
-            section: 'Nos entrées',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc9', label: 'Crustacé', color: 'bg-red-100', textColor: 'text-red-700' },
-                { id: 'mc10', label: 'Mollusque', color: 'bg-orange-100', textColor: 'text-orange-700' },
-                { id: 'mc11', label: 'Épices exotiques', color: 'bg-purple-100', textColor: 'text-purple-700' }
-            ]
-        },
-        {
-            id: 'p7',
-            nom: 'Filet de bœuf grillé',
-            description: 'Sauce au poivre, pommes duchesse',
-            prix: 32.00,
-            section: 'Nos viandes',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc12', label: 'Viande rouge', color: 'bg-red-100', textColor: 'text-red-700' }
-            ]
-        },
-        {
-            id: 'p8',
-            nom: 'Poulet fermier rôti',
-            description: 'Sauce aux herbes, légumes de saison',
-            prix: 26.00,
-            section: 'Nos viandes',
-            pointsDeVente: [true],
-            motsCles: [
-                { id: 'mc13', label: 'Volaille', color: 'bg-orange-100', textColor: 'text-orange-700' }
-            ]
-        }
-    ];
-}
 
 type TableauMenuProps = {
     pointDeVenteId: string;
     restaurantId?: number; // ID du restaurant pour récupérer les données de l'API
 };
 
-export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: TableauMenuProps) {
+export default function TableauMenu({ pointDeVenteId, restaurantId }: TableauMenuProps) {
     const { t } = useTranslation();
     const { i18n } = useI18n();
+    
+    // Récupérer le restaurant ID depuis localStorage si non fourni
+    const actualRestaurantId = restaurantId ?? getRestaurantId() ?? 1;
     
     // Données statiques (commentées pour utiliser l'API)
     // const [plats, setPlats] = useState<Plat[]>(() => createInitialData());
     
-    // Données de l'API
+    // Données de l'API uniquement
     const [apiDishes, setApiDishes] = useState<Dish[]>([]);
     const [menuPlats, setMenuPlats] = useState<Plat[]>([]);
-    const [hasOverrides, setHasOverrides] = useState(false);
-    const [hasUserModifications, setHasUserModifications] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [editingPlatId, setEditingPlatId] = useState<string | null>(null);
-    const storageKey = useMemo(() => `${API_MENU_STORAGE_PREFIX}${restaurantId}`, [restaurantId]);
+    const [currentPage, setCurrentPage] = useState<Record<string, number>>({});
+    const itemsPerPage = 10;
 
     // Mapping des numéros vers les clés d'arômes (commence à 0)
     const getAromaKeyFromNumber = (aromaNumber: string): string => {
@@ -213,175 +123,100 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
             .replace(/^./, match => match.toUpperCase());
     };
 
-    const sanitizePlat = (plat: any, fallbackId: string): Plat | null => {
-        if (!plat || typeof plat !== 'object') {
-            return null;
-        }
 
-        const id = typeof plat.id === 'string' ? plat.id : fallbackId;
-        const nom = typeof plat.nom === 'string' ? plat.nom : '';
-        if (!nom) {
-            return null;
-        }
-
-        const description = typeof plat.description === 'string' ? plat.description : undefined;
-        let prixValue: number | undefined;
-        if (typeof plat.prix === 'number') {
-            prixValue = plat.prix;
-        } else if (typeof plat.prix === 'string') {
-            const parsed = parseFloat(plat.prix);
-            prixValue = Number.isFinite(parsed) ? parsed : undefined;
-        }
-
-        const section = typeof plat.section === 'string' ? plat.section : '';
-        const pointsDeVente = Array.isArray(plat.pointsDeVente)
-            ? plat.pointsDeVente.map((value: any) => Boolean(value))
-            : [true];
-
-        const motsCles = Array.isArray(plat.motsCles)
-            ? plat.motsCles
-                .filter((mot: any) => mot && typeof mot === 'object' && typeof mot.label === 'string')
-                .map((mot: any, index: number) => ({
-                    id: typeof mot.id === 'string' ? mot.id : `${id}-mot-${index}`,
-                    label: mot.label,
-                    color: typeof mot.color === 'string' ? mot.color : undefined,
-                    textColor: typeof mot.textColor === 'string' ? mot.textColor : undefined,
-                    puce: typeof mot.puce === 'boolean' ? mot.puce : Boolean(mot.puceColor),
-                    puceColor: typeof mot.puceColor === 'string' ? mot.puceColor : undefined,
-                }))
-            : [];
-
-        return {
-            id,
-            nom,
-            description,
-            prix: prixValue,
-            section,
-            pointsDeVente,
-            motsCles,
-        };
-    };
-
-    const sanitizePlatsArray = (plats: any[]): Plat[] => {
-        return plats
-            .map((plat, index) => sanitizePlat(plat, `override-${index}-${Date.now()}`))
-            .filter((plat): plat is Plat => Boolean(plat));
-    };
-
-    const persistMenuPlats = (plats: Plat[]) => {
-        if (typeof window === 'undefined') {
-            return;
-        }
-        try {
-            if (plats.length === 0) {
-                window.localStorage.removeItem(storageKey);
-            } else {
-                window.localStorage.setItem(storageKey, JSON.stringify(plats));
-            }
-        } catch (storageError) {
-            console.error('Erreur lors de la sauvegarde du menu API dans le stockage local :', storageError);
-        }
-    };
 
     // Fonction pour convertir un plat de l'API au format attendu par l'interface
     const convertApiDishToPlat = (dish: Dish): Plat => {
-        // Traduire le nom du plat selon la langue
-        const dishName = i18n.language === 'en' 
-            ? (dish.dish_name?.en || dish.dish_name?.['en-US'] || dish.dish_name?.fr || `Dish ${dish.dish_id}`)
-            : (dish.dish_name?.fr || dish.dish_name?.en || dish.dish_name?.['en-US'] || `Plat ${dish.dish_id}`);
-            
-        const dishType = i18n.language === 'en'
-            ? (dish.dish_type?.en || dish.dish_type?.['en-US'] || dish.dish_type?.fr || 'Not specified')
-            : (dish.dish_type?.fr || dish.dish_type?.en || dish.dish_type?.['en-US'] || 'Non spécifié');
-        
         // Créer des mots-clés basés sur les catégories alimentaires (arômes)
         const motsCles: MotCle[] = [];
         
         // Arôme principal (food_cat_1)
         if (dish.food_cat_1) {
-            const translatedAroma = translateAroma(dish.food_cat_1);
-            const aromaKey = getAromaKeyFromNumber(dish.food_cat_1);
-            const colors = getAromaColorByType(aromaKey, true); // true = arôme principal
+            const aromaKey = getAromaKeyFromNumber(String(dish.food_cat_1));
+            const colors = getAromaColors(aromaKey);
             
-        motsCles.push({
-            id: `mc-api-${dish.dish_id}-1`,
-            label: translatedAroma,
-            color: colors.bg,
-            textColor: colors.text,
-            puce: true,
-            puceColor: colors.dot
-        });
+            if (colors) {
+                motsCles.push({
+                    id: `mc-api-${dish.dish_id}-1`,
+                    label: aromaKey, // Utiliser la clé au lieu du label traduit
+                    color: colors.bg,
+                    textColor: colors.text,
+                    puce: true,
+                    puceColor: colors.puce
+                });
+            }
         }
         
         // Arômes secondaires (food_cat_2 et food_cat_3)
         if (dish.food_cat_2) {
-            const translatedAroma = translateAroma(dish.food_cat_2);
-            const aromaKey = getAromaKeyFromNumber(dish.food_cat_2);
-            const colors = getAromaColorByType(aromaKey, false); // false = arôme secondaire
-            motsCles.push({
-                id: `mc-api-${dish.dish_id}-2`,
-                label: translatedAroma,
-                color: colors.bg,
-                textColor: colors.text,
-                puce: true, // TOUJOURS afficher la puce
-                puceColor: colors.dot
-            });
+            const aromaKey = getAromaKeyFromNumber(String(dish.food_cat_2));
+            const colors = getAromaColors(aromaKey);
+            if (colors) {
+                motsCles.push({
+                    id: `mc-api-${dish.dish_id}-2`,
+                    label: aromaKey, // Utiliser la clé au lieu du label traduit
+                    color: colors.bg,
+                    textColor: colors.text,
+                    puce: true, // TOUJOURS afficher la puce
+                    puceColor: colors.puce
+                });
+            }
         }
         
         if (dish.food_cat_3) {
-            const translatedAroma = translateAroma(dish.food_cat_3);
-            const aromaKey = getAromaKeyFromNumber(dish.food_cat_3);
-            const colors = getAromaColorByType(aromaKey, false); // false = arôme secondaire
-            motsCles.push({
-                id: `mc-api-${dish.dish_id}-3`,
-                label: translatedAroma,
-                color: colors.bg,
-                textColor: colors.text,
-                puce: true, // TOUJOURS afficher la puce
-                puceColor: colors.dot
-            });
+            const aromaKey = getAromaKeyFromNumber(String(dish.food_cat_3));
+            const colors = getAromaColors(aromaKey);
+            if (colors) {
+                motsCles.push({
+                    id: `mc-api-${dish.dish_id}-3`,
+                    label: aromaKey, // Utiliser la clé au lieu du label traduit
+                    color: colors.bg,
+                    textColor: colors.text,
+                    puce: true, // TOUJOURS afficher la puce
+                    puceColor: colors.puce
+                });
+            }
         }
 
 
-        return {
+        // Toujours utiliser les valeurs FR comme valeurs par défaut pour compatibilité
+        const convertedPlat = {
             id: `api-${dish.dish_id}`,
-            nom: dishName,
-            description: '', // Pas de description dans l'API pour l'instant
+            nom: dish.dish_name?.fr || dish.dish_name?.['en-US'] || dish.dish_name?.en || `Plat ${dish.dish_id}`, // Valeur par défaut en FR
+            nomFr: dish.dish_name?.fr || undefined,
+            nomEn: dish.dish_name?.['en-US'] || dish.dish_name?.en || undefined,
+            description: dish.dish_description?.fr || dish.dish_description?.['en-US'] || dish.dish_description?.en || '', // Valeur par défaut en FR
+            descriptionFr: dish.dish_description?.fr || undefined,
+            descriptionEn: dish.dish_description?.['en-US'] || dish.dish_description?.en || undefined,
             prix: 0, // Pas de prix dans l'API pour l'instant
-            section: dishType, // Le type devient la section
+            section: dish.dish_type?.fr || dish.dish_type?.['en-US'] || dish.dish_type?.en || 'Non spécifié', // Valeur par défaut en FR
+            sectionFr: dish.dish_type?.fr || undefined,
+            sectionEn: dish.dish_type?.['en-US'] || dish.dish_type?.en || undefined,
             pointsDeVente: [true], // Seulement le restaurant 1
             motsCles: motsCles
         };
+        
+        // Debug: vérifier les valeurs converties pour TOUS les plats
+        console.log(`convertApiDishToPlat - Plat ID ${dish.dish_id}:`, {
+            'dish.dish_name': dish.dish_name,
+            'dish.dish_name.fr': dish.dish_name?.fr,
+            'dish.dish_name.en-US': dish.dish_name?.['en-US'],
+            'dish.dish_type': dish.dish_type,
+            'dish.dish_type.fr': dish.dish_type?.fr,
+            'dish.dish_type.en-US': dish.dish_type?.['en-US'],
+            'dish.dish_description': dish.dish_description,
+            'convertedPlat.nomFr': convertedPlat.nomFr,
+            'convertedPlat.nomEn': convertedPlat.nomEn,
+            'convertedPlat.descriptionFr': convertedPlat.descriptionFr,
+            'convertedPlat.descriptionEn': convertedPlat.descriptionEn,
+            'convertedPlat.sectionFr': convertedPlat.sectionFr,
+            'convertedPlat.sectionEn': convertedPlat.sectionEn,
+            'convertedPlat complet': convertedPlat
+        });
+        
+        return convertedPlat;
     };
 
-    // Charger les éventuelles surcharges depuis le stockage local
-    useEffect(() => {
-        setHasOverrides(false);
-        setHasUserModifications(false);
-        if (typeof window === 'undefined') {
-            return;
-        }
-        try {
-            const stored = window.localStorage.getItem(storageKey);
-            if (!stored) {
-                setMenuPlats([]);
-                return;
-            }
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed)) {
-                const sanitized = sanitizePlatsArray(parsed);
-                if (sanitized.length > 0) {
-                    setMenuPlats(sanitized);
-                    setHasOverrides(true);
-                    return;
-                }
-            }
-            setMenuPlats([]);
-        } catch (storageError) {
-            console.error('Erreur lors du chargement du menu API depuis le stockage local :', storageError);
-            setMenuPlats([]);
-        }
-    }, [storageKey]);
 
     // Récupérer les données de l'API
     useEffect(() => {
@@ -389,9 +224,23 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
             setIsLoading(true);
             setError(null);
             try {
-                console.log('Récupération des plats pour le restaurant', restaurantId);
-                const data = await recommendationsService.getRestaurantDishes(restaurantId);
-                console.log('Plats récupérés:', data);
+                console.log('Récupération des plats pour le restaurant', actualRestaurantId);
+                const data = await recommendationsService.getRestaurantDishes(actualRestaurantId);
+                console.log('Plats récupérés depuis API:', data);
+                // Debug: vérifier les valeurs EN dans les plats
+                data.forEach((dish, index) => {
+                    console.log(`Plat ${index} (ID: ${dish.dish_id}):`, {
+                        'dish_name.fr': dish.dish_name?.fr,
+                        'dish_name.en-US': dish.dish_name?.['en-US'],
+                        'dish_name.en': dish.dish_name?.en,
+                        'dish_type.fr': dish.dish_type?.fr,
+                        'dish_type.en-US': dish.dish_type?.['en-US'],
+                        'dish_type.en': dish.dish_type?.en,
+                        'dish_description.fr': dish.dish_description?.fr,
+                        'dish_description.en-US': dish.dish_description?.['en-US'],
+                        'dish_description.en': dish.dish_description?.en
+                    });
+                });
                 setApiDishes(data);
             } catch (err) {
                 console.error('Erreur lors de la récupération des plats:', err);
@@ -402,38 +251,22 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
         };
 
         fetchDishes();
-    }, [restaurantId]);
+    }, [actualRestaurantId]);
 
-    // Mettre à jour la liste des plats à partir des données API si aucune surcharge
+    // Mettre à jour la liste des plats à partir des données API uniquement
     useEffect(() => {
         if (apiDishes.length === 0) {
-            if (!hasOverrides) {
-                setMenuPlats([]);
-            }
+            setMenuPlats([]);
             return;
         }
 
+        console.log('TableauMenu - Langue actuelle:', i18n.language);
         const converted = apiDishes.map(convertApiDishToPlat);
-        setMenuPlats((prev) => {
-            if (hasOverrides) {
-                const existingIds = new Set(prev.map((plat) => plat.id));
-                const nouveaux = converted.filter((plat) => !existingIds.has(plat.id));
-                if (nouveaux.length === 0) {
-                    return prev;
-                }
-                return [...prev, ...nouveaux];
-            }
-            return converted;
-        });
-    }, [apiDishes, hasOverrides, i18n.language, t]);
-
-    // Persister les modifications si nécessaire
-    useEffect(() => {
-        if (!hasOverrides && !hasUserModifications) {
-            return;
+        if (converted[0]) {
+            console.log('TableauMenu - Premier plat - nomEn:', converted[0].nomEn, 'sectionEn:', converted[0].sectionEn);
         }
-        persistMenuPlats(menuPlats);
-    }, [menuPlats, hasOverrides, hasUserModifications]);
+        setMenuPlats(converted);
+    }, [apiDishes, i18n.language, t]);
 
     // Filtrer les plats selon le point de vente actif
     const platsFiltres = menuPlats.filter(plat => {
@@ -445,18 +278,20 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
     const platsGroupes = useMemo(() => {
         const groupes: { [key: string]: Plat[] } = {};
         platsFiltres.forEach(plat => {
-            const type = plat.section; // Le type devient la clé de groupement
+            // Utiliser la section EN si la langue est en anglais et que la section EN existe
+            const type = i18n.language === 'en' && plat.sectionEn 
+                ? plat.sectionEn 
+                : (plat.sectionFr || plat.section); // Sinon utiliser la section FR ou la section par défaut
             if (!groupes[type]) {
                 groupes[type] = [];
             }
             groupes[type].push(plat);
         });
         return groupes;
-    }, [platsFiltres]);
+    }, [platsFiltres, i18n.language]);
 
     const columns = useMemo(() => [
         { key: 'nom', label: 'Nom du plat' },
-        { key: 'prix', label: 'Prix' },
         { key: 'actions', label: '' },
     ], []);
 
@@ -478,8 +313,6 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
                 pointsDeVente: nextPoints,
             };
         }));
-        setHasUserModifications(true);
-        setHasOverrides(true);
     }
 
     function startEditing(platId: string) {
@@ -492,8 +325,8 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
     }
 
     // Hooks pour les mutations API
-    const updateDishMutation = useUpdateDish(restaurantId);
-    const deleteDishMutation = useDeleteDish(restaurantId);
+    const updateDishMutation = useUpdateDish(actualRestaurantId);
+    const deleteDishMutation = useDeleteDish(actualRestaurantId);
 
     async function savePlat(plat: Plat) {
         // Vérifier si c'est un plat de l'API (commence par "api-")
@@ -514,15 +347,6 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
                 console.error('Erreur lors de la mise à jour du plat:', error);
                 // L'erreur sera gérée par React Query
             }
-        } else {
-            // Pour les plats locaux (non-API), garder l'ancien comportement
-            setEditingPlatId(null);
-            setMenuPlats((prev) =>
-                prev.map((item) => (item.id === plat.id ? { ...item, ...plat } : item))
-            );
-            setHasUserModifications(true);
-            setHasOverrides(true);
-            setExpanded(prev => ({ ...prev, [plat.id]: false }));
         }
     }
 
@@ -544,17 +368,6 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
                 console.error('Erreur lors de la suppression du plat:', error);
                 // L'erreur sera gérée par React Query
             }
-        } else {
-            // Pour les plats locaux (non-API), garder l'ancien comportement
-            setEditingPlatId(null);
-            setMenuPlats((prev) => prev.filter((plat) => plat.id !== platId));
-            setHasUserModifications(true);
-            setHasOverrides(true);
-            setExpanded(prev => {
-                const next = { ...prev };
-                delete next[platId];
-                return next;
-            });
         }
     }
 
@@ -597,7 +410,7 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
                             <div className="ml-3">
                                 <h3 className="text-sm font-medium text-red-800">{t('common.error')}</h3>
                                 <div className="mt-2 text-sm text-red-700">
-                                    <p>Impossible de charger les plats du restaurant {restaurantId}.</p>
+                                    <p>Impossible de charger les plats du restaurant {actualRestaurantId}.</p>
                                     <p className="mt-1 text-xs">{t('common.error')}: {error}</p>
                                 </div>
                             </div>
@@ -615,7 +428,17 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
                 <div key={type} className="bg-white rounded-xl border border-gray-200">
                     <div className="px-6 py-6 text-lg text-gray-900 flex items-center justify-between bg-[#D5D9EB] rounded-t-xl">
                         <div className="flex items-center gap-2">
-                            <span>{type}</span>
+                            <span>
+                                {(() => {
+                                    // Le type vient déjà du groupement qui utilise sectionEn si en anglais
+                                    // Mais vérifions aussi le premier plat pour être sûr
+                                    const firstPlat = platsDuType[0];
+                                    if (i18n.language === 'en' && firstPlat?.sectionEn) {
+                                        return firstPlat.sectionEn;
+                                    }
+                                    return type;
+                                })()}
+                            </span>
                             <Tag label={`${platsDuType.length} ${t('common.elements')}`} color="bg-[#EEF4FF]" textColor="text-indigo-700" />
                         </div>
                     </div>
@@ -643,10 +466,28 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
                                         <tr className="border-t border-gray-200">
                                                                                          <td className="px-6 py-4">
                                                  <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-                                                     <div className="font-medium text-sm text-left">{plat.nom}</div>
-                                                     {plat.description && (
-                                                         <div className="text-sm text-left text-gray-600">{plat.description}</div>
-                                                     )}
+                                                     <div className="font-medium text-sm text-left">
+                                                         {(() => {
+                                                             const currentLang = i18n.language;
+                                                             const nom = currentLang === 'en' 
+                                                                 ? (plat.nomEn || plat.nom)
+                                                                 : (plat.nomFr || plat.nom);
+                                                             if (currentLang === 'en' && plat.id === 'api-0') {
+                                                                 console.log('Affichage nom - Langue:', currentLang, 'nomEn:', plat.nomEn, 'nom:', plat.nom, 'résultat:', nom);
+                                                             }
+                                                             return nom;
+                                                         })()}
+                                                     </div>
+                                                     {(() => {
+                                                         const description = i18n.language === 'en' 
+                                                             ? (plat.descriptionEn || plat.description)
+                                                             : (plat.descriptionFr || plat.description);
+                                                         return description ? (
+                                                             <div className="text-sm text-left text-gray-600">
+                                                                 {description}
+                                                             </div>
+                                                         ) : null;
+                                                     })()}
                                                  </div>
                                              </td>
                                             <td className="px-6 py-4 text-right">
@@ -655,8 +496,33 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
                                                     {/* Mots-clés */}
                                                     <div className="flex space-x-2">
                                                         {plat.motsCles.map((motCle) => {
+                                                            // Convertir les anciens labels français en clés d'arômes
+                                                            const oldLabelMap: Record<string, string> = {
+                                                                'Légume vert': 'greenVegetable',
+                                                                'Viande rouge': 'redMeat',
+                                                                'Viande blanche': 'whiteMeat',
+                                                                'Volaille': 'whiteMeat',
+                                                                'Poisson': 'finFish',
+                                                                'Crustacé': 'shellfish',
+                                                                'Mollusque': 'mollusk',
+                                                                'Solanacée': 'nightshade',
+                                                                'Champignon': 'funghi',
+                                                                'Fromage dur': 'nuttyHardCheese',
+                                                                'Fromage bleu': 'pungentBlueCheese',
+                                                                'Fromage doux': 'delicateButteryCheese',
+                                                                'Herbe fraîche': 'aromaticGreenHerb',
+                                                                'Herbe sèche': 'dryHerb',
+                                                                'Épices exotiques': 'exoticSpice',
+                                                                'Viande séchée': 'curedMeat',
+                                                                'Faisselle': 'sourCheeseCream',
+                                                                'Fromage salé': 'saltyCrumblyCheese'
+                                                            };
+                                                            
+                                                            // Utiliser la clé d'arôme (soit directement, soit convertie depuis l'ancien label)
+                                                            const aromaKey = oldLabelMap[motCle.label] || motCle.label;
+                                                            
                                                             // Traduire le label si c'est une clé d'arôme
-                                                            const translationKey = `menu.aromas.${motCle.label}`;
+                                                            const translationKey = `menu.aromas.${aromaKey}`;
                                                             const translatedLabel = t(translationKey);
                                                             // Si la traduction existe (ne retourne pas la clé), l'utiliser, sinon utiliser le label original
                                                             const displayLabel = translatedLabel !== translationKey ? translatedLabel : motCle.label;
@@ -690,14 +556,19 @@ export default function TableauMenu({ pointDeVenteId, restaurantId = 1 }: Tablea
                                         </tr>
                                                                                  {isOpen && (
                                              <tr className="transition-all duration-300 ease-in-out animate-in slide-in-from-top-2">
-                                                 <td colSpan={3} className="px-6 py-4 bg-white">
-                                                    <FormulaireModificationPlat
-                                                        plat={plat}
-                                                        onSave={savePlat}
-                                                        onCancel={cancelEditing}
-                                                        onDelete={deletePlat}
-                                                        restaurantId={restaurantId}
-                                                    />
+                                                 <td colSpan={2} className="px-6 py-4 bg-white">
+                                                    {(() => {
+                                                        console.log('TableauMenu - Plat passé au FormulaireModificationPlat:', JSON.stringify(plat, null, 2));
+                                                        return (
+                                                            <FormulaireModificationPlat
+                                                                plat={plat}
+                                                                onSave={savePlat}
+                                                                onCancel={cancelEditing}
+                                                                onDelete={deletePlat}
+                                                                restaurantId={restaurantId}
+                                                            />
+                                                        );
+                                                    })()}
                                                 </td>
                                             </tr>
                                         )}

@@ -212,30 +212,34 @@ export const useWineRecommendations = (userList?: User[], wineCategories?: strin
 
 export const useRestaurantWines = (restaurantId?: number) => {
     const { data: restaurantInfo } = useRestaurantInfo();
-    // Utiliser le restaurant ID depuis le localStorage ou restaurantInfo, sinon 1 par défaut
+    // Utiliser le restaurant ID depuis le localStorage ou restaurantInfo
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId !== undefined 
         ? restaurantId 
-        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
+        : (storedRestaurantId !== null && storedRestaurantId !== undefined 
+            ? storedRestaurantId 
+            : (restaurantInfo?.id !== undefined ? restaurantInfo.id : null));
     
     return useQuery({
-        queryKey: queryKeys.restaurantWines(actualRestaurantId),
-        queryFn: () => recommendationsService.getRestaurantWines(actualRestaurantId),
+        queryKey: queryKeys.restaurantWines(actualRestaurantId ?? 0),
+        queryFn: () => recommendationsService.getRestaurantWines(actualRestaurantId ?? 0),
         enabled: actualRestaurantId !== null,
     });
 };
 
 export const useRestaurantDishes = (restaurantId?: number) => {
     const { data: restaurantInfo } = useRestaurantInfo();
-    // Utiliser le restaurant ID depuis le localStorage ou restaurantInfo, sinon 1 par défaut
+    // Utiliser le restaurant ID depuis le localStorage ou restaurantInfo
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId !== undefined 
         ? restaurantId 
-        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
+        : (storedRestaurantId !== null && storedRestaurantId !== undefined 
+            ? storedRestaurantId 
+            : (restaurantInfo?.id !== undefined ? restaurantInfo.id : null));
     
     return useQuery({
-        queryKey: queryKeys.restaurantDishes(actualRestaurantId),
-        queryFn: () => recommendationsService.getRestaurantDishes(actualRestaurantId),
+        queryKey: queryKeys.restaurantDishes(actualRestaurantId ?? 0),
+        queryFn: () => recommendationsService.getRestaurantDishes(actualRestaurantId ?? 0),
         enabled: actualRestaurantId !== null,
     });
 };
@@ -254,18 +258,22 @@ export const useVins = (restaurantId?: number) => {
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId !== undefined 
         ? restaurantId 
-        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
+        : (storedRestaurantId !== null && storedRestaurantId !== undefined 
+            ? storedRestaurantId 
+            : (restaurantInfo?.id !== undefined ? restaurantInfo.id : null));
     
     // Récupérer les vins depuis l'API et les convertir au format Vin
     return useQuery({
-        queryKey: ['vins', actualRestaurantId],
+        queryKey: ['vins', actualRestaurantId ?? 0],
         queryFn: async () => {
-            const restaurantWines = await recommendationsService.getRestaurantWines(actualRestaurantId);
+            const restaurantId = actualRestaurantId ?? 0;
+            const restaurantWines = await recommendationsService.getRestaurantWines(restaurantId);
             if (restaurantWines && restaurantWines.length > 0) {
-                return restaurantWines.map(wine => convertRestaurantWineToVin(wine, actualRestaurantId));
+                return restaurantWines.map(wine => convertRestaurantWineToVin(wine, restaurantId));
             }
             return [];
         },
+        enabled: actualRestaurantId !== null,
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 };
@@ -276,26 +284,30 @@ export const useCreateVin = (restaurantId?: number) => {
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId !== undefined 
         ? restaurantId 
-        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
+        : (storedRestaurantId !== null && storedRestaurantId !== undefined 
+            ? storedRestaurantId 
+            : (restaurantInfo?.id !== undefined ? restaurantInfo.id : null));
     
     return useMutation({
         mutationFn: async (vinData: Omit<Vin, 'id'>) => {
+            const restaurantId = actualRestaurantId ?? 0;
             // Convertir le format Vin vers le format API
             const wineData = convertVinToRestaurantWineData(vinData);
             
             // Créer le vin via l'API
-            const createdWine = await winesService.createWine(actualRestaurantId, wineData);
+            const createdWine = await winesService.createWine(restaurantId, wineData);
             
             // Convertir le résultat en format Vin
-            return convertRestaurantWineToVin(createdWine, actualRestaurantId);
+            return convertRestaurantWineToVin(createdWine, restaurantId);
         },
         onSuccess: (newVin) => {
+            const restaurantId = actualRestaurantId ?? 0;
             // Invalider et rafraîchir les requêtes de vins
-            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', actualRestaurantId] });
-            queryClient.invalidateQueries({ queryKey: ['vins', actualRestaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', restaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['vins', restaurantId] });
             
             // Forcer le refetch immédiatement
-            queryClient.refetchQueries({ queryKey: ['restaurant-wines', actualRestaurantId] });
+            queryClient.refetchQueries({ queryKey: ['restaurant-wines', restaurantId] });
             
             // Mettre à jour la date de dernière modification
             setLastModifiedDate();
@@ -309,10 +321,13 @@ export const useUpdateVin = (restaurantId?: number) => {
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId !== undefined 
         ? restaurantId 
-        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
+        : (storedRestaurantId !== null && storedRestaurantId !== undefined 
+            ? storedRestaurantId 
+            : (restaurantInfo?.id !== undefined ? restaurantInfo.id : null));
     
     return useMutation({
         mutationFn: async ({ id, vin }: { id: string; vin: Partial<Vin> }) => {
+            const restaurantId = actualRestaurantId ?? 0;
             const wineId = parseInt(id);
             if (isNaN(wineId)) {
                 throw new Error(`ID de vin invalide: ${id}`);
@@ -322,15 +337,24 @@ export const useUpdateVin = (restaurantId?: number) => {
             const wineData = convertVinToRestaurantWineData(vin as Vin);
             
             // Mettre à jour le vin via l'API
-            const updatedWine = await winesService.updateWine(actualRestaurantId, wineId, wineData);
+            const updatedWine = await winesService.updateWine(restaurantId, wineId, wineData);
             
-            // Convertir le résultat en format Vin
-            return convertRestaurantWineToVin(updatedWine, actualRestaurantId);
+            // L'API ne retourne pas toujours les données complètes après la mise à jour
+            // Si la réponse ne contient pas les données complètes, retourner les données qu'on a envoyées
+            if (updatedWine && updatedWine.wine_name) {
+                // Convertir le résultat en format Vin
+                return convertRestaurantWineToVin(updatedWine, restaurantId);
+            } else {
+                // Si l'API ne retourne pas les données complètes, retourner les données qu'on a préparées
+                // (converties en format Vin)
+                return vin as Vin;
+            }
         },
         onSuccess: (updatedVin) => {
+            const restaurantId = actualRestaurantId ?? 0;
             // Invalider et rafraîchir les requêtes de vins
-            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', actualRestaurantId] });
-            queryClient.invalidateQueries({ queryKey: ['vins', actualRestaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', restaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['vins', restaurantId] });
             
             // Mettre à jour la date de dernière modification
             setLastModifiedDate();
@@ -344,22 +368,26 @@ export const useDeleteVin = (restaurantId?: number) => {
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId !== undefined 
         ? restaurantId 
-        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
+        : (storedRestaurantId !== null && storedRestaurantId !== undefined 
+            ? storedRestaurantId 
+            : (restaurantInfo?.id !== undefined ? restaurantInfo.id : null));
     
     return useMutation({
         mutationFn: async (id: string) => {
+            const restaurantId = actualRestaurantId ?? 0;
             const wineId = parseInt(id);
             if (isNaN(wineId)) {
                 throw new Error(`ID de vin invalide: ${id}`);
             }
             
             // Supprimer le vin via l'API
-            await winesService.deleteWine(actualRestaurantId, wineId);
+            await winesService.deleteWine(restaurantId, wineId);
         },
         onSuccess: () => {
+            const restaurantId = actualRestaurantId ?? 0;
             // Invalider et rafraîchir les requêtes de vins
-            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', actualRestaurantId] });
-            queryClient.invalidateQueries({ queryKey: ['vins', actualRestaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['restaurant-wines', restaurantId] });
+            queryClient.invalidateQueries({ queryKey: ['vins', restaurantId] });
             
             // Mettre à jour la date de dernière modification
             setLastModifiedDate();
@@ -372,27 +400,36 @@ export const useCreateDish = (restaurantId?: number) => {
     const queryClient = useQueryClient();
     const { data: restaurantInfo } = useRestaurantInfo();
     const storedRestaurantId = getRestaurantId();
-    const actualRestaurantId = restaurantId !== undefined 
+    // Si restaurantId est explicitement fourni et n'est pas 0, l'utiliser
+    // Sinon, utiliser restaurantInfo.id ou storedRestaurantId ou 1 par défaut
+    // Note: 0 est une valeur valide pour restaurantId, donc on doit vérifier explicitement undefined
+    const actualRestaurantId = restaurantId !== undefined
         ? restaurantId 
-        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
+        : (restaurantInfo?.id !== undefined 
+            ? restaurantInfo.id 
+            : (storedRestaurantId !== null && storedRestaurantId !== undefined 
+                ? storedRestaurantId 
+                : 1));
     
     return useMutation({
         mutationFn: async (platData: Omit<Plat, 'id'>) => {
+            const restaurantId = actualRestaurantId ?? 0;
             // Convertir le format Plat vers le format API
             const dishData = convertPlatToDishData(platData);
             
             // Créer le plat via l'API
-            const createdDish = await dishesService.createDish(actualRestaurantId, dishData);
+            const createdDish = await dishesService.createDish(restaurantId, dishData);
             
             // Convertir le résultat en format Plat
-            return convertDishToPlat(createdDish, actualRestaurantId);
+            return convertDishToPlat(createdDish, restaurantId);
         },
         onSuccess: (newPlat) => {
+            const restaurantId = actualRestaurantId ?? 0;
             // Invalider et rafraîchir les requêtes de plats
-            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(actualRestaurantId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(restaurantId) });
             
             // Forcer le refetch immédiatement
-            queryClient.refetchQueries({ queryKey: queryKeys.restaurantDishes(actualRestaurantId) });
+            queryClient.refetchQueries({ queryKey: queryKeys.restaurantDishes(restaurantId) });
             
             // Mettre à jour la date de dernière modification
             setLastModifiedDate();
@@ -406,7 +443,9 @@ export const useUpdateDish = (restaurantId?: number) => {
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId !== undefined 
         ? restaurantId 
-        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
+        : (storedRestaurantId !== null && storedRestaurantId !== undefined 
+            ? storedRestaurantId 
+            : (restaurantInfo?.id !== undefined ? restaurantInfo.id : null));
     
     return useMutation({
         mutationFn: async ({ id, plat }: { id: string; plat: Partial<Plat> }) => {
@@ -417,18 +456,20 @@ export const useUpdateDish = (restaurantId?: number) => {
             }
             const dishId = parseInt(dishIdMatch[1]);
             
+            const restaurantId = actualRestaurantId ?? 0;
             // Convertir les données partielles en format API
             const dishData = convertPlatToDishData(plat as Plat);
             
             // Mettre à jour le plat via l'API
-            const updatedDish = await dishesService.updateDish(actualRestaurantId, dishId, dishData);
+            const updatedDish = await dishesService.updateDish(restaurantId, dishId, dishData);
             
             // Convertir le résultat en format Plat
-            return convertDishToPlat(updatedDish, actualRestaurantId);
+            return convertDishToPlat(updatedDish, restaurantId);
         },
         onSuccess: (updatedPlat) => {
+            const restaurantId = actualRestaurantId ?? 0;
             // Invalider et rafraîchir les requêtes de plats
-            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(actualRestaurantId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(restaurantId) });
             
             // Mettre à jour la date de dernière modification
             setLastModifiedDate();
@@ -442,7 +483,9 @@ export const useDeleteDish = (restaurantId?: number) => {
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId !== undefined 
         ? restaurantId 
-        : (restaurantInfo?.id !== undefined ? restaurantInfo.id : (storedRestaurantId !== null ? storedRestaurantId : 1));
+        : (storedRestaurantId !== null && storedRestaurantId !== undefined 
+            ? storedRestaurantId 
+            : (restaurantInfo?.id !== undefined ? restaurantInfo.id : null));
     
     return useMutation({
         mutationFn: async (id: string) => {
@@ -452,13 +495,15 @@ export const useDeleteDish = (restaurantId?: number) => {
                 throw new Error(`ID de plat invalide: ${id}`);
             }
             const dishId = parseInt(dishIdMatch[1]);
+            const restaurantId = actualRestaurantId ?? 0;
             
             // Supprimer le plat via l'API
-            await dishesService.deleteDish(actualRestaurantId, dishId);
+            await dishesService.deleteDish(restaurantId, dishId);
         },
         onSuccess: () => {
+            const restaurantId = actualRestaurantId ?? 0;
             // Invalider et rafraîchir les requêtes de plats
-            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(actualRestaurantId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.restaurantDishes(restaurantId) });
         },
     });
 };
@@ -570,6 +615,7 @@ export const useWineStats = () => {
         magnum: 2,
         demiBouteille: 5,
         desiree: 3,
+        autresFormats: 0,
         incomplete: 2,
     };
 
@@ -643,41 +689,119 @@ export const useWineStats = () => {
             return type.includes('fortifié');
         }).length,
         bouteille: vinsToUse.filter(vin => {
-            const prix = typeof vin === 'object' && 'prix' in vin 
-                ? vin.prix 
-                : (vin as any).price || 0;
-            return prix > 0;
-        }).length,
-        verre: vinsToUse.filter(vin => {
-            const prix = typeof vin === 'object' && 'prix' in vin 
-                ? vin.prix 
-                : (vin as any).price || 0;
-            return prix < 20;
-        }).length,
-        magnum: vinsToUse.filter(vin => {
-            // Logique pour détecter les magnums (à adapter selon la structure des données)
+            // Vérifier d'abord dans formats
             const formats = typeof vin === 'object' && 'formats' in vin 
                 ? (vin.formats as any[]) 
                 : [];
-            return Array.isArray(formats) && formats.some((format: any) => 
-                format.nom && format.nom.toLowerCase().includes('magnum')
-            );
+            if (Array.isArray(formats) && formats.length > 0) {
+                return formats.some((format: any) => 
+                    format.nom && (
+                        format.nom.toLowerCase().includes('bouteille') && 
+                        !format.nom.toLowerCase().includes('demi') &&
+                        !format.nom.toLowerCase().includes('magnum')
+                    )
+                );
+            }
+            // Sinon, vérifier format_cl si disponible (pour RestaurantWine)
+            const formatCl = (vin as any).format_cl;
+            if (formatCl !== undefined && formatCl !== null) {
+                return Math.abs(formatCl - 75) < 0.1; // Bouteille = 75 cl
+            }
+            // Si on a un format mais qu'on ne peut pas le déterminer, compter quand même
+            return false;
+        }).length,
+        verre: vinsToUse.filter(vin => {
+            // Vérifier d'abord dans formats
+            const formats = typeof vin === 'object' && 'formats' in vin 
+                ? (vin.formats as any[]) 
+                : [];
+            if (Array.isArray(formats) && formats.length > 0) {
+                return formats.some((format: any) => 
+                    format.nom && format.nom.toLowerCase().includes('verre')
+                );
+            }
+            // Sinon, vérifier format_cl si disponible (pour RestaurantWine)
+            const formatCl = (vin as any).format_cl;
+            if (formatCl !== undefined && formatCl !== null) {
+                return Math.abs(formatCl - 10) < 0.1; // Verre = 10 cl
+            }
+            return false;
+        }).length,
+        magnum: vinsToUse.filter(vin => {
+            // Logique pour détecter les magnums
+            const formats = typeof vin === 'object' && 'formats' in vin 
+                ? (vin.formats as any[]) 
+                : [];
+            if (Array.isArray(formats) && formats.length > 0) {
+                return formats.some((format: any) => 
+                    format.nom && format.nom.toLowerCase().includes('magnum')
+                );
+            }
+            // Vérifier format_cl si disponible (pour RestaurantWine)
+            const formatCl = (vin as any).format_cl;
+            if (formatCl !== undefined && formatCl !== null) {
+                return Math.abs(formatCl - 150) < 0.1; // Magnum = 150 cl
+            }
+            return false;
         }).length,
         demiBouteille: vinsToUse.filter(vin => {
             const formats = typeof vin === 'object' && 'formats' in vin 
                 ? (vin.formats as any[]) 
                 : [];
-            return Array.isArray(formats) && formats.some((format: any) => 
-                format.nom && format.nom.toLowerCase().includes('demi')
-            );
+            if (Array.isArray(formats) && formats.length > 0) {
+                return formats.some((format: any) => 
+                    format.nom && format.nom.toLowerCase().includes('demi')
+                );
+            }
+            // Vérifier format_cl si disponible (pour RestaurantWine)
+            const formatCl = (vin as any).format_cl;
+            if (formatCl !== undefined && formatCl !== null) {
+                return Math.abs(formatCl - 37) < 0.1; // Demi-bouteille = 37 cl
+            }
+            return false;
         }).length,
         desiree: vinsToUse.filter(vin => {
+            const formats = typeof vin === 'object' && 'formats' in vin
+                ? (vin.formats as any[]) 
+                : [];
+            if (Array.isArray(formats) && formats.length > 0) {
+                return formats.some((format: any) => 
+                    format.nom && format.nom.toLowerCase().includes('désirée')
+                );
+            }
+            // Vérifier format_cl si disponible (pour RestaurantWine)
+            const formatCl = (vin as any).format_cl;
+            if (formatCl !== undefined && formatCl !== null) {
+                return Math.abs(formatCl - 50) < 0.1; // Désirée = 50 cl
+            }
+            return false;
+        }).length,
+        // Compter tous les autres formats (formats non reconnus)
+        autresFormats: vinsToUse.filter(vin => {
+            // Vérifier si le vin a un format mais qu'il ne correspond à aucun format connu
             const formats = typeof vin === 'object' && 'formats' in vin 
                 ? (vin.formats as any[]) 
                 : [];
-            return Array.isArray(formats) && formats.some((format: any) => 
-                format.nom && format.nom.toLowerCase().includes('désirée')
-            );
+            if (Array.isArray(formats) && formats.length > 0) {
+                const hasKnownFormat = formats.some((format: any) => {
+                    if (!format.nom) return false;
+                    const nomLower = format.nom.toLowerCase();
+                    return nomLower.includes('bouteille') || 
+                           nomLower.includes('verre') || 
+                           nomLower.includes('magnum') || 
+                           nomLower.includes('demi') || 
+                           nomLower.includes('désirée');
+                });
+                // Si le vin a un format mais qu'il ne correspond à aucun format connu, le compter
+                return !hasKnownFormat;
+            }
+            // Vérifier format_cl si disponible (pour RestaurantWine) et qu'il ne correspond à aucun format connu
+            const formatCl = (vin as any).format_cl;
+            if (formatCl !== undefined && formatCl !== null) {
+                const knownFormatCls = [75, 10, 150, 37, 50];
+                return !knownFormatCls.some(cl => Math.abs(formatCl - cl) < 0.1);
+            }
+            return false;
         }).length,
         incomplete: vinsToUse.filter(vin => {
             const cepage = typeof vin === 'object' && 'cepage' in vin 
@@ -747,9 +871,9 @@ export const useAlerts = () => {
     }
     
     // Vérifier si un prix est à 0 pour un plat
-    const dishesWithZeroPrice = dishesArray.filter((dish: Dish) => 
-        !dish.price || dish.price === 0
-    );
+    // Note: Le type Dish de l'API n'a pas de propriété price, donc on ne peut pas vérifier le prix
+    // Cette vérification est désactivée pour l'instant car l'API ne retourne pas de prix pour les plats
+    const dishesWithZeroPrice: Dish[] = [];
     if (dishesWithZeroPrice.length > 0) {
         const plural = dishesWithZeroPrice.length > 1 ? 's' : '';
         const has = dishesWithZeroPrice.length > 1 ? ' ont' : ' a';
@@ -818,7 +942,7 @@ export const useDishesWithoutPrincipalAroma = () => {
     }
     
     const dishesWithoutAroma = dishes.filter((dish: Dish) => 
-        !dish.food_cat_1 || dish.food_cat_1 === null || dish.food_cat_1 === undefined
+        !dish.food_cat_1 || dish.food_cat_1 === null || dish.food_cat_1 === undefined || dish.food_cat_1 === -1
     );
     
     return {

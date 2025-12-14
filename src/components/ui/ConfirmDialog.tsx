@@ -1,7 +1,7 @@
 'use client';
 import { type ReactNode } from 'react';
 import { X } from 'lucide-react';
-import Button from './Button';
+import Button from '../common/Button';
 
 type ConfirmDialogProps = {
     isOpen: boolean;

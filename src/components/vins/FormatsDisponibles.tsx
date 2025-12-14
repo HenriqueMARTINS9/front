@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { getTagColors } from '@/lib/tagColors';
+import { useTranslation } from '@/lib/useTranslation';
 
 type Format = {
     id: string;
@@ -15,6 +16,7 @@ type FormatsDisponiblesProps = {
 };
 
 export default function FormatsDisponibles({ formats, wineType }: FormatsDisponiblesProps) {
+    const { t } = useTranslation();
     // Le texte reste toujours gris, pas de changement de couleur selon le type de vin
     const textColor = 'text-gray-900';
     
@@ -34,8 +36,8 @@ export default function FormatsDisponibles({ formats, wineType }: FormatsDisponi
             <table>
                 <thead>
                     <tr>
-                        <th className="py-1 font-medium text-left text-sm text-gray-700">Formats disponibles</th>
-                        <th className="py-1 font-medium text-left text-sm text-gray-700">Prix</th>
+                        <th className="py-1 font-medium text-left text-sm text-gray-700">{t('common.availableFormats')}</th>
+                        <th className="py-1 font-medium text-left text-sm text-gray-700">{t('wines.wine.price')}</th>
                     </tr>
                 </thead>
                 <tbody>

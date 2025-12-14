@@ -1,8 +1,8 @@
 "use client";
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, Pencil, Plus } from 'lucide-react';
-import Tag from './Tag';
-import Button from './Button';
+import Tag from '../common/Tag';
+import Button from '../common/Button';
 import FormulaireModification from './FormulaireModification';
 import CepageAssemblage from './CepageAssemblage';
 import FormatsDisponibles from './FormatsDisponibles';
@@ -11,6 +11,8 @@ import { type Vin } from '@/lib/api';
 import { useUpdateVin, useDeleteVin } from '@/lib/hooks';
 import { getTagColors } from '@/lib/tagColors';
 import { useTranslation } from '@/lib/useTranslation';
+import { getRestaurantId } from '@/lib/auth';
+import { getCepageNameById } from '@/lib/cepages';
 
 type Cepage = {
     id: string;
@@ -51,79 +53,11 @@ type TableauVinProps = {
     restaurantId?: number;
 };
 
-function createInitialData(): Wine[] {
-    return [
-        {
-            id: 'w1',
-            name: 'Domaine de la Harpe',
-            subname: 'Domaine de la Harpe',
-            millesime: 2021,
-            type: 'Blanc',
-            pointsDeVente: [true],
-            aocRegion: 'La Côte',
-            pays: 'Suisse',
-            cepages: [
-                { id: 'c1', nom: 'Chasselas', pourcentage: 100 }
-            ],
-            formats: [
-                { id: 'f1', nom: 'Bouteille', capacite: '75 cl', prix: 36.00 },
-                { id: 'f2', nom: 'Demi-bouteille', capacite: '37.5 cl', prix: 24.50 }
-            ],
-            motsCles: [
-                { id: 'mc1', label: 'Frais & léger', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' },
-                { id: 'mc2', label: 'Fruit blanc discret', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' },
-                { id: 'mc3', label: 'Finale douce', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }
-            ]
-        },
-        {
-            id: 'w2',
-            name: 'Château de Vinzel - Grand Cru',
-            millesime: 2023,
-            type: 'Blanc',
-            pointsDeVente: [true],
-            aocRegion: 'La Côte',
-            pays: 'Suisse',
-            cepages: [
-                { id: 'c2', nom: 'Chasselas', pourcentage: 100 }
-            ],
-            formats: [
-                { id: 'f3', nom: 'Magnum', capacite: '150 cl', prix: 42.00 },
-                { id: 'f4', nom: 'Bouteille', capacite: '75 cl', prix: 42.00 },
-                { id: 'f5', nom: 'Désirée', capacite: '50 cl', prix: 42.00 },
-                { id: 'f6', nom: 'Demi-bouteille', capacite: '37.5 cl', prix: 42.00 },
-                { id: 'f7', nom: 'Verre', capacite: '10 cl', prix: 42.00 }
-            ],
-            motsCles: [
-                { id: 'mc4', label: 'Label 1', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' },
-                { id: 'mc5', label: 'Label 2', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' },
-                { id: 'mc6', label: 'Label 3', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' },
-                { id: 'mc7', label: 'Label 4', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }
-            ]
-        },
-        {
-            id: 'w3',
-            name: 'Sauvignon - Domaine de Chantegrive',
-            millesime: 2022,
-            type: 'Blanc',
-            pointsDeVente: [true],
-            aocRegion: 'Bordeaux',
-            pays: 'France',
-            cepages: [
-                { id: 'c3', nom: 'Sauvignon Blanc', pourcentage: 100 }
-            ],
-            formats: [
-                { id: 'f8', nom: 'Bouteille', capacite: '75 cl', prix: 28.00 }
-            ],
-            motsCles: [
-                { id: 'mc8', label: 'Fruité', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' },
-                { id: 'mc9', label: 'Minéral', color: 'bg-[#FFFAEB]', textColor: 'text-[#B54708]' }
-            ]
-        },
-    ];
-}
 
-export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) {
+export default function TableauVin({ vins, restaurantId }: TableauVinProps) {
     const { t, i18n } = useTranslation();
+    // Récupérer le restaurant ID depuis localStorage si non fourni
+    const actualRestaurantId = restaurantId ?? getRestaurantId() ?? 1;
     
     // Fonction pour traduire les types de vins
     const translateWineType = (wineType: string) => {
@@ -150,8 +84,8 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
     const [currentPage, setCurrentPage] = useState<number>(1);
     const itemsPerPage = 10;
 
-    const updateVinMutation = useUpdateVin(restaurantId);
-    const deleteVinMutation = useDeleteVin(restaurantId);
+    const updateVinMutation = useUpdateVin(actualRestaurantId);
+    const deleteVinMutation = useDeleteVin(actualRestaurantId);
 
     // Mettre à jour les vins locaux quand les props changent
     React.useEffect(() => {
@@ -213,8 +147,11 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
         setEditingWineId(null);
     }
 
-    async function saveWine(wine: Vin) {
+    async function saveWine(wine: Vin | Wine) {
         try {
+            console.log('saveWine - vin reçu:', JSON.stringify(wine, null, 2));
+            console.log('saveWine - wine.formats:', JSON.stringify(wine.formats, null, 2));
+            
             // Mettre à jour les mots-clés avec la couleur du type de vin
             const wineTypeColors = getTagColors(wine.type);
             const updatedMotsCles = wine.motsCles.map(motCle => ({
@@ -223,22 +160,69 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
                 textColor: wineTypeColors.text
             }));
 
-            // Mettre à jour localement immédiatement avec le vin complet
+            // Mettre à jour localement immédiatement avec le vin complet, en incluant les formats
             setLocalVins(prev => prev.map(v =>
                 v.id === wine.id
-                    ? { ...v, ...wine, motsCles: updatedMotsCles }
+                    ? { ...v, ...wine, motsCles: updatedMotsCles, formats: wine.formats || v.formats || [] }
                     : v
             ));
 
-            // Mettre à jour le vin avec les nouveaux mots-clés et le type
-            await updateVinMutation.mutateAsync({
+            // Préparer les données pour la mutation
+            // S'assurer que toutes les valeurs sont préservées, même si elles sont vides
+            const vinData: Vin = {
                 id: wine.id,
-                vin: {
-                    ...wine,
-                    type: wine.type,
-                    motsCles: updatedMotsCles
-                }
+                // Utiliser 'nom' directement (le vin passé est déjà converti en Vin)
+                nom: wine.nom || '',
+                subname: wine.subname || '',
+                type: wine.type || 'Blanc',
+                cepage: wine.cepages && wine.cepages.length > 0 ? wine.cepages[0].nom : (wine.cepage || ''),
+                cepages: wine.cepages || [],
+                region: wine.region || '',
+                pays: wine.pays || '',
+                millesime: wine.millesime || 0,
+                prix: wine.formats && wine.formats.length > 0 ? wine.formats[0].prix : (wine.prix || 0),
+                restaurant: wine.restaurant || `Restaurant ${restaurantId}`,
+                pointsDeVente: wine.pointsDeVente || [true],
+                motsCles: updatedMotsCles,
+                formats: wine.formats || []
+            };
+            
+            // Vérifier que toutes les valeurs critiques sont présentes
+            if (!vinData.nom || vinData.nom.trim() === '') {
+                console.error('saveWine - Nom du vin manquant ou vide:', vinData);
+            }
+            if (!vinData.formats || vinData.formats.length === 0) {
+                console.error('saveWine - Formats manquants:', vinData);
+            }
+            
+            console.log('saveWine - vinData complet avant mutation:', JSON.stringify(vinData, null, 2));
+            console.log('saveWine - vinData.formats avant mutation:', JSON.stringify(vinData.formats, null, 2));
+
+            // Mettre à jour le vin avec les nouveaux mots-clés et le type
+            // IMPORTANT: S'assurer que cepages et formats sont inclus pour la conversion
+            const updatedVin = await updateVinMutation.mutateAsync({
+                id: wine.id,
+                vin: vinData
             });
+            
+            // L'API ne retourne pas toujours les données complètes après la mise à jour
+            // Utiliser les données qu'on a préparées (vinData) pour mettre à jour localVins
+            // plutôt que la réponse de l'API qui peut être incomplète
+            setLocalVins(prev => prev.map(v =>
+                v.id === wine.id
+                    ? { 
+                        ...v, 
+                        ...vinData, 
+                        motsCles: updatedMotsCles,
+                        formats: vinData.formats || wine.formats || []
+                    }
+                    : v
+            ));
+            
+            // Forcer un refetch des vins depuis l'API pour s'assurer que les données sont à jour
+            // Cela sera fait automatiquement par l'invalidation des queries dans useUpdateVin
+            // mais on peut aussi le faire manuellement si nécessaire
+            
             setEditingWineId(null);
         } catch (error) {
             console.error('Erreur lors de la mise à jour du vin:', error);
@@ -265,7 +249,7 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
                         if (!searchQuery.trim()) return true;
                         const searchLower = searchQuery.toLowerCase();
                         return wine.nom?.toLowerCase().includes(searchLower) || 
-                               wine.domaine?.toLowerCase().includes(searchLower);
+                               wine.subname?.toLowerCase().includes(searchLower);
                     }).length} ${i18n.language === 'en' ? 'wines' : 'vins'}`} color="bg-[#EEF4FF]" textColor="text-indigo-700" />
                 </div>
                 <div className="flex items-center gap-4">
@@ -307,7 +291,7 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
                                     if (!searchQuery.trim()) return true;
                                     const searchLower = searchQuery.toLowerCase();
                                     return wine.nom?.toLowerCase().includes(searchLower) || 
-                                           wine.domaine?.toLowerCase().includes(searchLower);
+                                           wine.subname?.toLowerCase().includes(searchLower);
                                 });
                                 const totalPages = Math.ceil(filteredVins.length / itemsPerPage);
                                 const startIndex = (currentPage - 1) * itemsPerPage;
@@ -390,8 +374,8 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
                                                     <div className="space-y-6">
                                                         {/* AOC / Région et Pays */}
                                                         <div>
-                                                            <p className="text-sm font-medium text-gray-700">{wine.region || 'Non spécifié'}</p>
-                                                            <p className="text-sm text-gray-700">{wine.pays || 'Non spécifié'}</p>
+                                                            <p className="text-sm font-medium text-gray-700">{wine.region || t('common.notSpecified')}</p>
+                                                            <p className="text-sm text-gray-700">{wine.pays || t('common.notSpecified')}</p>
                                                         </div>
 
                                                         {/* Cépage ou assemblage */}
@@ -402,12 +386,9 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
 
                                                         {/* Formats disponibles et Prix */}
                                                         <FormatsDisponibles 
-                                                            formats={editingData[wine.id]?.formats || [{ id: '1', nom: 'Bouteille (75 cl)', prix: wine.prix }]} 
+                                                            formats={editingData[wine.id]?.formats || wine.formats || [{ id: '1', nom: 'Bouteille (75 cl)', prix: wine.prix }]} 
                                                             wineType={wine.type} 
                                                         />
-
-                                                        {/* Mots clefs descriptifs */}
-                                                        <MotsCles motsCles={wine.motsCles} wineType={wine.type} />
                                                     </div>
                                                 </div>
                                             </td>
@@ -434,7 +415,9 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
                                                                 cepages: wine.cepages && wine.cepages.length > 0 
                                                                     ? wine.cepages 
                                                                     : [{ id: '1', nom: wine.cepage, pourcentage: 100 }],
-                                                                formats: [{ id: '1', nom: 'Bouteille (75 cl)', prix: wine.prix }],
+                                                                formats: wine.formats && wine.formats.length > 0
+                                                                    ? wine.formats
+                                                                    : [{ id: '1', nom: 'Bouteille (75 cl)', prix: wine.prix }],
                                                                 motsCles: wine.motsCles
                                                             }}
                                                             onDataChange={(data) => updateEditingData(wine.id, data)}
@@ -459,17 +442,20 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
                                                                 
                                                                 saveWine({
                                                                     id: wineData.id,
-                                                                    nom: wineData.name,
-                                                                    subname: wineData.subname,
-                                                                    type: wineData.type,
-                                                                    cepage: wineData.cepages[0]?.nom || '',
-                                                                    region: wineData.aocRegion || '',
-                                                                    pays: wineData.pays || '',
-                                                                    millesime: wineData.millesime,
-                                                                    prix: prix,
+                                                                    // Préserver le nom original si wineData.name est vide
+                                                                    nom: wineData.name && wineData.name.trim() !== '' ? wineData.name : wine.nom,
+                                                                    subname: wineData.subname || wine.subname || '',
+                                                                    type: wineData.type || wine.type,
+                                                                    cepage: wineData.cepages[0]?.nom || wine.cepage || '', // Pour compatibilité
+                                                                    cepages: wineData.cepages || wine.cepages || [], // IMPORTANT: Inclure cepages pour la conversion
+                                                                    region: wineData.aocRegion || wine.region || '',
+                                                                    pays: wineData.pays || wine.pays || '',
+                                                                    millesime: wineData.millesime !== undefined ? wineData.millesime : wine.millesime,
+                                                                    prix: prix !== undefined ? prix : wine.prix,
                                                                     restaurant: wine.restaurant,
-                                                                    pointsDeVente: wineData.pointsDeVente,
-                                                                    motsCles: wineData.motsCles
+                                                                    pointsDeVente: wineData.pointsDeVente || wine.pointsDeVente || [true],
+                                                                    motsCles: wineData.motsCles || wine.motsCles || [],
+                                                                    formats: wineData.formats || wine.formats || []
                                                                 });
                                                                 
                                                                 // Forcer la mise à jour de l'affichage en fermant et rouvrant les détails
@@ -495,7 +481,7 @@ export default function TableauVin({ vins, restaurantId = 0 }: TableauVinProps) 
                         if (!searchQuery.trim()) return true;
                         const searchLower = searchQuery.toLowerCase();
                         return wine.nom?.toLowerCase().includes(searchLower) || 
-                               wine.domaine?.toLowerCase().includes(searchLower);
+                               wine.subname?.toLowerCase().includes(searchLower);
                     });
                     const totalPages = Math.ceil(filteredVins.length / itemsPerPage);
                     if (totalPages <= 1) return null;

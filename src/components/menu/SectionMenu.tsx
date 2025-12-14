@@ -1,10 +1,12 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
-import Tag from './Tag';
+import Tag from '../common/Tag';
 import FormulaireModificationPlat from './FormulaireModificationPlat';
 import type { Plat } from './TableauMenu';
 import { useTranslation } from '@/lib/useTranslation';
+import { useTranslation as useI18n } from 'react-i18next';
+import { getRestaurantId } from '@/lib/auth';
 
 type SectionMenuProps = {
     titre: string;
@@ -30,7 +32,7 @@ export default function SectionMenu({
     onSavePlat,
     onDeletePlat,
     isApiSection = false,
-    restaurantId = 0,
+    restaurantId,
     onRenameSection,
     onDeleteSection,
     isEditingTitle = false,
@@ -42,6 +44,9 @@ export default function SectionMenu({
     titlePlaceholder,
 }: SectionMenuProps) {
     const { t } = useTranslation();
+    const { i18n } = useI18n();
+    // Récupérer le restaurant ID depuis localStorage si non fourni
+    const actualRestaurantId = restaurantId ?? getRestaurantId() ?? 1;
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [editingPlatId, setEditingPlatId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -70,6 +75,25 @@ export default function SectionMenu({
 
     const showSectionActions = (!!onRenameSection || (!!onDeleteSection && plats.length === 0)) && !isEditingTitle;
     const showDeleteOnly = !!onDeleteSection && plats.length === 0 && isEditingTitle;
+
+    // Déterminer le titre à afficher selon la langue
+    const displayTitle = useMemo(() => {
+        if (isEditingTitle) {
+            return titre; // Garder le titre original pendant l'édition
+        }
+        
+        // Si la langue est en anglais, chercher la valeur EN dans les plats de la section
+        if (i18n.language === 'en' && plats.length > 0) {
+            // Prendre la sectionEn du premier plat qui a une valeur EN
+            const platWithEn = plats.find(p => p.sectionEn);
+            if (platWithEn?.sectionEn) {
+                return platWithEn.sectionEn;
+            }
+        }
+        
+        // Sinon, utiliser le titre par défaut (qui est en FR)
+        return titre;
+    }, [titre, plats, i18n.language, isEditingTitle]);
 
     return (
         <div className="bg-white rounded-xl border border-gray-200">
@@ -107,13 +131,13 @@ export default function SectionMenu({
                             onClick={onStartTitleEdit}
                             className="flex items-center gap-2 text-left"
                         >
-                            <span className={`text-lg font-semibold ${titre ? 'text-gray-900' : 'text-gray-500 italic'}`}>
-                                {titre || titlePlaceholder}
+                            <span className={`text-lg font-semibold ${displayTitle ? 'text-gray-900' : 'text-gray-500 italic'}`}>
+                                {displayTitle || titlePlaceholder}
                             </span>
                         </button>
                     ) : (
-                        <span className={`text-lg font-semibold ${titre ? 'text-gray-900' : 'text-gray-500 italic'}`}>
-                            {titre || titlePlaceholder}
+                        <span className={`text-lg font-semibold ${displayTitle ? 'text-gray-900' : 'text-gray-500 italic'}`}>
+                            {displayTitle || titlePlaceholder}
                         </span>
                     )}
                     {isApiSection && (
@@ -177,10 +201,21 @@ export default function SectionMenu({
                                         <tr className="border-t border-gray-200">
                                             <td className="px-6 py-4">
                                                 <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-                                                    <div className="font-medium text-sm text-left">{plat.nom}</div>
-                                                    {plat.description && (
-                                                        <div className="text-sm text-left text-gray-600">{plat.description}</div>
-                                                    )}
+                                                    <div className="font-medium text-sm text-left">
+                                                        {i18n.language === 'en' 
+                                                            ? (plat.nomEn || plat.nom)
+                                                            : (plat.nomFr || plat.nom)}
+                                                    </div>
+                                                    {(() => {
+                                                        const description = i18n.language === 'en' 
+                                                            ? (plat.descriptionEn || plat.description)
+                                                            : (plat.descriptionFr || plat.description);
+                                                        return description ? (
+                                                            <div className="text-sm text-left text-gray-600">
+                                                                {description}
+                                                            </div>
+                                                        ) : null;
+                                                    })()}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right">
@@ -188,8 +223,33 @@ export default function SectionMenu({
                                                     {/* Mots-clés */}
                                                     <div className="flex space-x-2">
                                                         {plat.motsCles.map((motCle) => {
+                                                            // Convertir les anciens labels français en clés d'arômes
+                                                            const oldLabelMap: Record<string, string> = {
+                                                                'Légume vert': 'greenVegetable',
+                                                                'Viande rouge': 'redMeat',
+                                                                'Viande blanche': 'whiteMeat',
+                                                                'Volaille': 'whiteMeat',
+                                                                'Poisson': 'finFish',
+                                                                'Crustacé': 'shellfish',
+                                                                'Mollusque': 'mollusk',
+                                                                'Solanacée': 'nightshade',
+                                                                'Champignon': 'funghi',
+                                                                'Fromage dur': 'nuttyHardCheese',
+                                                                'Fromage bleu': 'pungentBlueCheese',
+                                                                'Fromage doux': 'delicateButteryCheese',
+                                                                'Herbe fraîche': 'aromaticGreenHerb',
+                                                                'Herbe sèche': 'dryHerb',
+                                                                'Épices exotiques': 'exoticSpice',
+                                                                'Viande séchée': 'curedMeat',
+                                                                'Faisselle': 'sourCheeseCream',
+                                                                'Fromage salé': 'saltyCrumblyCheese'
+                                                            };
+                                                            
+                                                            // Utiliser la clé d'arôme (soit directement, soit convertie depuis l'ancien label)
+                                                            const aromaKey = oldLabelMap[motCle.label] || motCle.label;
+                                                            
                                                             // Traduire le label si c'est une clé d'arôme
-                                                            const translationKey = `menu.aromas.${motCle.label}`;
+                                                            const translationKey = `menu.aromas.${aromaKey}`;
                                                             const translatedLabel = t(translationKey);
                                                             // Si la traduction existe (ne retourne pas la clé), l'utiliser, sinon utiliser le label original
                                                             const displayLabel = translatedLabel !== translationKey ? translatedLabel : motCle.label;

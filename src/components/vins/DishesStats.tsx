@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { useRestaurantDishes } from '@/lib/hooks';
-import Card from './Card';
+import Card from '../common/Card';
 import { useTranslation } from '@/lib/useTranslation';
 
 type DishesStatsProps = {

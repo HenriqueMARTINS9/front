@@ -1,13 +1,13 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import Sidebar from '@/components/SideBar';
-import Header from '@/components/Header';
-import Button from '@/components/Button';
-import SectionMenu from '@/components/SectionMenu';
-import PointsDeVenteTabs from '@/components/PointsDeVenteTabs';
-import ModalNouveauPlat from '@/components/ModalNouveauPlat';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import type { Plat } from '@/components/TableauMenu';
+import Sidebar from '@/components/layout/SideBar';
+import Header from '@/components/layout/Header';
+import Button from '@/components/common/Button';
+import SectionMenu from '@/components/menu/SectionMenu';
+import PointsDeVenteTabs from '@/components/menu/PointsDeVenteTabs';
+import ModalNouveauPlat from '@/components/menu/ModalNouveauPlat';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import type { Plat } from '@/components/menu/TableauMenu';
 import { useTranslation } from '@/lib/useTranslation';
 import { useRestaurantDishes, useDeleteDish } from '@/lib/hooks';
 import { convertDishToPlat } from '@/lib/api';
@@ -112,9 +112,15 @@ export default function MenuPage() {
                                 .map((plat: any) => ({
                                     id: typeof plat.id === 'string' ? plat.id : `plat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                                     nom: typeof plat.nom === 'string' ? plat.nom : '',
+                                    nomFr: typeof plat.nomFr === 'string' ? plat.nomFr : undefined,
+                                    nomEn: typeof plat.nomEn === 'string' ? plat.nomEn : undefined,
                                     description: typeof plat.description === 'string' ? plat.description : undefined,
+                                    descriptionFr: typeof plat.descriptionFr === 'string' ? plat.descriptionFr : undefined,
+                                    descriptionEn: typeof plat.descriptionEn === 'string' ? plat.descriptionEn : undefined,
                                     prix: typeof plat.prix === 'number' ? plat.prix : undefined,
                                     section: typeof plat.section === 'string' ? plat.section : '',
+                                    sectionFr: typeof plat.sectionFr === 'string' ? plat.sectionFr : undefined,
+                                    sectionEn: typeof plat.sectionEn === 'string' ? plat.sectionEn : undefined,
                                     pointsDeVente: Array.isArray(plat.pointsDeVente) ? plat.pointsDeVente : [],
                                     motsCles: Array.isArray(plat.motsCles) ? plat.motsCles : [],
                                 }))
@@ -154,12 +160,18 @@ export default function MenuPage() {
 
     // Fonction pour ajouter un nouveau plat
     const handleAddPlat = (platData: Omit<Plat, 'id'>) => {
-        // S'assurer que description et motsCles sont bien inclus
+        // S'assurer que description et motsCles sont bien inclus, ainsi que toutes les propriétés FR/EN
         const newPlat: Plat = {
             nom: platData.nom || '',
+            nomFr: platData.nomFr,
+            nomEn: platData.nomEn,
             description: platData.description || '',
+            descriptionFr: platData.descriptionFr,
+            descriptionEn: platData.descriptionEn,
             prix: platData.prix || 0,
             section: platData.section || '',
+            sectionFr: platData.sectionFr,
+            sectionEn: platData.sectionEn,
             pointsDeVente: platData.pointsDeVente || [true],
             motsCles: platData.motsCles || [],
             id: `plat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`

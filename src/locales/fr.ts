@@ -18,8 +18,13 @@ export default {
     },
     "menus": {
       "title": "Menus",
-      "subtitle": "1 Point de vente",
+      "subtitle": "{{count}} Point{{plural}} de vente",
       "restaurant": "Restaurant"
+    },
+    "qrcode": {
+      "title": "QR Code",
+      "download": "Télécharger PNG",
+      "print": "Imprimer"
     },
     "wines": {
       "title": "Vins",
@@ -27,6 +32,9 @@ export default {
       "sparkling": "Mousseux",
       "white": "Blanc",
       "red": "Rouge",
+      "bottle": "Bouteille",
+      "glass": "Verre",
+      "otherFormats": "Autres formats",
       "rose": "Rosé",
       "sweet": "Doux",
       "oldWhite": "Blanc vieux",
@@ -266,11 +274,8 @@ export default {
     "dishNameRequired": "Le nom du plat est requis",
     "dishPriceRequired": "Le prix du plat est requis",
     "fortified": "Fortifié",
-    "magnum": "Magnum",
-    "desired": "Désirée",
     "wineStats": "Statistiques des vins",
     "lastModifiedDate": "Dernière modification le 8 août 2025",
-    "halfBottle": "Demi-bouteille",
     "dishesCount": "plats",
     "loadingDishes": "Chargement des plats...",
     "noDishesFound": "Aucun plat trouvé",
@@ -324,7 +329,6 @@ export default {
     "addGrapeVariety": "Ajouter un cépage",
     "noGrapeVarieties": "Aucun cépage ajouté",
     "whichRestaurants": "Dans quels restaurants ce vin est-il disponible ?",
-    "restaurant": "Restaurant",
     "availableFormats": "Formats disponibles",
     "addFormat": "Ajouter un format",
     "format": "Format",
@@ -345,6 +349,18 @@ export default {
         "sweet": "Doux",
         "old white": "Blanc vieux",
         "orange": "Orange"
-    }
+    },
+    "french": "Français",
+    "english": "Anglais",
+    "wineType": "Type de vin",
+    "grapeVarieties": "Cépage(s)",
+    "regionAOC": "Région / AOC",
+    "selectFormat": "Sélectionner un format",
+    "loadingSections": "Chargement des sections...",
+    "mainAromaRequired": "Un arôme principal est requis",
+    "selectMainAroma": "Sélectionner un arôme principal",
+    "selectSecondaryAroma": "Sélectionner un arôme secondaire",
+    "sectionRequired": "Une section est requise",
+    "grapeVarietyOrBlend": "Cépage ou assemblage"
   }
 };

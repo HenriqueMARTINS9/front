@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCepageIdByName, getCepageNameById } from './cepages';
 
 // Types pour les vins (basés sur l'API VirtualSomm)
 export interface RestaurantWine {
@@ -25,6 +26,7 @@ export interface Dish {
     dish_id: number;
     dish_type: { [key: string]: string };
     dish_name: { [key: string]: string };
+    dish_description?: { [key: string]: string };
     food_cat_1: number;
     food_cat_1_percent: number;
     food_cat_2: number;
@@ -137,7 +139,39 @@ export interface Vin {
         color: string;
         textColor: string;
     }>;
+    formats?: Array<{
+        id: string;
+        nom: string;
+        prix: number;
+    }>;
 }
+
+// Fonction pour convertir format_cl (nombre) en format local (chaîne)
+const convertFormatClToString = (formatCl: number): string => {
+    console.log('convertFormatClToString - formatCl reçu:', formatCl, 'type:', typeof formatCl);
+    
+    // Mapping des formats connus
+    // Note: La demi-bouteille utilise 37 dans l'API mais s'affiche comme 37.5 cl
+    const formatMap: Array<{ value: number; label: string }> = [
+        { value: 150, label: 'Magnum (150 cl)' },
+        { value: 75, label: 'Bouteille (75 cl)' },
+        { value: 50, label: 'Désirée (50 cl)' },
+        { value: 37, label: 'Demi-bouteille (37.5 cl)' },
+        { value: 10, label: 'Verre (10 cl)' },
+    ];
+    
+    // Chercher une correspondance exacte ou proche (pour gérer les erreurs d'arrondi)
+    const match = formatMap.find(f => Math.abs(f.value - formatCl) < 0.1);
+    if (match) {
+        console.log('convertFormatClToString - correspondance trouvée:', match.label);
+        return match.label;
+    }
+    
+    // Sinon, créer un format générique avec la valeur en cl
+    const generic = `${formatCl} cl`;
+    console.log('convertFormatClToString - format générique créé:', generic);
+    return generic;
+};
 
 // Fonctions utilitaires pour convertir entre Vin et RestaurantWine
 export const convertRestaurantWineToVin = (wine: RestaurantWine, restaurantId: number = 0): Vin => {
@@ -148,16 +182,35 @@ export const convertRestaurantWineToVin = (wine: RestaurantWine, restaurantId: n
     };
 
     // Convertir tous les cépages avec leurs pourcentages
+    // Toujours convertir le nom en ID local (ne pas utiliser variety_id de l'API car les IDs peuvent différer)
     const cepages = wine.grapes_varieties && wine.grapes_varieties.length > 0
-        ? wine.grapes_varieties.map((gv, index) => ({
-            id: gv.variety_id ? gv.variety_id.toString() : `cep-${index}`,
-            nom: getValue(gv.variety_name),
-            pourcentage: gv.variety_percent || 0
-        }))
+        ? wine.grapes_varieties.map((gv, index) => {
+            const cepageName = getValue(gv.variety_name);
+            // Toujours convertir le nom en ID local (ignorer variety_id de l'API)
+            const cepageId = getCepageIdByName(cepageName);
+            const finalId = cepageId !== -1 ? cepageId.toString() : `cep-${index}`;
+            return {
+                id: finalId,
+                nom: finalId, // Stocker l'ID local comme nom pour le formulaire
+                pourcentage: gv.variety_percent || 0
+            };
+        })
         : [];
 
     // Le premier cépage pour la compatibilité avec l'ancien format
     const cepage = cepages.length > 0 ? cepages[0].nom : '';
+
+    // Convertir format_cl en format local
+    console.log('convertRestaurantWineToVin - wine.format_cl:', wine.format_cl);
+    console.log('convertRestaurantWineToVin - wine.price:', wine.price);
+    const formatString = convertFormatClToString(wine.format_cl || 75);
+    console.log('convertRestaurantWineToVin - formatString converti:', formatString);
+    const formats = [{
+        id: `format-${wine.wine_id || Date.now()}`,
+        nom: formatString,
+        prix: wine.price || 0
+    }];
+    console.log('convertRestaurantWineToVin - formats créés:', JSON.stringify(formats, null, 2));
 
     return {
         id: wine.wine_id != null ? wine.wine_id.toString() : `wine-${Date.now()}`,
@@ -173,6 +226,7 @@ export const convertRestaurantWineToVin = (wine: RestaurantWine, restaurantId: n
         restaurant: `Restaurant ${restaurantId}`,
         pointsDeVente: [true], // Par défaut, tous les vins sont disponibles
         motsCles: [], // Les mots-clés ne sont pas dans l'API pour l'instant
+        formats: formats, // Ajouter les formats convertis
     };
 };
 
@@ -205,31 +259,43 @@ export const convertVinToRestaurantWineData = (vin: Omit<Vin, 'id'> | Vin, langu
     const wineType = wineTypeMap[vin.type] || { fr: vin.type, 'en-US': vin.type };
 
     // Extraire le format en cl depuis le format du vin
-    // Les formats peuvent être: "Bouteille (75 cl)", "Magnum (150 cl)", etc.
+    // Les formats peuvent être: "Bouteille (75 cl)", "Magnum (150 cl)", "Verre (10 cl)", etc.
     const extractFormatCl = (formatString?: string): number => {
-        if (!formatString) return 75; // Par défaut 75cl
-        
-        // Chercher un nombre suivi de "cl" dans le format
-        const match = formatString.match(/(\d+(?:\.\d+)?)\s*cl/i);
-        if (match) {
-            return parseFloat(match[1]);
+        if (!formatString) {
+            console.log('extractFormatCl - formatString vide, retour 75');
+            return 75; // Par défaut 75cl
         }
         
-        // Mapping des formats connus
+        console.log('extractFormatCl - formatString reçu:', formatString);
+        
+        // Chercher un nombre suivi de "cl" dans le format (peut être dans des parenthèses)
+        // Exemples: "Verre (10 cl)", "Bouteille (75 cl)", "10 cl", etc.
+        const match = formatString.match(/(\d+(?:\.\d+)?)\s*cl/i);
+        if (match) {
+            const extracted = parseFloat(match[1]);
+            console.log('extractFormatCl - valeur extraite depuis regex:', extracted);
+            return extracted;
+        }
+        
+        // Mapping des formats connus (fallback si la regex ne fonctionne pas)
+        // Note: La demi-bouteille utilise 37 dans l'API (pas 37.5)
         const formatMap: Record<string, number> = {
             'Magnum': 150,
             'Bouteille': 75,
             'Désirée': 50,
-            'Demi-bouteille': 37.5,
+            'Demi-bouteille': 37,
+            'Demi bouteille': 37,
             'Verre': 10,
         };
         
         for (const [key, value] of Object.entries(formatMap)) {
             if (formatString.toLowerCase().includes(key.toLowerCase())) {
+                console.log('extractFormatCl - valeur trouvée dans formatMap:', key, '->', value);
                 return value;
             }
         }
         
+        console.warn('extractFormatCl - Aucune correspondance trouvée, retour 75 par défaut');
         return 75; // Par défaut
     };
 
@@ -240,36 +306,125 @@ export const convertVinToRestaurantWineData = (vin: Omit<Vin, 'id'> | Vin, langu
         variety_percent: number;
     }> = [];
     
-    if ((vin as any).cepages && Array.isArray((vin as any).cepages) && (vin as any).cepages.length > 0) {
+    // Si on a des cépages (même un tableau vide, cela signifie que proportions inconnues)
+    if ((vin as any).cepages && Array.isArray((vin as any).cepages)) {
+        // Si le tableau est vide, cela signifie proportions inconnues, on retourne un tableau vide
+        if ((vin as any).cepages.length === 0) {
+            console.log('convertVinToRestaurantWineData - Tableau de cépages vide (proportions inconnues), grapes_varieties sera vide');
+        } else {
         // Utiliser les cépages depuis le formulaire
-        grapesVarieties = (vin as any).cepages.map((cep: any) => ({
-            variety_name: {
-                [language]: cep.nom || '',
-                ...(language === 'fr' ? { 'en-US': cep.nom || '' } : { fr: cep.nom || '' }),
-            },
-            variety_percent: typeof cep.pourcentage === 'string' ? parseFloat(cep.pourcentage) || 100 : (cep.pourcentage || 100),
-        }));
+        // Le nom est maintenant l'ID (string), convertir en nom réel
+        console.log('convertVinToRestaurantWineData - Début conversion cépages, nombre:', (vin as any).cepages.length);
+        console.log('convertVinToRestaurantWineData - cepages bruts:', JSON.stringify((vin as any).cepages, null, 2));
+        grapesVarieties = (vin as any).cepages
+            .map((cep: any) => {
+                console.log('convertVinToRestaurantWineData - Traitement cep:', JSON.stringify(cep));
+                // Étape 1: Déterminer l'ID du cépage
+                // cep.nom peut être soit un ID (string numérique) soit un nom de cépage
+                let cepageId: number = -1;
+                
+                if (typeof cep.nom === 'string' && cep.nom !== '') {
+                    // Vérifier si c'est un ID numérique
+                    if (!isNaN(Number(cep.nom))) {
+                        const parsedId = parseInt(cep.nom, 10);
+                        console.log('convertVinToRestaurantWineData - parsedId:', parsedId, 'isValid:', parsedId >= 0 && parsedId < 92);
+                        // Vérifier que l'ID est valide (entre 0 et 91)
+                        if (parsedId >= 0 && parsedId < 92) {
+                            cepageId = parsedId;
+                        } else {
+                            console.warn('convertVinToRestaurantWineData - ID invalide:', parsedId);
+                        }
+                    } else {
+                        // C'est un nom de cépage, le convertir en ID
+                        cepageId = getCepageIdByName(cep.nom);
+                        console.log('convertVinToRestaurantWineData - Nom converti en ID:', cep.nom, '→', cepageId);
+                    }
+                }
+                
+                // Étape 2: Obtenir le nom du cépage à partir de l'ID
+                // IMPORTANT: Toujours utiliser getCepageNameById pour obtenir le nom, jamais utiliser cep.nom directement
+                const cepageName = cepageId !== -1 ? getCepageNameById(cepageId) : '';
+                console.log('convertVinToRestaurantWineData - cepageId:', cepageId, 'cepageName:', cepageName);
+                
+                // Étape 3: Si on n'a pas pu obtenir un ID et un nom valides, ignorer ce cépage
+                if (cepageId === -1 || !cepageName) {
+                    console.warn('convertVinToRestaurantWineData - Impossible de convertir cep.nom:', cep.nom, 'en ID et nom valides, cépage ignoré');
+                    return null;
+                }
+                
+                // Vérifier que le pourcentage est valide
+                const varietyPercent = typeof cep.pourcentage === 'string' ? parseFloat(cep.pourcentage) || 0 : (cep.pourcentage || 0);
+                if (isNaN(varietyPercent) || varietyPercent < 0 || varietyPercent > 100) {
+                    console.warn('convertVinToRestaurantWineData - Pourcentage invalide:', cep.pourcentage, 'pour le cépage:', cepageName);
+                }
+                
+                const result = {
+                    variety_id: cepageId, // ID numérique (0-91)
+                    variety_name: {
+                        [language]: cepageName, // Nom du cépage (ex: "Diolinoir")
+                        ...(language === 'fr' ? { 'en-US': cepageName } : { fr: cepageName }),
+                    },
+                    variety_percent: typeof cep.pourcentage === 'string' ? parseFloat(cep.pourcentage) || 100 : (cep.pourcentage || 100),
+                };
+                console.log('convertVinToRestaurantWineData - Résultat final:', JSON.stringify(result, null, 2));
+                return result;
+            })
+            .filter((gv: any) => gv !== null); // Filtrer les cépages invalides
+        console.log('convertVinToRestaurantWineData - grapesVarieties finaux:', JSON.stringify(grapesVarieties, null, 2));
+        }
     } else if (vin.cepage) {
         // Utiliser le cépage simple
+        const cepageId = getCepageIdByName(vin.cepage);
+        const cepageName = cepageId !== -1 ? getCepageNameById(cepageId) : vin.cepage;
         grapesVarieties = [{
             variety_name: {
-                [language]: vin.cepage,
-                ...(language === 'fr' ? { 'en-US': vin.cepage } : { fr: vin.cepage }),
+                [language]: cepageName,
+                ...(language === 'fr' ? { 'en-US': cepageName } : { fr: cepageName }),
             },
             variety_percent: 100, // Par défaut 100% si un seul cépage
         }];
     }
 
-    // Extraire le format_cl du format si disponible
+    // Extraire le format_cl et le prix du format si disponible
     // Vérifier d'abord si on a des formats dans un format de liste
     let formatCl = 75; // Par défaut
+    let price = vin.prix || 0; // Par défaut utiliser le prix du vin
+    
+    console.log('convertVinToRestaurantWineData - vin.formats:', JSON.stringify((vin as any).formats, null, 2));
+    console.log('convertVinToRestaurantWineData - vin.prix:', vin.prix);
+    
     if ((vin as any).formats && Array.isArray((vin as any).formats) && (vin as any).formats.length > 0) {
         // Prendre le premier format
         const firstFormat = (vin as any).formats[0];
-        formatCl = extractFormatCl(firstFormat.nom || firstFormat.capacite);
+        console.log('convertVinToRestaurantWineData - firstFormat:', JSON.stringify(firstFormat, null, 2));
+        const formatString = firstFormat.nom || firstFormat.capacite || '';
+        
+        if (!formatString || formatString.trim() === '') {
+            console.warn('convertVinToRestaurantWineData - Format string vide, utilisation de la valeur par défaut 75cl');
+            formatCl = 75;
+        } else {
+            console.log('convertVinToRestaurantWineData - formatString:', formatString);
+            formatCl = extractFormatCl(formatString);
+            console.log('convertVinToRestaurantWineData - formatCl extrait:', formatCl);
+        }
+        
+        // Extraire le prix du format si disponible
+        if (firstFormat.prix !== undefined && firstFormat.prix !== null) {
+            price = typeof firstFormat.prix === 'string' ? parseFloat(firstFormat.prix) || 0 : firstFormat.prix || 0;
+            if (isNaN(price)) {
+                console.warn('convertVinToRestaurantWineData - Prix invalide:', firstFormat.prix, ', utilisation de 0');
+                price = 0;
+            }
+            console.log('convertVinToRestaurantWineData - prix extrait du format:', price);
+        }
     } else if ((vin as any).format) {
         formatCl = extractFormatCl((vin as any).format);
+        console.log('convertVinToRestaurantWineData - formatCl extrait depuis format:', formatCl);
+    } else {
+        console.warn('convertVinToRestaurantWineData - Aucun format trouvé, utilisation de la valeur par défaut 75cl');
     }
+    
+    console.log('convertVinToRestaurantWineData - format_cl final:', formatCl, 'price final:', price);
 
     return {
         wine_name: {
@@ -281,20 +436,20 @@ export const convertVinToRestaurantWineData = (vin: Omit<Vin, 'id'> | Vin, langu
             ...(language === 'fr' ? { 'en-US': wineType['en-US'] } : { fr: wineType.fr }),
         },
         domain: {
-            [language]: vin.subname || vin.nom,
-            ...(language === 'fr' ? { 'en-US': vin.subname || vin.nom } : { fr: vin.subname || vin.nom }),
+            [language]: vin.subname || vin.nom || '',
+            ...(language === 'fr' ? { 'en-US': vin.subname || vin.nom || '' } : { fr: vin.subname || vin.nom || '' }),
         },
         country: {
-            [language]: vin.pays,
-            ...(language === 'fr' ? { 'en-US': vin.pays } : { fr: vin.pays }),
+            [language]: vin.pays || '',
+            ...(language === 'fr' ? { 'en-US': vin.pays || '' } : { fr: vin.pays || '' }),
         },
         appellation: {
-            [language]: vin.region,
-            ...(language === 'fr' ? { 'en-US': vin.region } : { fr: vin.region }),
+            [language]: vin.region || '',
+            ...(language === 'fr' ? { 'en-US': vin.region || '' } : { fr: vin.region || '' }),
         },
         grapes_varieties: grapesVarieties,
         year: vin.millesime,
-        price: vin.prix,
+        price: price,
         format_cl: formatCl,
     };
 };
@@ -542,19 +697,38 @@ export const recommendationsService = {
             let response;
             
             try {
-                // Approche 1: POST avec restaurant_id dans le body
+                // Approche 1: POST avec restaurant_id dans les paramètres de requête
                 response = await api.post('/recommendations/restaurant_wines', {}, {
                     params: { restaurant_id: restaurantId }
                 });
-            } catch (error: unknown) {
-                    throw error;
+            } catch (error: any) {
+                // Si l'approche 1 échoue, essayer avec restaurant_id dans le body
+                try {
+                    console.log('Tentative avec restaurant_id dans le body');
+                    response = await api.post('/recommendations/restaurant_wines', {
+                        restaurant_id: restaurantId
+                    });
+                } catch (error2: any) {
+                    // Si les deux approches échouent, essayer GET
+                    try {
+                        console.log('Tentative avec GET');
+                        response = await api.get('/recommendations/restaurant_wines', {
+                            params: { restaurant_id: restaurantId }
+                        });
+                    } catch (error3: any) {
+                        console.error('Toutes les approches ont échoué:', error3);
+                        throw error3;
+                    }
                 }
+            }
             
             console.log('Wines response:', response.data);
-            return response.data;
+            return response.data || [];
         } catch (error) {
             console.error('Error fetching restaurant wines:', error);
-            throw error;
+            // Si l'endpoint ne fonctionne pas, retourner un tableau vide pour éviter de bloquer l'application
+            console.warn('Endpoint /recommendations/restaurant_wines non fonctionnel, retour d\'un tableau vide');
+            return [];
         }
     },
 
@@ -698,6 +872,8 @@ export const winesService = {
         internal_score?: string;
     }): Promise<RestaurantWine> => {
         try {
+            console.log('winesService.updateWine - Données reçues:', JSON.stringify(wineData, null, 2));
+            console.log('winesService.updateWine - grapes_varieties:', JSON.stringify(wineData.grapes_varieties, null, 2));
             const sanitizedBody = {
                 ...wineData,
                 year: typeof wineData.year === 'string' ? parseInt(wineData.year) : wineData.year,
@@ -711,9 +887,16 @@ export const winesService = {
                 internal_score: wineData.internal_score || 'N/A',
             };
 
+            console.log('winesService.updateWine - Données sanitizées avant envoi:', JSON.stringify(sanitizedBody, null, 2));
+            console.log('winesService.updateWine - format_cl dans sanitizedBody:', sanitizedBody.format_cl);
+            console.log('winesService.updateWine - grapes_varieties sanitizés:', JSON.stringify(sanitizedBody.grapes_varieties, null, 2));
+
             const response = await api.put(`/recommendations/restaurant_wines/${wineId}`, sanitizedBody, {
                 params: { restaurant_id: restaurantId },
             });
+            
+            console.log('winesService.updateWine - Réponse de l\'API:', JSON.stringify(response.data, null, 2));
+            console.log('winesService.updateWine - format_cl dans la réponse:', response.data?.format_cl);
             return response.data;
         } catch (error: any) {
             console.error('Erreur lors de la mise à jour du vin:', error);
@@ -750,10 +933,16 @@ export type MotCle = {
 
 export type Plat = {
     id: string;
-    nom: string;
-    description?: string;
+    nom: string; // Pour compatibilité, utilise nomFr par défaut
+    nomFr?: string;
+    nomEn?: string;
+    description?: string; // Pour compatibilité, utilise descriptionFr par défaut
+    descriptionFr?: string;
+    descriptionEn?: string;
     prix?: number;
-    section: string;
+    section: string; // Pour compatibilité, utilise sectionFr par défaut
+    sectionFr?: string;
+    sectionEn?: string;
     pointsDeVente: boolean[];
     motsCles: MotCle[];
 };
@@ -853,12 +1042,12 @@ export const convertPlatToDishData = (plat: Omit<Plat, 'id'> | Plat, language: '
         food_cat_3_percent?: number;
     } = {
         dish_name: {
-            [language]: plat.nom,
-            ...(language === 'fr' ? { 'en-US': plat.nom } : { fr: plat.nom }),
+            fr: plat.nomFr || plat.nom || '',
+            'en-US': plat.nomEn || plat.nom || '',
         },
         dish_type: {
-            [language]: plat.section,
-            ...(language === 'fr' ? { 'en-US': plat.section } : { fr: plat.section }),
+            fr: plat.sectionFr || plat.section || '',
+            'en-US': plat.sectionEn || plat.section || '',
         },
     };
 
@@ -988,10 +1177,16 @@ export const convertDishToPlat = (dish: Dish, restaurantId: number = 0): Plat =>
 
     return {
         id: `api-${dish.dish_id}`,
-        nom: dishName,
-        description: '', // Pas de description dans l'API pour l'instant
+        nom: dishName, // Pour compatibilité avec l'affichage
+        nomFr: dish.dish_name?.fr || undefined,
+        nomEn: dish.dish_name?.['en-US'] || dish.dish_name?.en || undefined,
+        description: dish.dish_description?.fr || dish.dish_description?.['en-US'] || dish.dish_description?.en || '', // Description traduite selon la langue
+        descriptionFr: dish.dish_description?.fr || undefined,
+        descriptionEn: dish.dish_description?.['en-US'] || dish.dish_description?.en || undefined,
         prix: 0, // Pas de prix dans l'API pour l'instant
-        section: dishType,
+        section: dishType, // Pour compatibilité avec l'affichage
+        sectionFr: dish.dish_type?.fr || undefined,
+        sectionEn: dish.dish_type?.['en-US'] || dish.dish_type?.en || undefined,
         pointsDeVente: [true], // Par défaut disponible
         motsCles: motsCles
     };

@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
-import Tag from './Tag';
-import List from './List';
+import Tag from '../common/Tag';
+import List from '../common/List';
 import { getTagColors } from '@/lib/tagColors';
 
 type MotCle = {

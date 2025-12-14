@@ -1,6 +1,8 @@
 "use client";
 import React from 'react';
 import { getTagColors } from '@/lib/tagColors';
+import { getCepageNameById } from '@/lib/cepages';
+import { useTranslation } from '@/lib/useTranslation';
 
 type Cepage = {
     id: string;
@@ -14,6 +16,7 @@ type CepageAssemblageProps = {
 };
 
 export default function CepageAssemblage({ cepages, wineType }: CepageAssemblageProps) {
+    const { t } = useTranslation();
     const wineTypeColors = wineType ? getTagColors(wineType) : null;
     
     // Mapping direct des couleurs de bordure par type de vin
@@ -27,6 +30,7 @@ export default function CepageAssemblage({ cepages, wineType }: CepageAssemblage
         'Rosé': 'border-[#C11574]',
         'Fortifié': 'border-[#C11574]',
         'Sweet': 'border-[#C4320A]',
+        'Doux': 'border-[#C4320A]',
         'Old White': 'border-[#15803D]',
         'Moelleux ou liquoreux': 'border-[#C4320A]',
         'Orange': 'border-[#C4320A]'
@@ -48,19 +52,29 @@ export default function CepageAssemblage({ cepages, wineType }: CepageAssemblage
     
     return (
         <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-700">Cépage ou assemblage</p>
+            <p className="text-sm font-medium text-gray-700">{t('common.grapeVarietyOrBlend')}</p>
             
             <div className="flex flex-wrap gap-2">
-                {cepages.map((cepage) => (
-                    <div key={cepage.id} className="flex items-center">
-                        <div className={`${colors.bg} border ${colors.border} rounded-l-lg px-4 py-2.5`}>
-                            <span className={`text-sm font-semibold ${colors.text}`}>{cepage.nom}</span>
+                {cepages.map((cepage) => {
+                    // Convertir l'ID en nom si c'est un ID numérique
+                    const cepageId = typeof cepage.nom === 'string' && !isNaN(Number(cepage.nom))
+                        ? parseInt(cepage.nom, 10)
+                        : -1;
+                    const cepageName = cepageId !== -1 
+                        ? getCepageNameById(cepageId) 
+                        : (cepage.nom || '');
+                    
+                    return (
+                        <div key={cepage.id} className="flex items-center">
+                            <div className={`${colors.bg} border ${colors.border} rounded-l-lg px-4 py-2.5`}>
+                                <span className={`text-sm font-semibold ${colors.text}`}>{cepageName}</span>
+                            </div>
+                            <div className={`${colors.bg} border border-l-0 ${colors.border} rounded-r-lg px-4 py-2.5`}>
+                                <span className={`text-sm font-semibold ${colors.text}`}>{cepage.pourcentage} %</span>
+                            </div>
                         </div>
-                        <div className={`${colors.bg} border border-l-0 ${colors.border} rounded-r-lg px-4 py-2.5`}>
-                            <span className={`text-sm font-semibold ${colors.text}`}>{cepage.pourcentage} %</span>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

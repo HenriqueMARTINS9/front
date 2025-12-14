@@ -1,15 +1,15 @@
 'use client';
-import Sidebar from '@/components/SideBar';
-import Header from '@/components/Header';
-import Button from '@/components/Button';
-import TableauVin from '@/components/TableauVin';
-import ModalNouveauVin from '@/components/ModalNouveauVin';
-import ApiVinsIntegration from '@/components/ApiVinsIntegration';
+import Sidebar from '@/components/layout/SideBar';
+import Header from '@/components/layout/Header';
+import Button from '@/components/common/Button';
+import TableauVin from '@/components/vins/TableauVin';
+import ModalNouveauVin from '@/components/vins/ModalNouveauVin';
+import ApiVinsIntegration from '@/components/vins/ApiVinsIntegration';
 import { useState } from 'react';
 import { useVins, useCreateVin } from '@/lib/hooks';
 import { type Vin } from '@/lib/api';
 import { useNotification } from '@/lib/useNotification';
-import Notification from '@/components/Notification';
+import Notification from '@/components/ui/Notification';
 import { useTranslation } from '@/lib/useTranslation';
 
 export default function VinsPage() {

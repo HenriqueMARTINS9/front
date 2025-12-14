@@ -6,6 +6,16 @@ import SectionMenu from './SectionMenu';
 import type { Plat } from './TableauMenu';
 import { useTranslation } from '@/lib/useTranslation';
 
+// Type MotCle aligné avec TableauMenu (doit correspondre exactement)
+type MotCle = {
+    id: string;
+    label: string;
+    color: string;
+    textColor: string;
+    puce: boolean;
+    puceColor: string;
+};
+
 type ApiMenuIntegrationProps = {
     restaurantId: number;
 };
@@ -42,13 +52,15 @@ export default function ApiMenuIntegration({ restaurantId }: ApiMenuIntegrationP
         }
 
         // Créer des mots-clés basés sur les catégories alimentaires
-        const motsCles = [];
+        const motsCles = [] as MotCle[];
         if (dish.food_cat_1) {
             motsCles.push({
                 id: `mc-api-${dish.dish_id}-1`,
                 label: `Catégorie ${dish.food_cat_1}`,
                 color: 'bg-blue-100',
-                textColor: 'text-blue-700'
+                textColor: 'text-blue-700',
+                puce: true,
+                puceColor: '#3B82F6'
             });
         }
         if (dish.food_cat_2) {
@@ -56,7 +68,9 @@ export default function ApiMenuIntegration({ restaurantId }: ApiMenuIntegrationP
                 id: `mc-api-${dish.dish_id}-2`,
                 label: `Catégorie ${dish.food_cat_2}`,
                 color: 'bg-green-100',
-                textColor: 'text-green-700'
+                textColor: 'text-green-700',
+                puce: true,
+                puceColor: '#10B981'
             });
         }
         if (dish.food_cat_3) {
@@ -64,27 +78,36 @@ export default function ApiMenuIntegration({ restaurantId }: ApiMenuIntegrationP
                 id: `mc-api-${dish.dish_id}-3`,
                 label: `Catégorie ${dish.food_cat_3}`,
                 color: 'bg-purple-100',
-                textColor: 'text-purple-700'
+                textColor: 'text-purple-700',
+                puce: true,
+                puceColor: '#8B5CF6'
             });
         }
 
         // Ajouter le type de plat comme mot-clé principal
-        motsCles.unshift({
+        const typeMotCle: MotCle = {
             id: `mc-api-${dish.dish_id}-type`,
             label: dishType,
             color: 'bg-orange-100',
-            textColor: 'text-orange-700'
-        });
+            textColor: 'text-orange-700',
+            puce: true,
+            puceColor: '#F97316'
+        };
+        motsCles.unshift(typeMotCle);
 
         return {
             id: `api-${dish.dish_id}`,
-            nom: dishName,
+            nom: dishName, // Pour compatibilité avec l'affichage
+            nomFr: dish.dish_name?.fr || undefined,
+            nomEn: dish.dish_name?.['en-US'] || dish.dish_name?.en || undefined,
             description: '', // Pas de description dans l'API pour l'instant
+            descriptionFr: undefined,
+            descriptionEn: undefined,
             prix: 0, // Pas de prix dans l'API pour l'instant
             section: section,
             pointsDeVente: [true], // Un seul point de vente
-            motsCles: motsCles
-        };
+            motsCles: motsCles satisfies MotCle[]
+        } satisfies Plat;
     };
 
     // Grouper les plats par section

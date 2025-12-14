@@ -3,12 +3,13 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isRestaurantLoggedIn, isUserLoggedIn } from '@/lib/auth';
-import Sidebar from '@/components/SideBar';
-import AlertCard from '@/components/AlertCard';
-import VinsCard from '@/components/VinsCard';
-import Header from '@/components/Header';
-import MenuCard from '@/components/MenuCard';
-import MembersCard from '@/components/MembersCard';
+import Sidebar from '@/components/layout/SideBar';
+import AlertCard from '@/components/home/AlertCard';
+import VinsCard from '@/components/home/VinsCard';
+import Header from '@/components/layout/Header';
+import MenuCard from '@/components/home/MenuCard';
+import MembersCard from '@/components/home/MembersCard';
+import QRCodeCard from '@/components/home/QRCodeCard';
 import { useTranslation } from '@/lib/useTranslation';
 import { useRestaurantInfo, useAlerts } from '@/lib/hooks';
 
@@ -57,6 +58,9 @@ export default function HomePage() {
                     <div className="mb-0 col-span-4 space-y-10">
                         <div>
                             <VinsCard />
+                        </div>
+                        <div>
+                            <QRCodeCard />
                         </div>
                         {/*<div><MembersCard /></div> */}
                     </div>

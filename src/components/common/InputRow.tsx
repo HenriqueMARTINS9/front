@@ -222,17 +222,12 @@ export default function InputRow({
     
     const getRightColClass = () => {
         if (!showRightInput) return '';
-        if (showDeleteButton) return 'col-span-3';
+        if (showDeleteButton) return 'col-span-5';
         return 'col-span-4';
     };
     
-    const getDeleteColClass = () => {
-        if (!showDeleteButton) return '';
-        return 'col-span-2';
-    };
-    
     return (
-        <div className={`grid grid-cols-12 gap-3 items-center ${className}`}>
+        <div className={`grid grid-cols-12 gap-6 items-center ${className}`}>
             {/* Input de gauche */}
             {showLeftInput && (
                 <div className={getLeftColClass()}>
@@ -240,34 +235,37 @@ export default function InputRow({
                 </div>
             )}
             
-            {/* Input de droite */}
+            {/* Input de droite avec bouton de suppression dans la même colonne */}
             {showRightInput && (
                 <div className={getRightColClass()}>
-                    {renderRightInput()}
-                </div>
-            )}
-            
-            {/* Bouton de suppression */}
-            {showDeleteButton && (
-                <div className={`${getDeleteColClass()} flex items-center justify-center flex-shrink-0`}>
-                    <button
-                        type="button"
-                        onClick={handleDelete}
-                        disabled={disabled}
-                        className={`
-                            w-10 h-10 flex items-center justify-center
-                            transition-all duration-200
-                            text-gray-500 hover:text-red-500
-                            ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}   
-                            flex-shrink-0
-                        `}
-                        title="Supprimer"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                            <path d="M10 6L6 10M6 6L10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                    </button>
+                    <div className="flex items-center gap-0">
+                        <div className="flex-1">
+                            {renderRightInput()}
+                        </div>
+                        {/* Bouton de suppression */}
+                        {showDeleteButton && (
+                            <div className="ml-6 flex items-center justify-center flex-shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={handleDelete}
+                                    disabled={disabled}
+                                    className={`
+                                        w-10 h-10 flex items-center justify-center
+                                        transition-all duration-200
+                                        text-gray-500 hover:text-red-500
+                                        ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}   
+                                        flex-shrink-0
+                                    `}
+                                    title="Supprimer"
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                                        <path d="M10 6L6 10M6 6L10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

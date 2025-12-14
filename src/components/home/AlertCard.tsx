@@ -1,16 +1,31 @@
-import Card from "./Card";
+"use client";
+import React, { useState, useEffect } from 'react';
+import Card from "../common/Card";
 import { Wine } from 'lucide-react';
 import { useTranslation } from '@/lib/useTranslation';
 
 export default function AlertCard({ alerts }: { alerts: { type: 'error' | 'success' | 'warning'; message: string; category?: 'wine' | 'dish' | 'menu' }[] }) {
     const { t } = useTranslation();
+    // Utiliser useState pour éviter l'erreur d'hydratation
+    const [mounted, setMounted] = useState(false);
+    const [displayAlerts, setDisplayAlerts] = useState<typeof alerts>([]);
+
+    useEffect(() => {
+        setMounted(true);
+        setDisplayAlerts(alerts);
+    }, [alerts]);
+
+    // Pendant le SSR et le premier rendu, utiliser un tableau vide pour éviter l'erreur d'hydratation
+    const alertsToDisplay = mounted ? displayAlerts : [];
+    const alertsCount = alertsToDisplay.length;
+
     return (
-      <Card title={t('common.alerts')} number={alerts.length === 0 ? t('common.noNotifications') : alerts.length.toString()}>
-        {alerts.length === 0 ? (
+      <Card title={t('common.alerts')} number={alertsCount === 0 ? t('common.noNotifications') : alertsCount.toString()}>
+        {alertsCount === 0 ? (
           <div className="">
           </div>
         ) : (
-          alerts.map((alert, i) => {
+          alertsToDisplay.map((alert, i) => {
           const styles = {
             error: 'bg-[#FEF3F2] text-[#B42318]',
             success: 'bg-[#ECFDF3] text-[#027A48]',

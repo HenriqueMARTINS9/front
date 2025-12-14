@@ -141,7 +141,7 @@ export default function Select({
                 id={id}
                 name={name}
             >
-                <span className={`truncate ${selectedValue ? colors.text : colors.placeholder || 'text-gray-500'}`}>
+                <span className={`${selectedValue ? colors.text : colors.placeholder || 'text-gray-500'}`} style={{ fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif' }}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
                 
@@ -186,7 +186,7 @@ export default function Select({
                             ${index === normalizedOptions.length - 1 ? 'rounded-b-md' : ''}
                         `}
                     >
-                        <span>{option.label}</span>
+                        <span className="whitespace-nowrap" style={{ fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif' }}>{option.label}</span>
                         {option.value === selectedValue && (
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M16.6667 5L7.50004 14.1667L3.33337 10" stroke="#7F56D9" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>

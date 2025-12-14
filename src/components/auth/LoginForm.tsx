@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { useLogin, useRegister } from '@/lib/hooks';
 import { useNotification } from '@/lib/useNotification';
-import Button from './Button';
-import InputField from './InputField';
+import Button from '../common/Button';
+import InputField from '../common/InputField';
 
 export default function LoginForm() {
     const [isLogin, setIsLogin] = useState(true);

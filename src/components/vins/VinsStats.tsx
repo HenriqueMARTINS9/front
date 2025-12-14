@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { recommendationsService } from '@/lib/api';
 import { RestaurantWine } from '@/lib/api';
-import Card from './Card';
+import Card from '../common/Card';
 import { useTranslation } from '@/lib/useTranslation';
 
 type VinsStatsProps = {

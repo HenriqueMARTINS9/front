@@ -1,14 +1,15 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import MotsCles from './MotsCles';
-import Button from './Button';
-import Checkbox from './Checkbox';
-import RadioButton from './RadioButton';
-import Select from './Select';
-import InputField from './InputField';
-import InputRow from './InputRow';
-import List from './List';
+import Button from '../common/Button';
+import Checkbox from '../common/Checkbox';
+import RadioButton from '../common/RadioButton';
+import Select from '../common/Select';
+import InputField from '../common/InputField';
+import InputRow from '../common/InputRow';
+import List from '../common/List';
 import { useTranslation } from '@/lib/useTranslation';
+import { createCepagesOptions } from '@/lib/cepages';
 
 type ModalNouveauVinProps = {
     isOpen: boolean;
@@ -185,7 +186,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
             cepage: cepages.length > 0 ? cepages[0].nom : '',
             cepages: cepages.map(c => ({ 
                 id: c.id, 
-                nom: c.nom, 
+                nom: c.nom || '', // Le nom est maintenant l'ID (string)
                 pourcentage: typeof c.pourcentage === 'string' ? parseFloat(c.pourcentage) || 0 : (c.pourcentage || 0)
             })),
             region: aocRegion,
@@ -512,8 +513,8 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                 {
                                     key: 'nom',
                                     label: t('common.grapeVarietyName'),
-                                    type: 'text',
-                                    placeholder: t('common.grapeVarietyPlaceholder'),
+                                    type: 'select',
+                                    options: createCepagesOptions(),
                                     width: 'full'
                                 },
                                 {
@@ -568,7 +569,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                     </div>
 
                     {/* Format du vin */}
-                    <div className="grid grid-cols-3 gap-6">
+                    <div className="grid grid-cols-3 gap-6 items-end">
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-3">{t('common.format')}</label>
                             <Select
@@ -594,8 +595,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                                     text: 'text-gray-900',
                                     placeholder: 'placeholder-gray-500',
                                     focus: 'focus:outline-none focus:ring-2 focus:ring-[#F4EBFF] focus:border-[#D6BBFB] focus:shadow-xs',
-                                    hover: '',
-                                    error: 'border-red-500'
+                                    hover: ''
                                 }}
                             />
                             {errors.format && (
@@ -603,11 +603,11 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                             )}
                         </div>
                         <div className="flex-shrink-0 w-[130px]">
+                            <label className="block text-sm font-medium text-gray-700 mb-3">{t('wines.wine.price')}</label>
                             <InputField
                                 type="number"
                                 value={format.prix.toString()}
                                 onChange={(value) => handleFormatChange('prix', parseFloat(value) || 0)}
-                                label={t('wines.wine.price')}
                                 placeholder="42.00"
                                 suffix=" CHF"
                                 size="md"
@@ -642,10 +642,8 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                 <div className="px-8 py-4 border-t border-gray-200 bg-gray-50 flex justify-start gap-4">
                     <Button
                         type="button"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleSubmit(e);
+                        onClick={() => {
+                            handleSubmit();
                         }}
                         className="bg-[#3E4784] text-white hover:bg-[#2D3A6B] hover:shadow-lg transform transition-all duration-200 ease-in-out"
                     >
@@ -653,9 +651,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                     </Button>
                     <Button
                         type="button"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
+                        onClick={() => {
                             onClose();
                         }}
                         className="bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200"

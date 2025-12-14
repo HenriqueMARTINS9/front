@@ -17,8 +17,13 @@ export default {
     },
     "menus": {
       "title": "Menus",
-      "subtitle": "4 Sales Points",
+      "subtitle": "{{count}} Sales Point{{plural}}",
       "restaurant": "Restaurant"
+    },
+    "qrcode": {
+      "title": "QR Code",
+      "download": "Download PNG",
+      "print": "Print"
     },
     "wines": {
       "title": "Wines",
@@ -26,6 +31,9 @@ export default {
       "sparkling": "Sparkling",
       "white": "White",
       "red": "Red",
+      "bottle": "Bottle",
+      "glass": "Glass",
+      "otherFormats": "Other formats",
       "rose": "Rosé",
       "sweet": "Sweet",
       "oldWhite": "Old White",
@@ -55,7 +63,6 @@ export default {
     "confirmDeleteSection": "Do you really want to delete the section \"{{section}}\"?",
     "sectionNameRequired": "Section name is required",
     "sectionRenamed": "Section renamed successfully",
-    "editAddSection": "Edit / Add section",
     "sections": {
       "apiDishes": "VirtualSomm API Dishes",
       "staticDishes": "Static menu (local data)",
@@ -341,6 +348,18 @@ export default {
         "sweet": "Sweet",
         "old white": "Old White",
         "orange": "Orange"
-    }
+    },
+    "wineType": "Wine type",
+    "grapeVarieties": "Grape variety(ies)",
+    "regionAOC": "Region / AOC",
+    "selectFormat": "Select a format",
+    "loadingSections": "Loading sections...",
+    "mainAromaRequired": "A main aroma is required",
+    "selectMainAroma": "Select a main aroma",
+    "selectSecondaryAroma": "Select a secondary aroma",
+    "sectionRequired": "A section is required",
+    "grapeVarietyOrBlend": "Grape variety or blend",
+    "french": "French",
+    "english": "English"
   }
 };

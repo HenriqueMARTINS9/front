@@ -1,5 +1,6 @@
-import Card from './Card';
-import SubCard from './SubCard';
+import React from 'react';
+import Card from '../common/Card';
+import SubCard from '../menu/SubCard';
 import { useAllRestaurantDishes, useDishesWithoutPrincipalAroma } from '@/lib/hooks';
 import { useTranslation } from '@/lib/useTranslation';
 import { getLastModifiedDate, formatLastModifiedDate } from '@/lib/auth';
@@ -13,7 +14,7 @@ export default function MenuCard() {
 
     if (isLoading) {
         return (
-            <Card title={t('home.menus.title')} number={t('home.menus.subtitle')}>
+            <Card title={t('home.menus.title')} number={t('home.menus.subtitle', { count: 1, plural: '' })}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="animate-pulse">
                         <div className="h-20 bg-gray-200 rounded-lg"></div>
@@ -30,8 +31,11 @@ export default function MenuCard() {
         count: count || 0
     }));
 
+    // Compter le nombre de restaurants (sales points)
+    const salesPointsCount = availableRestaurants.length;
+
     return (
-        <Card title={t('home.menus.title')} number={t('home.menus.subtitle')}>
+        <Card title={t('home.menus.title')} number={t('home.menus.subtitle', { count: salesPointsCount, plural: salesPointsCount > 1 ? 's' : '' })}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {availableRestaurants.map((restaurant) => (
                     <SubCard

@@ -1,6 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
-import Card from './Card';
-import Tag from './Tag';
+import Card from '../common/Card';
+import Tag from '../common/Tag';
 import { getTagColors } from '@/lib/tagColors';
 import { useWineStats, useAlerts } from '@/lib/hooks';
 import { useRouter } from 'next/navigation';
@@ -49,16 +49,16 @@ export default function VinsCard() {
 
             {incompleteWinesCount > 0 && (
                 <div className="flex items-center justify-between bg-red-50 text-red-600 px-3 py-2 rounded text-xs font-medium mb-4">
-                    <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4" />
+                <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
                         {t('common.alertIncompleteWineSheets', { count: incompleteWinesCount, plural: incompleteWinesCount > 1 ? 's' : '' })}
-                    </div>
-                    <button 
-                        onClick={handleUpdateClick}
-                        className="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded hover:bg-red-200 transition-colors duration-200 cursor-pointer"
-                    >
-                        Mettre à jour
-                    </button>
+                </div>
+                <button 
+                    onClick={handleUpdateClick}
+                    className="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded hover:bg-red-200 transition-colors duration-200 cursor-pointer"
+                >
+                    Mettre à jour
+                </button>
                 </div>
             )}
 
@@ -147,6 +147,14 @@ export default function VinsCard() {
                             count={stats.desiree} 
                             label={t('common.desired')} 
                         />
+                        {stats.autresFormats > 0 && (
+                            <Tag 
+                                color="bg-[#F4F3FF]" 
+                                textColor="text-[#5925DC]" 
+                                count={stats.autresFormats} 
+                                label={t('home.wines.otherFormats') || 'Autres formats'} 
+                            />
+                        )}
                     </div>
                 </div>
             </div>

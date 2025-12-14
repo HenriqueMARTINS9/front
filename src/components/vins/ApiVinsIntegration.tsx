@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { convertRestaurantWineToVin, type Vin } from '@/lib/api';
 import TableauVin from './TableauVin';
 import { useTranslation } from '@/lib/useTranslation';
@@ -12,6 +12,7 @@ type ApiVinsIntegrationProps = {
 
 export default function ApiVinsIntegration({ restaurantId }: ApiVinsIntegrationProps) {
     const { t } = useTranslation();
+    const [isMounted, setIsMounted] = useState(false);
     
     // Utiliser le hook React Query pour récupérer les vins (se met à jour automatiquement)
     const { data: restaurantWines, isLoading, error: queryError } = useRestaurantWines(restaurantId);
@@ -19,6 +20,11 @@ export default function ApiVinsIntegration({ restaurantId }: ApiVinsIntegrationP
     // Récupérer le restaurant ID depuis le localStorage si non fourni
     const storedRestaurantId = getRestaurantId();
     const actualRestaurantId = restaurantId ?? storedRestaurantId ?? 1;
+
+    // S'assurer que le composant est monté côté client pour éviter les problèmes d'hydratation
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Conversion des vins de l'API en format local
     const vins = useMemo(() => {
@@ -29,6 +35,18 @@ export default function ApiVinsIntegration({ restaurantId }: ApiVinsIntegrationP
     }, [restaurantWines, actualRestaurantId]);
     
     const error = queryError ? (queryError instanceof Error ? queryError.message : t('common.error')) : null;
+
+    // Pendant l'hydratation (avant le montage), retourner un état neutre pour éviter les différences SSR/client
+    if (!isMounted) {
+        return (
+            <div className="bg-white rounded-xl border border-gray-200 p-8">
+                <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7F56D9]"></div>
+                    <span className="ml-3 text-gray-600">{t('common.loading') || 'Chargement'}</span>
+                </div>
+            </div>
+        );
+    }
 
     // Fonctions de gestion (désactivées pour les données API)
     const handleSaveVin = (vin: Vin) => {
@@ -48,7 +66,7 @@ export default function ApiVinsIntegration({ restaurantId }: ApiVinsIntegrationP
             <div className="bg-white rounded-xl border border-gray-200 p-8">
                 <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7F56D9]"></div>
-                    <span className="ml-3 text-gray-600">Chargement</span>
+                    <span className="ml-3 text-gray-600">{t('common.loading') || 'Chargement'}</span>
                 </div>
             </div>
         );
