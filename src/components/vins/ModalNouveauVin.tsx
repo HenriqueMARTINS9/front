@@ -18,13 +18,75 @@ type ModalNouveauVinProps = {
 };
 
 export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouveauVinProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const isEnglish = i18n.language === 'en';
+    
+    // Mapping bidirectionnel entre types français et anglais
+    const wineTypeTranslationMap: Record<string, string> = {
+        // Français -> Anglais
+        'Mousseux': 'Sparkling',
+        'Blanc': 'White',
+        'Rouge': 'Red',
+        'Rosé': 'Rosé',
+        'Orange': 'Orange',
+        'Fortifié': 'Fortified',
+        'Doux': 'Sweet',
+        'Moelleux ou liquoreux': 'Old White',
+        // Anglais -> Français
+        'Sparkling': 'Mousseux',
+        'White': 'Blanc',
+        'Red': 'Rouge',
+        'Fortified': 'Fortifié',
+        'Sweet': 'Doux',
+        'Old White': 'Moelleux ou liquoreux',
+    };
+    
+    // Liste des types de vins avec leurs valeurs internes et traductions
+    // Afficher uniquement ceux dans la langue choisie
+    const wineTypes = isEnglish 
+        ? [
+            { value: 'Sparkling', label: t('common.sparklingWine') },
+            { value: 'White', label: t('common.whiteWine') },
+            { value: 'Red', label: t('common.redWine') },
+            { value: 'Rosé', label: t('common.roseWine') },
+            { value: 'Orange', label: t('common.orangeWine') },
+            { value: 'Fortified', label: t('common.fortifiedWine') },
+            { value: 'Sweet', label: t('common.sweetWine') },
+            { value: 'Old White', label: t('common.oldWhiteWine') },
+        ]
+        : [
+            { value: 'Mousseux', label: t('common.sparklingWine') },
+            { value: 'Blanc', label: t('common.whiteWine') },
+            { value: 'Rouge', label: t('common.redWine') },
+            { value: 'Rosé', label: t('common.roseWine') },
+            { value: 'Orange', label: t('common.orangeWine') },
+            { value: 'Fortifié', label: t('common.fortifiedWine') },
+            { value: 'Doux', label: t('common.sweetWine') },
+            { value: 'Moelleux ou liquoreux', label: t('common.oldWhiteWine') },
+        ];
     
     // États pour les checkboxes des restaurants (seulement restaurant 1)
     const [restaurantChecks, setRestaurantChecks] = useState<boolean[]>([true]);
 
-    // État pour le type de vin sélectionné
-    const [selectedWineType, setSelectedWineType] = useState('Blanc');
+    // État pour le type de vin sélectionné - initialiser avec le type par défaut selon la langue
+    const [selectedWineType, setSelectedWineType] = useState(isEnglish ? 'White' : 'Blanc');
+    
+    // Traduire automatiquement le type sélectionné quand la langue change
+    const previousLanguageRef = useRef<string>(i18n.language);
+    useEffect(() => {
+        // Ne traduire que si la langue a vraiment changé
+        if (previousLanguageRef.current !== i18n.language) {
+            previousLanguageRef.current = i18n.language;
+            const translatedType = wineTypeTranslationMap[selectedWineType];
+            if (translatedType) {
+                // Vérifier si le type traduit existe dans la liste des types disponibles
+                const translatedTypeExists = wineTypes.some(wt => wt.value === translatedType);
+                if (translatedTypeExists && translatedType !== selectedWineType) {
+                    setSelectedWineType(translatedType);
+                }
+            }
+        }
+    }, [i18n.language, selectedWineType, wineTypes]);
 
     // État pour la checkbox "proportions inconnues"
     const [unknownProportions, setUnknownProportions] = useState(false);
@@ -53,7 +115,7 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
             // Initialiser avec le premier format disponible (Magnum)
             setFormat({ nom: 'Magnum (150 cl)', prix: 0 });
             setErrors({});
-            setSelectedWineType('Blanc');
+            setSelectedWineType(isEnglish ? 'White' : 'Blanc');
             setUnknownProportions(false);
             setRestaurantChecks([true]);
         }
@@ -229,134 +291,25 @@ export default function ModalNouveauVin({ isOpen, onClose, onSave }: ModalNouvea
                     <div>
                         <label className="block text-md font-medium text-gray-900 mb-3">{t('wines.wine.type')}</label>
                         <div className="grid grid-cols-3 gap-4">
-                            <RadioButton
-                                name="wine-type"
-                                value="Mousseux"
-                                checked={selectedWineType === 'Mousseux'}
-                                onChange={() => handleWineTypeChange('Mousseux')}
-                                size="lg"
-                                colors={{
-                                    unchecked: 'border-gray-300 bg-white',
-                                    checked: 'border-[#7F56D9] bg-white',
-                                    focus: 'focus:ring-[#C4B5FD]',
-                                    dot: 'bg-[#7F56D9]'
-                                }}
-                                className="flex items-center justify-start"
-                            >
-                                <span className="text-sm text-gray-700">{t('common.sparklingWine')}</span>
-                            </RadioButton>
-                            <RadioButton
-                                name="wine-type"
-                                value="Blanc"
-                                checked={selectedWineType === 'Blanc'}
-                                onChange={() => handleWineTypeChange('Blanc')}
-                                size="lg"
-                                colors={{
-                                    unchecked: 'border-gray-300 bg-white',
-                                    checked: 'border-[#7F56D9] bg-purple-50',
-                                    focus: 'focus:ring-[#C4B5FD]',
-                                    dot: 'bg-[#7F56D9]'
-                                }}
-                                className="flex items-center justify-start"
-                            >
-                                <span className="text-sm text-gray-700">{t('common.whiteWine')}</span>
-                            </RadioButton>
-                            <RadioButton
-                                name="wine-type"
-                                value="Rouge"
-                                checked={selectedWineType === 'Rouge'}
-                                onChange={() => handleWineTypeChange('Rouge')}
-                                size="lg"
-                                colors={{
-                                    unchecked: 'border-gray-300 bg-white',
-                                    checked: 'border-[#7F56D9] bg-purple-50',
-                                    focus: 'focus:ring-[#C4B5FD]',
-                                    dot: 'bg-[#7F56D9]'
-                                }}
-                                className="flex items-center justify-start"
-                            >
-                                <span className="text-sm text-gray-700">{t('common.redWine')}</span>
-                            </RadioButton>
-                            <RadioButton
-                                name="wine-type"
-                                value="Rosé"
-                                checked={selectedWineType === 'Rosé'}
-                                onChange={() => handleWineTypeChange('Rosé')}
-                                size="lg"
-                                colors={{
-                                    unchecked: 'border-gray-300 bg-white',
-                                    checked: 'border-[#7F56D9] bg-purple-50',
-                                    focus: 'focus:ring-[#C4B5FD]',
-                                    dot: 'bg-[#7F56D9]'
-                                }}
-                                className="flex items-center justify-start"
-                            >
-                                <span className="text-sm text-gray-700">{t('common.roseWine')}</span>
-                            </RadioButton>
-                            <RadioButton
-                                name="wine-type"
-                                value="Orange"
-                                checked={selectedWineType === 'Orange'}
-                                onChange={() => handleWineTypeChange('Orange')}
-                                size="lg"
-                                colors={{
-                                    unchecked: 'border-gray-300 bg-white',
-                                    checked: 'border-[#7F56D9] bg-purple-50',
-                                    focus: 'focus:ring-[#C4B5FD]',
-                                    dot: 'bg-[#7F56D9]'
-                                }}
-                                className="flex items-center justify-start"
-                            >
-                                <span className="text-sm text-gray-700">{t('common.orangeWine')}</span>
-                            </RadioButton>
-                            <RadioButton
-                                name="wine-type"
-                                value="Fortifié"
-                                checked={selectedWineType === 'Fortifié'}
-                                onChange={() => handleWineTypeChange('Fortifié')}
-                                size="lg"
-                                colors={{
-                                    unchecked: 'border-gray-300 bg-white',
-                                    checked: 'border-[#7F56D9] bg-purple-50',
-                                    focus: 'focus:ring-[#C4B5FD]',
-                                    dot: 'bg-[#7F56D9]'
-                                }}
-                                className="flex items-center justify-start"
-                            >
-                                <span className="text-sm text-gray-700">{t('common.fortifiedWine')}</span>
-                            </RadioButton>
-                            <RadioButton
-                                name="wine-type"
-                                value="Sweet"
-                                checked={selectedWineType === 'Sweet'}
-                                onChange={() => handleWineTypeChange('Sweet')}
-                                size="lg"
-                                colors={{
-                                    unchecked: 'border-gray-300 bg-white',
-                                    checked: 'border-[#7F56D9] bg-purple-50',
-                                    focus: 'focus:ring-[#C4B5FD]',
-                                    dot: 'bg-[#7F56D9]'
-                                }}
-                                className="flex items-center justify-start"
-                            >
-                                <span className="text-sm text-gray-700">{t('common.sweetWine')}</span>
-                            </RadioButton>
-                            <RadioButton
-                                name="wine-type"
-                                value="Old White"
-                                checked={selectedWineType === 'Old White'}
-                                onChange={() => handleWineTypeChange('Old White')}
-                                size="lg"
-                                colors={{
-                                    unchecked: 'border-gray-300 bg-white',
-                                    checked: 'border-[#7F56D9] bg-purple-50',
-                                    focus: 'focus:ring-[#C4B5FD]',
-                                    dot: 'bg-[#7F56D9]'
-                                }}
-                                className="flex items-center justify-start"
-                            >
-                                <span className="text-sm text-gray-700">{t('common.oldWhiteWine')}</span>
-                            </RadioButton>
+                            {wineTypes.map((wineType) => (
+                                <RadioButton
+                                    key={wineType.value}
+                                    name="wine-type"
+                                    value={wineType.value}
+                                    checked={selectedWineType === wineType.value}
+                                    onChange={() => handleWineTypeChange(wineType.value)}
+                                    size="lg"
+                                    colors={{
+                                        unchecked: 'border-gray-300 bg-white',
+                                        checked: 'border-[#7F56D9] bg-purple-50',
+                                        focus: 'focus:ring-[#C4B5FD]',
+                                        dot: 'bg-[#7F56D9]'
+                                    }}
+                                    className="flex items-center justify-start"
+                                >
+                                    <span className="text-sm text-gray-700">{wineType.label}</span>
+                                </RadioButton>
+                            ))}
                         </div>
                     </div>
 

@@ -23,14 +23,76 @@ type FormulaireModificationProps = {
 
 
 export default function FormulaireModification({ wine, onSave, onCancel, onDelete, onDataChange }: FormulaireModificationProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const isEnglish = i18n.language === 'en';
     const previousWineRef = useRef<string>('');
+    
+    // Mapping bidirectionnel entre types français et anglais
+    const wineTypeTranslationMap: Record<string, string> = {
+        // Français -> Anglais
+        'Mousseux': 'Sparkling',
+        'Blanc': 'White',
+        'Rouge': 'Red',
+        'Rosé': 'Rosé',
+        'Orange': 'Orange',
+        'Fortifié': 'Fortified',
+        'Doux': 'Sweet',
+        'Moelleux ou liquoreux': 'Old White',
+        // Anglais -> Français
+        'Sparkling': 'Mousseux',
+        'White': 'Blanc',
+        'Red': 'Rouge',
+        'Fortified': 'Fortifié',
+        'Sweet': 'Doux',
+        'Old White': 'Moelleux ou liquoreux',
+    };
+    
+    // Liste des types de vins avec leurs valeurs internes et traductions
+    // Afficher uniquement ceux dans la langue choisie
+    const wineTypes = isEnglish 
+        ? [
+            { value: 'Sparkling', label: t('common.sparklingWine') },
+            { value: 'White', label: t('common.whiteWine') },
+            { value: 'Red', label: t('common.redWine') },
+            { value: 'Rosé', label: t('common.roseWine') },
+            { value: 'Orange', label: t('common.orangeWine') },
+            { value: 'Fortified', label: t('common.fortifiedWine') },
+            { value: 'Sweet', label: t('common.sweetWine') },
+            { value: 'Old White', label: t('common.oldWhiteWine') },
+        ]
+        : [
+            { value: 'Mousseux', label: t('common.sparklingWine') },
+            { value: 'Blanc', label: t('common.whiteWine') },
+            { value: 'Rouge', label: t('common.redWine') },
+            { value: 'Rosé', label: t('common.roseWine') },
+            { value: 'Orange', label: t('common.orangeWine') },
+            { value: 'Fortifié', label: t('common.fortifiedWine') },
+            { value: 'Doux', label: t('common.sweetWine') },
+            { value: 'Moelleux ou liquoreux', label: t('common.oldWhiteWine') },
+        ];
     
     // États pour les checkboxes des restaurants
     const [restaurantChecks, setRestaurantChecks] = useState<boolean[]>(wine.pointsDeVente);
     
     // État pour le type de vin sélectionné - utiliser le type du vin
     const [selectedWineType, setSelectedWineType] = useState<Wine['type']>(wine.type);
+    
+    // Traduire automatiquement le type sélectionné quand la langue change
+    const previousLanguageRef = useRef<string>(i18n.language);
+    useEffect(() => {
+        // Ne traduire que si la langue a vraiment changé
+        if (previousLanguageRef.current !== i18n.language) {
+            previousLanguageRef.current = i18n.language;
+            const translatedType = wineTypeTranslationMap[selectedWineType];
+            if (translatedType) {
+                // Vérifier si le type traduit existe dans la liste des types disponibles
+                const translatedTypeExists = wineTypes.some(wt => wt.value === translatedType);
+                if (translatedTypeExists && translatedType !== selectedWineType) {
+                    setSelectedWineType(translatedType);
+                }
+            }
+        }
+    }, [i18n.language, selectedWineType, wineTypes]);
     
     // État pour la checkbox "proportions inconnues" - vérifier si le vin n'a pas de cépages ou si les pourcentages sont à 0
     const [unknownProportions, setUnknownProportions] = useState(
@@ -390,13 +452,13 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                 <div className="col-span-6">
                     <label className="block text-sm font-medium text-gray-700 mb-3">{t('common.wineType')}</label>
                     <div className="grid grid-cols-2 gap-3 items-start">
-                        {['Mousseux', 'Rosé', 'Blanc', 'Fortifié', 'Rouge', 'Sweet', 'Old White', 'Sparkling', 'Red', 'White'].map((type) => (
+                        {wineTypes.map((wineType) => (
                             <RadioButton
-                                key={type}
+                                key={wineType.value}
                                 name={`type-${wine.id}`}
-                                value={type}
-                                checked={type === selectedWineType}
-                                onChange={() => handleWineTypeChange(type)}
+                                value={wineType.value}
+                                checked={wineType.value === selectedWineType}
+                                onChange={() => handleWineTypeChange(wineType.value)}
                                 size="lg"
                                 colors={{
                                     unchecked: 'border-gray-300 bg-white',
@@ -406,7 +468,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                                 }}
                                 className="flex items-center justify-start"
                             >
-                                <span className="text-sm text-gray-700">{type}</span>
+                                <span className="text-sm text-gray-700">{wineType.label}</span>
                             </RadioButton>
                         ))}
                     </div>

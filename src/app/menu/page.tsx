@@ -35,6 +35,8 @@ export default function MenuPage() {
     const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
     const [sectionNameDraft, setSectionNameDraft] = useState('');
     const [sectionPendingDeletion, setSectionPendingDeletion] = useState<CustomSection | null>(null);
+    // Mémoriser les sections supprimées pour éviter qu'elles réapparaissent lors du refetch
+    const [deletedSectionNames, setDeletedSectionNames] = useState<Set<string>>(new Set());
     
     // Récupérer les plats de l'API (le restaurant ID sera récupéré automatiquement depuis le localStorage)
     const { data: apiDishes, isLoading: isLoadingApi } = useRestaurantDishes();
@@ -68,8 +70,11 @@ export default function MenuPage() {
             sectionsMap[sectionName].plats.push(plat);
         });
         
-        return Object.values(sectionsMap);
-    }, [apiDishes, customSections, t]);
+        // Filtrer les sections vides (sans plats) et les sections supprimées
+        return Object.values(sectionsMap).filter(section => 
+            section.plats.length > 0 && !deletedSectionNames.has(section.titre.toLowerCase())
+        );
+    }, [apiDishes, customSections, deletedSectionNames, t]);
     
     // Fusionner les sections API et personnalisées pour éviter les doublons
     // Les sections personnalisées ont la priorité
@@ -312,7 +317,17 @@ export default function MenuPage() {
 
     const handleConfirmRemoveSection = () => {
         if (!sectionPendingDeletion) return;
+        
+        // Supprimer la section des sections personnalisées
         setCustomSections(prev => prev.filter(item => item.id !== sectionPendingDeletion.id));
+        
+        // Mémoriser le nom de la section supprimée pour éviter qu'elle réapparaisse lors du refetch
+        setDeletedSectionNames(prev => {
+            const newSet = new Set(prev);
+            newSet.add(sectionPendingDeletion.titre.toLowerCase());
+            return newSet;
+        });
+        
         if (editingSectionId === sectionPendingDeletion.id) {
             setEditingSectionId(null);
             setSectionNameDraft('');
