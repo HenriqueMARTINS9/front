@@ -1,3 +1,5 @@
+"use client";
+import { useState, useEffect } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import Card from '../common/Card';
 import Tag from '../common/Tag';
@@ -14,12 +16,20 @@ export default function VinsCard() {
     const { t } = useTranslation();
     const lastModified = getLastModifiedDate();
     const formattedDate = formatLastModifiedDate(lastModified);
+    
+    // Utiliser useState pour éviter l'erreur d'hydratation
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleUpdateClick = () => {
         router.push('/vins');
     };
 
-    if (isLoading) {
+    // Pendant le SSR et le premier rendu, afficher le skeleton pour éviter l'erreur d'hydratation
+    if (!mounted || isLoading) {
         return (
             <Card title={t('home.wines.title')} number='45' subtitle={t('common.registeredReferences')}>
                 <div className="animate-pulse space-y-4">

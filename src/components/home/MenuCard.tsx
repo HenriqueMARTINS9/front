@@ -1,4 +1,5 @@
-import React from 'react';
+"use client";
+import React, { useState, useEffect } from 'react';
 import Card from '../common/Card';
 import SubCard from '../menu/SubCard';
 import { useAllRestaurantDishes, useDishesWithoutPrincipalAroma } from '@/lib/hooks';
@@ -11,8 +12,16 @@ export default function MenuCard() {
     const { t } = useTranslation();
     const lastModified = getLastModifiedDate();
     const formattedDate = formatLastModifiedDate(lastModified) || '8 août 2025';
+    
+    // Utiliser useState pour éviter l'erreur d'hydratation
+    const [mounted, setMounted] = useState(false);
 
-    if (isLoading) {
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Pendant le SSR et le premier rendu, ne pas afficher le skeleton pour éviter l'erreur d'hydratation
+    if (!mounted || isLoading) {
         return (
             <Card title={t('home.menus.title')} number={t('home.menus.subtitle', { count: 1, plural: '' })}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
