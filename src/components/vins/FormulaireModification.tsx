@@ -88,11 +88,11 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                 // Vérifier si le type traduit existe dans la liste des types disponibles
                 const translatedTypeExists = wineTypes.some(wt => wt.value === translatedType);
                 if (translatedTypeExists && translatedType !== selectedWineType) {
-                    setSelectedWineType(translatedType);
+                    setSelectedWineType(translatedType as Wine['type']);
                 }
             }
         }
-    }, [i18n.language, selectedWineType, wineTypes]);
+    }, [i18n.language, selectedWineType]);
     
     // État pour la checkbox "proportions inconnues" - vérifier si le vin n'a pas de cépages ou si les pourcentages sont à 0
     const [unknownProportions, setUnknownProportions] = useState(
@@ -184,10 +184,10 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
         console.log('FormulaireModification - wine.formats:', JSON.stringify(wine.formats, null, 2));
         
         // Mettre à jour les champs de base - préserver les valeurs existantes
-        setWineName(wine.name || wine.nom || '');
+        setWineName(wine.name || '');
         setMillesime(wine.millesime || 0);
         setSubname(wine.subname || '');
-        setAocRegion(wine.aocRegion || wine.region || '');
+        setAocRegion(wine.aocRegion || '');
         setPays(wine.pays || '');
         setSelectedWineType(wine.type);
         setRestaurantChecks(wine.pointsDeVente || [true]);
@@ -623,7 +623,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                         };
                         
                         // Validation des champs requis - utiliser la valeur originale si le champ est vide
-                        const finalWineName = wineName && wineName.trim() !== '' ? wineName.trim() : (wine.name || wine.nom || '');
+                        const finalWineName = wineName && wineName.trim() !== '' ? wineName.trim() : (wine.name || '');
                         if (!finalWineName || finalWineName.trim() === '') {
                             console.error('FormulaireModification - Nom du vin manquant (champ vide et pas de valeur originale)');
                             alert(t('common.wineNameRequired') || 'Le nom du vin est requis');
@@ -662,7 +662,7 @@ export default function FormulaireModification({ wine, onSave, onCancel, onDelet
                             name: finalWineName,
                             subname: subname && subname.trim() !== '' ? subname.trim() : (wine.subname || ''),
                             millesime: millesime !== undefined && millesime !== null ? millesime : (wine.millesime || 0),
-                            aocRegion: aocRegion && aocRegion.trim() !== '' ? aocRegion.trim() : (wine.aocRegion || wine.region || ''),
+                            aocRegion: aocRegion && aocRegion.trim() !== '' ? aocRegion.trim() : (wine.aocRegion || ''),
                             pays: pays && pays.trim() !== '' ? pays.trim() : (wine.pays || ''),
                             // Préserver les mots-clés existants
                             motsCles: wine.motsCles || []

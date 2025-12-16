@@ -37,8 +37,6 @@ export default {
       "rose": "Rosé",
       "sweet": "Sweet",
       "oldWhite": "Old White",
-      "bottle": "Bottle",
-      "glass": "Glass",
       "incomplete": "Incomplete"
     },
     "members": {

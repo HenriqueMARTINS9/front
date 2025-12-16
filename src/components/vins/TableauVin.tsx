@@ -61,16 +61,24 @@ export default function TableauVin({ vins, restaurantId }: TableauVinProps) {
     
     // Fonction pour traduire les types de vins
     const translateWineType = (wineType: string) => {
-        // Mapping direct des types de vins
+        // Mapping direct des types de vins (gérer les deux langues)
         const wineTypeMap: Record<string, string> = {
-            'red': i18n.language === 'en' ? 'Red' : 'Rouge',
-            'white': i18n.language === 'en' ? 'White' : 'Blanc',
-            'rose': i18n.language === 'en' ? 'Rosé' : 'Rosé',
+            // Types français
+            'mousseux': i18n.language === 'en' ? 'Sparkling' : 'Mousseux',
+            'blanc': i18n.language === 'en' ? 'White' : 'Blanc',
+            'rouge': i18n.language === 'en' ? 'Red' : 'Rouge',
+            'rosé': 'Rosé',
+            'orange': 'Orange',
+            'fortifié': i18n.language === 'en' ? 'Fortified' : 'Fortifié',
+            'doux': i18n.language === 'en' ? 'Sweet' : 'Doux',
+            'moelleux ou liquoreux': i18n.language === 'en' ? 'Old White' : 'Moelleux ou liquoreux',
+            // Types anglais
             'sparkling': i18n.language === 'en' ? 'Sparkling' : 'Mousseux',
+            'white': i18n.language === 'en' ? 'White' : 'Blanc',
+            'red': i18n.language === 'en' ? 'Red' : 'Rouge',
             'fortified': i18n.language === 'en' ? 'Fortified' : 'Fortifié',
             'sweet': i18n.language === 'en' ? 'Sweet' : 'Doux',
-            'old white': i18n.language === 'en' ? 'Old White' : 'Blanc vieux',
-            'orange': i18n.language === 'en' ? 'Orange' : 'Orange'
+            'old white': i18n.language === 'en' ? 'Old White' : 'Moelleux ou liquoreux',
         };
         
         const typeKey = wineType.toLowerCase();
@@ -169,19 +177,21 @@ export default function TableauVin({ vins, restaurantId }: TableauVinProps) {
 
             // Préparer les données pour la mutation
             // S'assurer que toutes les valeurs sont préservées, même si elles sont vides
+            // Gérer les deux types : Vin et Wine
+            const isVin = 'nom' in wine;
             const vinData: Vin = {
                 id: wine.id,
-                // Utiliser 'nom' directement (le vin passé est déjà converti en Vin)
-                nom: wine.nom || '',
+                // Utiliser 'nom' si c'est un Vin, sinon 'name' si c'est un Wine
+                nom: isVin ? (wine as Vin).nom : (wine as Wine).name || '',
                 subname: wine.subname || '',
                 type: wine.type || 'Blanc',
-                cepage: wine.cepages && wine.cepages.length > 0 ? wine.cepages[0].nom : (wine.cepage || ''),
+                cepage: wine.cepages && wine.cepages.length > 0 ? wine.cepages[0].nom : (isVin ? (wine as Vin).cepage : '') || '',
                 cepages: wine.cepages || [],
-                region: wine.region || '',
+                region: isVin ? (wine as Vin).region : (wine as Wine).aocRegion || '',
                 pays: wine.pays || '',
                 millesime: wine.millesime || 0,
-                prix: wine.formats && wine.formats.length > 0 ? wine.formats[0].prix : (wine.prix || 0),
-                restaurant: wine.restaurant || `Restaurant ${restaurantId}`,
+                prix: wine.formats && wine.formats.length > 0 ? wine.formats[0].prix : (isVin ? (wine as Vin).prix : 0) || 0,
+                restaurant: isVin ? (wine as Vin).restaurant : `Restaurant ${restaurantId}`,
                 pointsDeVente: wine.pointsDeVente || [true],
                 motsCles: updatedMotsCles,
                 formats: wine.formats || []
